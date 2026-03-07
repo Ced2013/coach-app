@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach App</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --orange: #ff8c00;
+    --orange2: #ff5500;
+    --text: #f0f0f8;
+    --muted: #5a5a78;
+    --border: #2a2a3a;
+    --green: #4caf82;
+    --blue: #47aaff;
+    --purple: #a855f7;
+    --red: #ff4757;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  /* NAV TABS */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex: 1; padding: 12px 8px 10px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 4px;
+    cursor: pointer; border: none; background: none;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab.active { color: var(--orange); }
+  .tab-icon { font-size: 20px; }
+
+  /* PAGES */
+  .page { display: none; padding: 24px 16px 20px; }
+  .page.active { display: block; }
+
+  /* HEADER */
+  .header { text-align:center; margin-bottom: 24px; }
+  .title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(38px, 10vw, 64px);
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--orange), var(--orange2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .subtitle { color: var(--muted); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; margin-top: 6px; }
+
+  /* DATE BAR */
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+  }
+  .date-text { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+  .date-value { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--orange); }
+
+  /* PROGRESS RING */
+  .progress-wrap { display:flex; flex-direction:column; align-items:center; margin-bottom: 24px; }
+  .progress-ring { position:relative; width:110px; height:110px; }
+  .progress-ring svg { transform: rotate(-90deg); }
+  .progress-ring circle { fill:none; stroke-width:6; transition: stroke-dashoffset 0.5s ease; }
+  .progress-ring .track { stroke: var(--surface2); }
+  .progress-ring .fill { stroke: var(--orange); stroke-linecap: round; }
+  .progress-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+  .progress-num { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--orange); line-height:1; }
+  .progress-lbl { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+
+  /* MOTIVATION */
+  .motivation-box {
+    background: linear-gradient(135deg, rgba(255,140,0,0.06), rgba(255,85,0,0.06));
+    border: 1px solid rgba(255,140,0,0.15);
+    border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align:center;
+  }
+  .motivation-text { font-size: 13px; color: var(--orange); font-weight: 500; line-height: 1.5; }
+
+  /* ROUTINE SECTIONS */
+  .section { margin-bottom: 18px; }
+  .section-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding:0 4px; }
+  .section-icon { font-size:16px; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
+  .section-count { margin-left:auto; font-size:11px; color:var(--muted); font-weight:500; }
+
+  .r-item {
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:11px; padding:12px 14px; margin-bottom:7px;
+    cursor:pointer; transition:all 0.2s; user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .r-item:active { transform: scale(0.98); }
+  .r-item.done { border-color: rgba(255,140,0,0.2); background: rgba(255,140,0,0.04); }
+  .r-item.done .r-text { text-decoration: line-through; color: var(--muted); }
+  .r-checkbox {
+    width:22px; height:22px; border-radius:7px; border:2px solid var(--border);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:12px; transition:all 0.2s;
+  }
+  .r-item.done .r-checkbox { background:var(--orange); border-color:var(--orange); }
+  .r-content { flex:1; }
+  .r-text { font-size:13px; font-weight:500; line-height:1.3; }
+  .r-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .r-tag {
+    font-size:9px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+    padding:3px 7px; border-radius:6px; flex-shrink:0;
+  }
+  .tag-n { background:rgba(255,140,0,0.15); color:var(--orange); }
+  .tag-t { background:rgba(71,170,255,0.15); color:var(--blue); }
+  .tag-r { background:rgba(76,175,130,0.15); color:var(--green); }
+  .tag-m { background:rgba(168,85,247,0.15); color:var(--purple); }
+  .tag-s { background:rgba(255,71,87,0.15); color:var(--red); }
+
+  .reset-btn {
+    display:block; width:100%; padding:14px;
+    background:transparent; border:1px solid var(--border);
+    border-radius:11px; color:var(--muted);
+    font-family:'DM Sans',sans-serif; font-size:12px;
+    letter-spacing:2px; text-transform:uppercase;
+    cursor:pointer; transition:all 0.2s; margin-top:20px;
+  }
+  .reset-btn:hover { border-color:var(--red); color:var(--red); }
+
+  /* PLANNING PAGE */
+  .week-nav {
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:10px 16px; margin-bottom:16px;
+  }
+  .week-nav button {
+    background:none; border:none; color:var(--orange);
+    font-size:22px; cursor:pointer; padding:2px 8px;
+  }
+  .week-label { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:2px; }
+
+  .week-summary {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px;
+  }
+  .sum-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:11px; padding:11px; text-align:center;
+  }
+  .sum-val { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--orange); }
+  .sum-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+
+  .day-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:13px; margin-bottom:10px; overflow:hidden;
+  }
+  .day-card.today { border-color: rgba(255,140,0,0.45); }
+  .day-card.today .day-header { background: rgba(255,140,0,0.07); }
+
+  .day-header {
+    display:flex; align-items:center; gap:10px;
+    padding:13px 15px; cursor:pointer; user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .day-name { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; min-width:85px; }
+  .day-date-lbl { font-size:10px; color:var(--muted); }
+  .today-badge {
+    font-size:9px; font-weight:600; background:var(--orange); color:#000;
+    padding:2px 8px; border-radius:20px; letter-spacing:1px; text-transform:uppercase;
+  }
+  .day-kcal { margin-left:auto; font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--orange); }
+  .day-kcal span { font-family:'DM Sans',sans-serif; font-size:9px; color:var(--muted); display:block; text-align:right; }
+
+  .day-body { padding: 0 14px 13px; }
+
+  .s-item {
+    display:flex; align-items:flex-start; gap:11px;
+    padding:10px 13px; border-radius:10px; margin-bottom:7px;
+    cursor:pointer; border:1px solid transparent; transition:all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .s-item:last-child { margin-bottom:0; }
+  .s-item.run { background:rgba(71,170,255,0.06); border-color:rgba(71,170,255,0.15); }
+  .s-item.renfo { background:rgba(255,140,0,0.06); border-color:rgba(255,140,0,0.15); }
+  .s-item.repos { background:rgba(76,175,130,0.06); border-color:rgba(76,175,130,0.15); }
+  .s-item.marathon { background:rgba(255,140,0,0.12); border-color:rgba(255,140,0,0.5); }
+  .s-item.done { opacity:0.5; }
+  .s-item.done .s-name { text-decoration:line-through; }
+
+  .s-check {
+    width:21px; height:21px; border-radius:7px; border:2px solid var(--border);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; margin-top:1px; transition:all 0.2s;
+  }
+  .s-item.run.done .s-check { background:var(--blue); border-color:var(--blue); }
+  .s-item.renfo.done .s-check { background:var(--orange); border-color:var(--orange); }
+  .s-item.repos.done .s-check { background:var(--green); border-color:var(--green); }
+  .s-item.marathon.done .s-check { background:var(--orange); border-color:var(--orange); }
+
+  .tag-marathon { background:rgba(255,140,0,0.25); color:var(--orange); font-weight:800; }
+
+  .s-content { flex:1; }
+  .s-name { font-size:13px; font-weight:600; margin-bottom:2px; }
+  .s-detail { font-size:11px; color:var(--muted); line-height:1.4; }
+
+  .s-tag {
+    font-size:9px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+    padding:3px 7px; border-radius:6px; flex-shrink:0;
+  }
+  .tag-run { background:rgba(71,170,255,0.15); color:var(--blue); }
+  .tag-renfo { background:rgba(255,140,0,0.15); color:var(--orange); }
+  .tag-repos { background:rgba(76,175,130,0.15); color:var(--green); }
+
+  .kcal-bar {
+    display:flex; align-items:center; gap:10px; margin-top:9px;
+    padding:10px 13px; background:var(--surface2); border-radius:9px;
+  }
+  .kcal-title { font-size:10px; color:var(--muted); }
+  .kcal-val { font-size:13px; font-weight:600; color:var(--orange); }
+  .macros-txt { font-size:10px; color:var(--muted); margin-top:1px; }
+</style>
+</head>
+<body>
+
+<!-- PAGE PLANNING -->
+<div class="page active" id="page-planning">
+  <div class="header">
+    <div class="title">PLANNING</div>
+    <div class="subtitle">Prépa Marathon · 12 Avril 2026</div>
+  </div>
+
+  <div class="date-bar">
+    <span class="date-text">Aujourd'hui</span>
+    <span class="date-value" id="dateDisplay2">—</span>
+  </div>
+
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">‹</button>
+    <span class="week-label" id="weekLabel">—</span>
+    <button onclick="changeWeek(1)">›</button>
+  </div>
+
+  <div class="week-summary">
+    <div class="sum-card"><div class="sum-val" id="sumSeances">—</div><div class="sum-lbl">séances</div></div>
+    <div class="sum-card"><div class="sum-val" id="sumRenfo">—</div><div class="sum-lbl">renfo</div></div>
+    <div class="sum-card"><div class="sum-val" id="sumDone">—</div><div class="sum-lbl">réalisées</div></div>
+  </div>
+
+  <div id="planContainer"></div>
+</div>
+
+<!-- PAGE ROUTINE -->
+<div class="page" id="page-routine">
+  <div class="header">
+    <div class="title">ROUTINE</div>
+    <div class="subtitle">Checklist quotidienne</div>
+  </div>
+
+  <div class="date-bar">
+    <span class="date-text">Aujourd'hui</span>
+    <span class="date-value" id="dateDisplay">—</span>
+  </div>
+
+  <div class="motivation-box">
+    <div class="motivation-text" id="motivationText">—</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-ring">
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        <circle class="track" cx="55" cy="55" r="49"/>
+        <circle class="fill" cx="55" cy="55" r="49" id="progressCircle"
+          stroke-dasharray="307.9" stroke-dashoffset="307.9"/>
+      </svg>
+      <div class="progress-text">
+        <div class="progress-num" id="progressNum">0%</div>
+        <div class="progress-lbl">Accompli</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUTRITION -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🍽️</span>
+      <span class="section-title">NUTRITION</span>
+      <span class="section-count" id="cN">0/5</span>
+    </div>
+    <div class="r-item" data-sec="n" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Protéines ≥ 170g</div><div class="r-sub">Non négociable — tous les jours</div></div>
+      <span class="r-tag tag-n">MACRO</span>
+    </div>
+    <div class="r-item" data-sec="n" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Calories dans la cible du jour</div><div class="r-sub">Repos 1700 · EF 2000 · Intense 2300</div></div>
+      <span class="r-tag tag-n">KCAL</span>
+    </div>
+    <div class="r-item" data-sec="n" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Logger chaque repas dans Yazio</div><div class="r-sub">Avant ou pendant — pas après</div></div>
+      <span class="r-tag tag-n">TRACK</span>
+    </div>
+    <div class="r-item" data-sec="n" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">2L d'eau minimum</div><div class="r-sub">+500ml les jours de séance longue</div></div>
+      <span class="r-tag tag-n">HYDRA</span>
+    </div>
+    <div class="r-item" data-sec="n" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Compléments pris</div><div class="r-sub">Whey+Collagène+Créatine · Oméga3 · Magnésium soir · Vit D</div></div>
+      <span class="r-tag tag-n">SUPPL</span>
+    </div>
+  </div>
+
+  <!-- ENTRAÎNEMENT -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">💪</span>
+      <span class="section-title">ENTRAÎNEMENT</span>
+      <span class="section-count" id="cT">0/2</span>
+    </div>
+    <div class="r-item" data-sec="t" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Séance du jour réalisée</div><div class="r-sub">Run · Renfo · Vélo</div></div>
+      <span class="r-tag tag-t">SÉANCE</span>
+    </div>
+    <div class="r-item" data-sec="t" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Activité Garmin enregistrée</div><div class="r-sub">Vérifie calories brûlées vs apport</div></div>
+      <span class="r-tag tag-t">GARMIN</span>
+    </div>
+  </div>
+
+  <!-- RÉCUPÉRATION -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">😴</span>
+      <span class="section-title">RÉCUPÉRATION</span>
+      <span class="section-count" id="cR">0/3</span>
+    </div>
+    <div class="r-item" data-sec="r" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Sommeil ≥ 7h30</div><div class="r-sub">C'est là que la graisse se perd</div></div>
+      <span class="r-tag tag-r">SLEEP</span>
+    </div>
+    <div class="r-item" data-sec="r" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Étirements / mobilité 10 min</div><div class="r-sub">Après séance ou le soir</div></div>
+      <span class="r-tag tag-r">MOBILITÉ</span>
+    </div>
+    <div class="r-item" data-sec="r" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Pas d'alcool ce soir</div><div class="r-sub">Perturbe le cortisol et la récupération</div></div>
+      <span class="r-tag tag-r">RÉCUP</span>
+    </div>
+  </div>
+
+  <!-- MESURES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📊</span>
+      <span class="section-title">MESURES HEBDO</span>
+      <span class="section-count" id="cS">0/2</span>
+    </div>
+    <div class="r-item" data-sec="s" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Pesée à jeun</div><div class="r-sub">Samedi matin · J0 : 76,3 kg</div></div>
+      <span class="r-tag tag-s">POIDS</span>
+    </div>
+    <div class="r-item" data-sec="s" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Tour de taille mesuré</div><div class="r-sub">Niveau le plus large · J0 : 89 cm</div></div>
+      <span class="r-tag tag-s">TOUR</span>
+    </div>
+  </div>
+
+  <!-- MINDSET -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🧠</span>
+      <span class="section-title">MINDSET</span>
+      <span class="section-count" id="cM">0/2</span>
+    </div>
+    <div class="r-item" data-sec="m" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Visualiser l'objectif</div><div class="r-sub">La simulation · Septembre-Octobre 2026</div></div>
+      <span class="r-tag tag-m">VISION</span>
+    </div>
+    <div class="r-item" data-sec="m" onclick="toggleR(this)">
+      <div class="r-checkbox"></div>
+      <div class="r-content"><div class="r-text">Bilan rapide de la journée</div><div class="r-sub">Ce qui a bien marché · À améliorer</div></div>
+      <span class="r-tag tag-m">BILAN</span>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetDay()">↺ Réinitialiser la journée</button>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" id="tab-planning" onclick="showPage('planning')">
+    <span class="tab-icon">🗓️</span>Planning
+  </button>
+  <button class="tab" id="tab-routine" onclick="showPage('routine')">
+    <span class="tab-icon">✅</span>Routine
+  </button>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+const WEEKS = [
+  {
+    label: "7 – 15 MARS",
+    days: [
+      { name:"SAMEDI", date:"7 mars", iso:"2026-03-07", kcal:1970, p:160, g:235, l:55,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos — veille 10 km", detail:"Glucides hauts · Hydratation++ · Prépare le glycogène", key:"w1d0s0" }]},
+      { name:"DIMANCHE", date:"8 mars", iso:"2026-03-08", kcal:2300, p:165, g:290, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"10 km Compétition", detail:"Effort max · Course officielle · 10h20", key:"w1d1s0" }]},
+      { name:"LUNDI", date:"9 mars", iso:"2026-03-09", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"Allure 6:03–6:33 /km · Matin jour off", key:"w1d2s0" }]},
+      { name:"MARDI", date:"10 mars", iso:"2026-03-10", kcal:2100, p:175, g:255, l:63,
+        seances:[
+          { type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"Allure 6:03–6:33 /km · Pause déj", key:"w1d3s0" },
+          { type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement A", detail:"Split squat x3 · Gainage latéral 40s x3 · Soir", key:"w1d3s1" }
+        ]},
+      { name:"MERCREDI", date:"11 mars", iso:"2026-03-11", kcal:1700, p:170, g:175, l:60,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos complet", detail:"Récupération active · Marche légère OK", key:"w1d4s0" }]},
+      { name:"JEUDI", date:"12 mars", iso:"2026-03-12", kcal:2150, p:175, g:265, l:63,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Séance intense Campus", detail:"D'après programme · Soir", key:"w1d5s0" }]},
+      { name:"VENDREDI", date:"13 mars", iso:"2026-03-13", kcal:2050, p:175, g:248, l:62,
+        seances:[
+          { type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"Allure 6:03–6:33 /km · Pause déj", key:"w1d6s0" },
+          { type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement B", detail:"Split squat · Swing · Bonds x5 · Soir", key:"w1d6s1" }
+        ]},
+      { name:"SAMEDI", date:"14 mars", iso:"2026-03-14", kcal:1970, p:160, g:235, l:55,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos — veille sortie longue", detail:"Glucides hauts · Prépare le glycogène", key:"w1d7s0" }]},
+      { name:"DIMANCHE", date:"15 mars", iso:"2026-03-15", kcal:2300, p:165, g:290, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Sortie longue", detail:"Allure EF · Cardio faible intensité · Matin", key:"w1d8s0" }]}
+    ]
+  },
+  {
+    label: "16 – 22 MARS",
+    days: [
+      { name:"LUNDI", date:"16 mars", iso:"2026-03-16", kcal:1800, p:170, g:210, l:60,
+        seances:[{ type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement Campus A", detail:"2 blocs · Exercices intenses + sauts · 2' récup · 30 min", key:"w2d0s0" }]},
+      { name:"MARDI", date:"17 mars", iso:"2026-03-17", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"9,5 km · 1h · Allure EF", key:"w2d1s0" }]},
+      { name:"MERCREDI", date:"18 mars", iso:"2026-03-18", kcal:2200, p:175, g:270, l:63,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Seuil 60", detail:"3 répétitions de 8' à allure seuil · 3' récup footing · 10,7 km", key:"w2d2s0" }]},
+      { name:"JEUDI", date:"19 mars", iso:"2026-03-19", kcal:1800, p:170, g:210, l:60,
+        seances:[{ type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement Campus B", detail:"2 blocs · Exercice intense + assistance · 2' récup · 30 min", key:"w2d3s0" }]},
+      { name:"VENDREDI", date:"20 mars", iso:"2026-03-20", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"6,4 km · 40 min · Allure EF", key:"w2d4s0" }]},
+      { name:"SAMEDI", date:"21 mars", iso:"2026-03-21", kcal:1970, p:160, g:235, l:55,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos — veille sortie longue", detail:"Glucides hauts · Hydratation++", key:"w2d5s0" }]},
+      { name:"DIMANCHE", date:"22 mars", iso:"2026-03-22", kcal:2300, p:165, g:290, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Long + Allure 42 km", detail:"26,9 km · 2h40 · Intervalles pyramide allure marathon", key:"w2d6s0" }]}
+    ]
+  },
+  {
+    label: "23 – 29 MARS",
+    days: [
+      { name:"LUNDI", date:"23 mars", iso:"2026-03-23", kcal:1800, p:170, g:210, l:60,
+        seances:[{ type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement Campus A", detail:"2 blocs · Exercice intense + assistance · 2' récup · 30 min", key:"w3d0s0" }]},
+      { name:"MARDI", date:"24 mars", iso:"2026-03-24", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"7,2 km · 45 min · Allure EF", key:"w3d1s0" }]},
+      { name:"MERCREDI", date:"25 mars", iso:"2026-03-25", kcal:2200, p:175, g:270, l:63,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Seuil 60", detail:"4 répétitions de 7' à allure seuil · 3' récup footing · 11,9 km", key:"w3d2s0" }]},
+      { name:"JEUDI", date:"26 mars", iso:"2026-03-26", kcal:1800, p:170, g:210, l:60,
+        seances:[{ type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement Campus B", detail:"4 séries · Exercices intenses + sauts · 2' récup · 30 min", key:"w3d3s0" }]},
+      { name:"VENDREDI", date:"27 mars", iso:"2026-03-27", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"9,5 km · 1h · Allure EF", key:"w3d4s0" }]},
+      { name:"SAMEDI", date:"28 mars", iso:"2026-03-28", kcal:1970, p:160, g:235, l:55,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos — veille sortie longue", detail:"Glucides hauts · Hydratation++", key:"w3d5s0" }]},
+      { name:"DIMANCHE", date:"29 mars", iso:"2026-03-29", kcal:2300, p:165, g:290, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Long + Allure 42 km", detail:"18,3 km · 1h50 · Allure spécifique pyramide", key:"w3d6s0" }]}
+    ]
+  },
+  {
+    label: "30 MARS – 5 AVR.",
+    days: [
+      { name:"LUNDI", date:"30 mars", iso:"2026-03-30", kcal:1800, p:170, g:210, l:60,
+        seances:[{ type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement Campus A", detail:"3 blocs · 2 séries exercice · 30 min", key:"w4d0s0" }]},
+      { name:"MARDI", date:"31 mars", iso:"2026-03-31", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"6,4 km · 40 min · Allure EF", key:"w4d1s0" }]},
+      { name:"MERCREDI", date:"1 avril", iso:"2026-04-01", kcal:2150, p:175, g:260, l:63,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"SweetSpot", detail:"3 répétitions de 6' à allure cible · 2' récup footing · 9 km", key:"w4d2s0" }]},
+      { name:"JEUDI", date:"2 avril", iso:"2026-04-02", kcal:1800, p:170, g:210, l:60,
+        seances:[{ type:"renfo", tag:"RENFO", emoji:"💪", name:"Renforcement Campus B", detail:"2 blocs · Exercice principal + assistance · 1'30 récup · 30 min", key:"w4d3s0" }]},
+      { name:"VENDREDI", date:"3 avril", iso:"2026-04-03", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"8 km · 50 min · Allure EF", key:"w4d4s0" }]},
+      { name:"SAMEDI", date:"4 avril", iso:"2026-04-04", kcal:1970, p:160, g:235, l:55,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos — veille sortie longue", detail:"Glucides hauts · Hydratation++", key:"w4d5s0" }]},
+      { name:"DIMANCHE", date:"5 avril", iso:"2026-04-05", kcal:2300, p:165, g:290, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Sortie longue", detail:"Allure EF · Dernière longue sortie avant marathon", key:"w4d6s0" }]}
+    ]
+  },
+  {
+    label: "6 – 12 AVR. 🎯",
+    days: [
+      { name:"LUNDI", date:"6 avril", iso:"2026-04-06", kcal:2000, p:170, g:240, l:62,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF — endurance fondamentale", detail:"6,4 km · 40 min · Allure très légère", key:"w5d0s0" }]},
+      { name:"MARDI", date:"7 avril", iso:"2026-04-07", kcal:2150, p:175, g:260, l:63,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"Allure 42 km", detail:"3 répétitions de 3' à allure marathon · 3' récup · 5,6 km", key:"w5d1s0" }]},
+      { name:"MERCREDI", date:"8 avril", iso:"2026-04-08", kcal:1700, p:170, g:175, l:60,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos complet", detail:"Récupération · Aucune fatigue inutile", key:"w5d2s0" }]},
+      { name:"JEUDI", date:"9 avril", iso:"2026-04-09", kcal:1700, p:170, g:175, l:60,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos complet", detail:"Récupération · Hydratation++", key:"w5d3s0" }]},
+      { name:"VENDREDI", date:"10 avril", iso:"2026-04-10", kcal:2000, p:165, g:245, l:60,
+        seances:[{ type:"run", tag:"RUN", emoji:"🏃", name:"EF + Lignes droites", detail:"3,1 km · 20 min · Activation légère · Lignes droites en option", key:"w5d4s0" }]},
+      { name:"SAMEDI", date:"11 avril", iso:"2026-04-11", kcal:2300, p:160, g:300, l:55,
+        seances:[{ type:"repos", tag:"REPOS", emoji:"😴", name:"Repos — veille MARATHON", detail:"Glucides max · Hydratation++ · Sommeil tôt 🎯", key:"w5d5s0" }]},
+      { name:"DIMANCHE", date:"12 avril", iso:"2026-04-12", kcal:3500, p:150, g:450, l:60,
+        seances:[{ type:"run", tag:"marathon", emoji:"🏅", name:"MARATHON 42,2 km", detail:"C'est le jour J ! Tout s'est construit pour ça. 3h54 estimé 💪", key:"w5d6s0" }]}
+    ]
+  }
+];
+
+// ── STORAGE (IndexedDB) ───────────────────────────────
+const DB_NAME = 'coachapp';
+const DB_VERSION = 1;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore('kv', { keyPath: 'k' });
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject();
+  });
+}
+
+function dbGet(key) {
+  return new Promise((resolve) => {
+    const tx = db.transaction('kv', 'readonly');
+    const req = tx.objectStore('kv').get(key);
+    req.onsuccess = () => resolve(req.result ? req.result.v : null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+function dbSet(key, value) {
+  return new Promise((resolve) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put({ k: key, v: value });
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+function dbDel(key) {
+  return new Promise((resolve) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').delete(key);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+
+// ── STATE ─────────────────────────────────────────────
+let currentWeek = 0;
+let pState = {};
+let rState = {};;
+
+const motivations = [
+  "La photo objectif existe. Elle t'attend. 💪",
+  "Chaque protéine comptée = un pas vers la simulation. 🔥",
+  "Le marathon se prépare dans l'assiette autant que sur la piste.",
+  "La régularité bat l'intensité. Chaque. Jour.",
+  "Dans 6 mois tu regarderas cette routine et tu souriras. 😄",
+  "76,3 kg aujourd'hui. ~70 kg en octobre. La route est tracée. 🎯",
+  "Les abdos se font en cuisine. Tu sais ce que tu as à faire.",
+  "Un jour parfait de plus vers la photo objectif. 🏃",
+  "Marathon 12 avril. Sèche jusqu'en octobre. Un pas à la fois.",
+  "La structure musculaire est là. Il faut juste enlever ce qui la cache. 💡"
+];
+
+// ── UTILS ─────────────────────────────────────────────
+function getTodayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── PAGES ─────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── PLANNING ──────────────────────────────────────────
+function changeWeek(dir) {
+  currentWeek = Math.max(0, Math.min(WEEKS.length - 1, currentWeek + dir));
+  renderPlan();
+}
+
+async function toggleSeance(key) {
+  pState[key] = !pState[key];
+  await dbSet('plan_state', JSON.stringify(pState));
+  renderPlan();
+}
+
+function renderPlan() {
+  const week = WEEKS[currentWeek];
+  document.getElementById('weekLabel').textContent = week.label;
+
+  let totalRun = 0, totalRenfo = 0, totalDone = 0;
+  week.days.forEach(day => {
+    day.seances.forEach(s => {
+      if (s.type === 'run') totalRun++;
+      if (s.type === 'renfo') totalRenfo++;
+      if (pState[s.key]) totalDone++;
+    });
+  });
+  document.getElementById('sumSeances').textContent = totalRun;
+  document.getElementById('sumRenfo').textContent = totalRenfo;
+  document.getElementById('sumDone').textContent = totalDone;
+
+  const today = getTodayISO();
+  const container = document.getElementById('planContainer');
+  container.innerHTML = '';
+
+  week.days.forEach(day => {
+    const isToday = day.iso === today;
+    const card = document.createElement('div');
+    card.className = 'day-card' + (isToday ? ' today' : '');
+
+    card.innerHTML = `
+      <div class="day-header">
+        <div>
+          <div class="day-name">${day.name}</div>
+          <div class="day-date-lbl">${day.date}</div>
+        </div>
+        ${isToday ? '<span class="today-badge">Aujourd\'hui</span>' : ''}
+        <div class="day-kcal">${day.kcal}<span>kcal cible</span></div>
+      </div>
+      <div class="day-body" id="body_${day.iso}"></div>
+    `;
+    container.appendChild(card);
+
+    const body = document.getElementById('body_' + day.iso);
+    day.seances.forEach(s => {
+      const el = document.createElement('div');
+      el.className = `s-item ${s.type}${pState[s.key] ? ' done' : ''}`;
+      el.innerHTML = `
+        <div class="s-check">${pState[s.key] ? '✓' : ''}</div>
+        <div class="s-content">
+          <div class="s-name">${s.emoji} ${s.name}</div>
+          <div class="s-detail">${s.detail}</div>
+        </div>
+        <span class="s-tag tag-${s.type}">${s.tag}</span>
+      `;
+      el.onclick = () => toggleSeance(s.key);
+      body.appendChild(el);
+    });
+
+    const kb = document.createElement('div');
+    kb.className = 'kcal-bar';
+    kb.innerHTML = `
+      <span style="font-size:15px">🍽️</span>
+      <div style="flex:1">
+        <div class="kcal-title">Cible nutrition</div>
+        <div class="kcal-val">${day.kcal} kcal</div>
+        <div class="macros-txt">P ${day.p}g · G ${day.g}g · L ${day.l}g</div>
+      </div>
+    `;
+    body.appendChild(kb);
+  });
+}
+
+// ── ROUTINE ───────────────────────────────────────────
+const TOTAL_R = 14;
+
+function toggleR(el) {
+  el.classList.toggle('done');
+  el.querySelector('.r-checkbox').textContent = el.classList.contains('done') ? '✓' : '';
+  saveRoutine();
+  updateProgress();
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return `routine_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+}
+
+async function saveRoutine() {
+  const state = {};
+  document.querySelectorAll('.r-item').forEach(item => {
+    state[item.querySelector('.r-text').textContent] = item.classList.contains('done');
+  });
+  await dbSet(getTodayKey(), JSON.stringify(state));
+}
+
+function updateProgress() {
+  const done = document.querySelectorAll('.r-item.done').length;
+  const pct = Math.round((done / TOTAL_R) * 100);
+  document.getElementById('progressNum').textContent = pct + '%';
+  const c = 307.9;
+  document.getElementById('progressCircle').style.strokeDashoffset = c - (pct / 100) * c;
+  document.getElementById('progressCircle').style.stroke = pct === 100 ? '#ff5500' : '#ff8c00';
+
+  const secs = {n:5, t:2, r:3, s:2, m:2};
+  const labels = {n:'cN', t:'cT', r:'cR', s:'cS', m:'cM'};
+  Object.keys(secs).forEach(k => {
+    const cnt = document.querySelectorAll(`[data-sec="${k}"].done`).length;
+    document.getElementById(labels[k]).textContent = `${cnt}/${secs[k]}`;
+  });
+}
+
+async function resetDay() {
+  if (confirm('Réinitialiser toutes les cases ?')) {
+    document.querySelectorAll('.r-item').forEach(item => {
+      item.classList.remove('done');
+      item.querySelector('.r-checkbox').textContent = '';
+    });
+    await dbDel(getTodayKey());
+    updateProgress();
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  await openDB();
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).toUpperCase();
+  document.getElementById('dateDisplay').textContent = dateStr;
+  document.getElementById('dateDisplay2').textContent = dateStr;
+  document.getElementById('motivationText').textContent = motivations[now.getDay() % motivations.length];
+
+  // Load planning state
+  const ps = await dbGet('plan_state');
+  if (ps) pState = JSON.parse(ps);
+
+  // Load routine state for today
+  const rs = await dbGet(getTodayKey());
+  if (rs) {
+    const saved = JSON.parse(rs);
+    document.querySelectorAll('.r-item').forEach(item => {
+      const key = item.querySelector('.r-text').textContent;
+      if (saved[key]) {
+        item.classList.add('done');
+        item.querySelector('.r-checkbox').textContent = '✓';
+      }
+    });
+  }
+
+  updateProgress();
+
+  // Auto-select current week
+  const today = getTodayISO();
+  WEEKS.forEach((w, i) => {
+    if (w.days.some(d => d.iso === today)) currentWeek = i;
+  });
+
+  renderPlan();
+}
+
+init();
+</script>
+</body>
+</html>

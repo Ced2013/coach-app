@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menus Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26;
+    --orange:#ff8c00; --orange2:#ff5500; --text:#f0f0f8;
+    --muted:#5a5a78; --border:#2a2a3a; --green:#4caf82;
+    --blue:#47aaff; --red:#ff4757;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; padding:24px 16px 100px; }
+
+  .title { font-family:'Bebas Neue',sans-serif; font-size:52px; letter-spacing:4px; background:linear-gradient(135deg,var(--orange),var(--orange2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; text-align:center; }
+  .subtitle { color:var(--muted); font-size:11px; letter-spacing:3px; text-transform:uppercase; margin-top:4px; text-align:center; margin-bottom:24px; }
+
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+  .tab { flex:1; padding:12px 8px 10px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; border:none; background:none; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; -webkit-tap-highlight-color:transparent; }
+  .tab.active { color:var(--orange); }
+  .tab-icon { font-size:20px; }
+
+  .page { display:none; }
+  .page.active { display:block; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px; margin-bottom:14px; }
+  .card-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; margin-bottom:12px; }
+
+  select, input[type=number], input[type=text] {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:9px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:13px; padding:10px 12px; margin-bottom:0; appearance:none;
+  }
+  .field { margin-bottom:12px; }
+  .input-lbl { font-size:9px; color:var(--muted); margin-bottom:4px; display:block; text-transform:uppercase; letter-spacing:1px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+  .btn-primary { width:100%; padding:13px; background:linear-gradient(135deg,var(--orange),var(--orange2)); border:none; border-radius:10px; color:#000; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; cursor:pointer; }
+  .btn-secondary { width:100%; padding:10px; background:transparent; border:1px solid var(--border); border-radius:9px; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; margin-top:10px; }
+
+  /* Catégorie chips */
+  .cat-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .cat-chip { padding:7px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.15s; }
+  .cat-chip.active { background:rgba(255,140,0,0.12); border-color:rgba(255,140,0,0.5); color:var(--orange); }
+
+  /* Aliment rows */
+  .alim-card { background:var(--surface2); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .alim-nom { font-size:13px; font-weight:600; }
+  .alim-macros { font-size:11px; color:var(--muted); margin-top:2px; }
+  .alim-actions { display:flex; gap:8px; margin-top:8px; }
+  .btn-del { background:none; border:none; color:var(--red); font-size:13px; cursor:pointer; padding:2px 8px; font-family:'DM Sans',sans-serif; }
+  .btn-edit { background:none; border:1px solid var(--border); border-radius:6px; color:var(--muted); font-size:11px; cursor:pointer; padding:3px 10px; font-family:'DM Sans',sans-serif; }
+  .section-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:14px 0 6px; }
+
+  /* Menu cards */
+  .menu-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px; margin-bottom:12px; }
+  .slot-block { margin-bottom:14px; }
+  .slot-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+  .compo-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .compo-left { display:flex; flex-direction:column; gap:2px; }
+  .compo-nom { font-size:13px; font-weight:500; }
+  .compo-cat { font-size:10px; color:var(--muted); }
+  .compo-right { text-align:right; }
+  .compo-qty { font-size:13px; font-weight:600; color:var(--orange); }
+  .compo-kcal { font-size:10px; color:var(--muted); }
+
+  .macro-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; text-align:center; background:var(--surface2); border-radius:9px; padding:10px; margin-top:12px; }
+  .macro-num { font-family:'Bebas Neue',sans-serif; font-size:22px; }
+  .macro-lbl { font-size:9px; color:var(--muted); }
+  .macro-diff { font-size:9px; margin-top:1px; }
+
+  .badge-add { padding:6px 14px; border-radius:8px; border:1px solid rgba(255,140,0,0.4); background:rgba(255,140,0,0.08); color:var(--orange); font-size:11px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .badge-added { padding:6px 14px; border-radius:8px; border:1px solid rgba(76,175,130,0.4); background:rgba(76,175,130,0.1); color:var(--green); font-size:11px; font-weight:600; font-family:'DM Sans',sans-serif; }
+
+  .target-box { background:var(--surface2); border-radius:9px; padding:10px; margin-bottom:12px; display:none; font-size:12px; color:var(--muted); }
+  .cours-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); }
+  .empty-state { text-align:center; padding:36px 16px; color:var(--muted); font-size:13px; line-height:2; }
+  .empty-icon { font-size:36px; margin-bottom:8px; }
+  .divider { height:1px; background:var(--border); margin:10px 0; }
+
+  /* Info box */
+  .info-box { background:rgba(71,170,255,0.06); border:1px solid rgba(71,170,255,0.2); border-radius:10px; padding:12px; margin-bottom:14px; font-size:12px; color:var(--muted); line-height:1.7; }
+  .info-box b { color:var(--blue); }
+</style>
+</head>
+<body>
+
+<!-- PAGE GÉNÉRER -->
+<div class="page active" id="page-gen">
+  <div class="title">MENUS</div>
+  <div class="subtitle">Générateur intelligent</div>
+
+  <div class="card">
+    <div class="card-title">🎯 TYPE DE JOURNÉE</div>
+    <div class="field">
+      <select id="menuDayType" onchange="onTypeChange()">
+        <option value="">— Sélectionne —</option>
+        <option value="1700|170|131|55">😴 Repos</option>
+        <option value="1970|160|209|55">😴 Repos veille sortie longue</option>
+        <option value="1800|170|145|60">💪 Renfo seul</option>
+        <option value="2000|170|195|60">🏃 EF courte</option>
+        <option value="2000|170|190|62">🏃 EF longue</option>
+        <option value="2050|175|198|62">🏃💪 EF + Renfo</option>
+        <option value="2150|175|221|63">🏃 Séance intense / Seuil</option>
+        <option value="2200|175|233|63">🏃 Allure spécifique</option>
+        <option value="2300|165|270|62">🏃 Sortie longue</option>
+      </select>
+    </div>
+    <div class="target-box" id="targetBox"></div>
+    <button class="btn-primary" onclick="generateMenus()">GÉNÉRER 3 MENUS</button>
+  </div>
+
+  <div id="menusContainer"></div>
+</div>
+
+<!-- PAGE COURSES -->
+<div class="page" id="page-courses">
+  <div class="title">COURSES</div>
+  <div class="subtitle">Liste de la semaine</div>
+  <div class="card">
+    <div class="card-title">🛒 LISTE DE COURSES</div>
+    <div id="coursesList"><span style="font-size:12px;color:var(--muted);">Génère et ajoute des menus d'abord.</span></div>
+    <button class="btn-secondary" onclick="clearCourses()">↺ Effacer la liste</button>
+  </div>
+</div>
+
+<!-- PAGE ALIMENTS -->
+<div class="page" id="page-aliments">
+  <div class="title">ALIMENTS</div>
+  <div class="subtitle">Ma bibliothèque</div>
+
+  <div class="info-box">
+    Macros pour <b>100g</b>.<br>
+    🥩 <b>Viande/Poisson</b> · 🍚 <b>Accompagnement</b> · 🥦 <b>Légume</b> → assemblés pour déj/dîner.<br>
+    🌅 <b>Petit déj</b> · 🍎 <b>Collation</b> → macros pour <b>1 portion complète</b>.
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="formTitle">+ AJOUTER</div>
+    <input type="hidden" id="editIdx" value="">
+
+    <div class="field">
+      <span class="input-lbl">Nom</span>
+      <input type="text" id="newNom" placeholder="Ex : Poulet filet">
+    </div>
+
+    <div class="field">
+      <span class="input-lbl">Catégorie</span>
+      <div class="cat-row" id="catRow">
+        <div class="cat-chip" id="cat-viande" onclick="selectCat('viande')">🥩 Viande/Poisson</div>
+        <div class="cat-chip" id="cat-accompagnement" onclick="selectCat('accompagnement')">🍚 Accompagnement</div>
+        <div class="cat-chip" id="cat-legume" onclick="selectCat('legume')">🥦 Légume</div>
+        <div class="cat-chip" id="cat-ptdej" onclick="selectCat('ptdej')">🌅 Petit déj</div>
+        <div class="cat-chip" id="cat-collation" onclick="selectCat('collation')">🍎 Collation</div>
+      </div>
+    </div>
+
+    <div id="helpText" style="font-size:11px;color:var(--muted);margin-bottom:12px;display:none;"></div>
+
+    <div class="field grid4">
+      <div><span class="input-lbl">KCAL</span><input type="number" id="newKcal" placeholder="0"></div>
+      <div><span class="input-lbl">PROT g</span><input type="number" id="newP" placeholder="0"></div>
+      <div><span class="input-lbl">GLUC g</span><input type="number" id="newG" placeholder="0"></div>
+      <div><span class="input-lbl">LIP g</span><input type="number" id="newL" placeholder="0"></div>
+    </div>
+
+    <!-- Quantité de base uniquement pour viande/légume -->
+    <div class="field" id="qtyField" style="display:none;">
+      <span class="input-lbl">Quantité habituelle (g)</span>
+      <input type="number" id="newQty" placeholder="Ex : 150">
+    </div>
+
+    <button class="btn-primary" style="margin-top:4px;" onclick="saveAliment()">ENREGISTRER</button>
+    <button class="btn-secondary" id="cancelBtn" style="display:none;" onclick="cancelEdit()">Annuler</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 MES ALIMENTS</div>
+    <div id="alimentsList">
+      <div class="empty-state"><div class="empty-icon">📦</div>Aucun aliment encore.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" id="tab-gen" onclick="showPage('gen')"><span class="tab-icon">🍽️</span>Menus</button>
+  <button class="tab" id="tab-courses" onclick="showPage('courses'); renderCourses()"><span class="tab-icon">🛒</span>Courses</button>
+  <button class="tab" id="tab-aliments" onclick="showPage('aliments')"><span class="tab-icon">📦</span>Aliments</button>
+</div>
+
+<script>
+// ── STORAGE ───────────────────────────────────────────
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('menusapp3', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('kv', { keyPath: 'k' });
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = rej;
+  });
+}
+function dbGet(k) {
+  return new Promise(res => {
+    try { const r = db.transaction('kv','readonly').objectStore('kv').get(k); r.onsuccess = () => res(r.result ? r.result.v : null); r.onerror = () => res(null); }
+    catch(e) { res(null); }
+  });
+}
+function dbSet(k, v) {
+  return new Promise(res => {
+    try { const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').put({k, v}); tx.oncomplete = res; tx.onerror = res; }
+    catch(e) { res(); }
+  });
+}
+function dbDel(k) {
+  return new Promise(res => {
+    try { const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete = res; tx.onerror = res; }
+    catch(e) { res(); }
+  });
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── CATÉGORIE SELECTOR ────────────────────────────────
+let selectedCat = '';
+const CAT_HELP = {
+  viande:        '→ Macros pour 100g · Quantité typique en g (ex: 150g)',
+  accompagnement:'→ Macros pour 100g · Quantité ajustée automatiquement selon le jour',
+  legume:        '→ Macros pour 100g · Quantité typique en g (ex: 150g)',
+  ptdej:         '→ Macros pour 1 portion complète (ex: 4 œufs + 10g beurre = total)',
+  collation:     '→ Macros pour 1 portion complète (ex: 50g grisons + 100g skyr = total)',
+};
+const CAT_LABELS = {
+  viande:'🥩 Viande/Poisson', accompagnement:'🍚 Accompagnement', legume:'🥦 Légume', ptdej:'🌅 Petit déj', collation:'🍎 Collation'
+};
+
+function selectCat(cat) {
+  selectedCat = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('cat-'+cat).classList.add('active');
+  const help = document.getElementById('helpText');
+  help.textContent = CAT_HELP[cat];
+  help.style.display = 'block';
+  // Montrer quantité de base pour viande et légume
+  document.getElementById('qtyField').style.display = (cat === 'viande' || cat === 'legume') ? 'block' : 'none';
+}
+
+// ── ALIMENTS ──────────────────────────────────────────
+let aliments = [];
+
+async function loadAliments() {
+  const saved = await dbGet('aliments');
+  aliments = saved ? JSON.parse(saved) : [];
+  renderAliments();
+}
+
+async function saveAliment() {
+  const nom = document.getElementById('newNom').value.trim();
+  if (!nom) { alert('Entre un nom !'); return; }
+  if (!selectedCat) { alert('Sélectionne une catégorie !'); return; }
+
+  const a = {
+    nom,
+    cat: selectedCat,
+    kcal: parseFloat(document.getElementById('newKcal').value) || 0,
+    p:    parseFloat(document.getElementById('newP').value)    || 0,
+    g:    parseFloat(document.getElementById('newG').value)    || 0,
+    l:    parseFloat(document.getElementById('newL').value)    || 0,
+  };
+  // Quantité de base uniquement pour viande et légume
+  if (selectedCat === 'viande' || selectedCat === 'legume') {
+    a.qty = parseFloat(document.getElementById('newQty').value) || 150;
+  }
+
+  const editIdx = document.getElementById('editIdx').value;
+  if (editIdx !== '') {
+    aliments[parseInt(editIdx)] = a;
+  } else {
+    aliments.push(a);
+  }
+  await dbSet('aliments', JSON.stringify(aliments));
+  resetForm();
+  renderAliments();
+}
+
+function resetForm() {
+  document.getElementById('newNom').value = '';
+  ['newKcal','newP','newG','newL','newQty'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('helpText').style.display = 'none';
+  document.getElementById('qtyField').style.display = 'none';
+  document.getElementById('editIdx').value = '';
+  document.getElementById('formTitle').textContent = '+ AJOUTER';
+  document.getElementById('cancelBtn').style.display = 'none';
+  selectedCat = '';
+}
+
+function editAliment(idx) {
+  const a = aliments[idx];
+  document.getElementById('newNom').value = a.nom;
+  document.getElementById('newKcal').value = a.kcal;
+  document.getElementById('newP').value = a.p;
+  document.getElementById('newG').value = a.g;
+  document.getElementById('newL').value = a.l;
+  if (a.qty) document.getElementById('newQty').value = a.qty;
+  selectCat(a.cat);
+  document.getElementById('editIdx').value = idx;
+  document.getElementById('formTitle').textContent = '✏️ MODIFIER';
+  document.getElementById('cancelBtn').style.display = 'block';
+  showPage('aliments');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function cancelEdit() { resetForm(); }
+
+async function deleteAliment(idx) {
+  if (!confirm('Supprimer "' + aliments[idx].nom + '" ?')) return;
+  aliments.splice(idx, 1);
+  await dbSet('aliments', JSON.stringify(aliments));
+  renderAliments();
+}
+
+function renderAliments() {
+  const el = document.getElementById('alimentsList');
+  if (!aliments.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div>Aucun aliment encore.</div>';
+    return;
+  }
+  const order = ['viande','accompagnement','legume','ptdej','collation'];
+  let html = '';
+  order.forEach(cat => {
+    const items = aliments.filter(a => a.cat === cat);
+    if (!items.length) return;
+    html += `<div class="section-lbl">${CAT_LABELS[cat]}</div>`;
+    items.forEach(a => {
+      const idx = aliments.indexOf(a);
+      const qtyInfo = a.qty ? ` · Base ${a.qty}g` : '';
+      const portionNote = (a.cat === 'ptdej' || a.cat === 'collation') ? ' <span style="font-size:9px;background:rgba(71,170,255,0.15);color:var(--blue);padding:1px 5px;border-radius:4px;">1 portion</span>' : ' <span style="font-size:9px;background:rgba(255,255,255,0.06);color:var(--muted);padding:1px 5px;border-radius:4px;">/ 100g</span>';
+      html += `<div class="alim-card">
+        <div class="alim-nom">${a.nom}${portionNote}</div>
+        <div class="alim-macros">${a.kcal} kcal · P${a.p}g · G${a.g}g · L${a.l}g${qtyInfo}</div>
+        <div class="alim-actions">
+          <button class="btn-edit" onclick="editAliment(${idx})">✏️ Modifier</button>
+          <button class="btn-del" onclick="deleteAliment(${idx})">✕ Supprimer</button>
+        </div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ── GÉNÉRATEUR ────────────────────────────────────────
+function onTypeChange() {
+  const val = document.getElementById('menuDayType').value;
+  const box = document.getElementById('targetBox');
+  if (!val) { box.style.display = 'none'; return; }
+  const [kcal,p,g,l] = val.split('|').map(Number);
+  box.style.display = 'block';
+  box.innerHTML = `Cible : <span style="color:var(--orange);font-weight:600;">${kcal} kcal</span> · P <b style="color:var(--text);">${p}g</b> · G <b style="color:var(--text);">${g}g</b> · L <b style="color:var(--text);">${l}g</b>`;
+}
+
+function macroAt(alim, qty) {
+  // Pour ptdej/collation : macros = valeurs saisies directement (1 portion)
+  if (alim.cat === 'ptdej' || alim.cat === 'collation') {
+    return { kcal: alim.kcal, p: alim.p, g: alim.g, l: alim.l, qty: 1, unit: 'portion' };
+  }
+  // Pour les autres : macros pour 100g, on calcule pour qty
+  return {
+    kcal: Math.round(qty * alim.kcal / 100),
+    p:    Math.round(qty * alim.p    / 100),
+    g:    Math.round(qty * alim.g    / 100),
+    l:    Math.round(qty * alim.l    / 100),
+    qty,
+    unit: 'g',
+  };
+}
+
+function pickRandom(arr, seed) {
+  if (!arr.length) return null;
+  return arr[seed % arr.length];
+}
+
+function buildMeal(viandes, accompagnements, legumes, targetKcal, seed) {
+  // Choix des composants
+  const viande = pickRandom(viandes, seed);
+  const legume = pickRandom(legumes, seed + 1);
+  const accom  = pickRandom(accompagnements, seed + 2);
+
+  if (!viande && !accom) return null;
+
+  const result = [];
+
+  // Viande : quantité fixe définie par l'utilisateur
+  const vQty = viande ? (viande.qty || 150) : 0;
+  const vMacro = viande ? macroAt(viande, vQty) : null;
+
+  // Légume : quantité fixe
+  const lQty = legume ? (legume.qty || 150) : 0;
+  const lMacro = legume ? macroAt(legume, lQty) : null;
+
+  // Calories restantes pour l'accompagnement
+  const usedKcal = (vMacro ? vMacro.kcal : 0) + (lMacro ? lMacro.kcal : 0);
+  const remainKcal = Math.max(0, targetKcal - usedKcal);
+
+  // Quantité accompagnement : arrondie à 5g
+  let aQty = 0;
+  let aMacro = null;
+  if (accom && accom.kcal > 0) {
+    aQty = Math.max(30, Math.round((remainKcal / (accom.kcal / 100)) / 5) * 5);
+    aMacro = macroAt(accom, aQty);
+  }
+
+  if (viande && vMacro) result.push({ alim: viande, macro: vMacro });
+  if (accom && aMacro)  result.push({ alim: accom,  macro: aMacro });
+  if (legume && lMacro) result.push({ alim: legume, macro: lMacro });
+
+  return result;
+}
+
+function buildMenu(kcal, p, g, l, seed) {
+  const viandes        = aliments.filter(a => a.cat === 'viande');
+  const accompagnements= aliments.filter(a => a.cat === 'accompagnement');
+  const legumes        = aliments.filter(a => a.cat === 'legume');
+  const ptdejItems     = aliments.filter(a => a.cat === 'ptdej');
+  const collItems      = aliments.filter(a => a.cat === 'collation');
+
+  // Répartition : PtDej 22% · Déj 35% · Dîner 33% · Coll 10%
+  const pdKcal = kcal * 0.22;
+  const djKcal = kcal * 0.35;
+  const dnKcal = kcal * 0.33;
+  const coKcal = kcal * 0.10;
+
+  const slots = [];
+
+  // Petit déjeuner
+  const pdAlim = pickRandom(ptdejItems, seed);
+  if (pdAlim) {
+    slots.push({ label:'🌅 Petit déjeuner', composants:[{ alim:pdAlim, macro:macroAt(pdAlim, 1) }] });
+  }
+
+  // Déjeuner
+  const djMeal = buildMeal(viandes, accompagnements, legumes, djKcal, seed);
+  if (djMeal && djMeal.length) slots.push({ label:'🕛 Déjeuner', composants:djMeal });
+
+  // Dîner — on évite de répéter la même viande et le même accompagnement
+  const usedNoms = djMeal ? djMeal.map(c => c.alim.nom) : [];
+  const viandesLeft = viandes.filter(v => !usedNoms.includes(v.nom));
+  const accomLeft   = accompagnements.filter(a => !usedNoms.includes(a.nom));
+  const legumesDn   = legumes.filter(l => !usedNoms.includes(l.nom));
+  const dnMeal = buildMeal(
+    viandesLeft.length ? viandesLeft : viandes,
+    accomLeft.length   ? accomLeft   : accompagnements,
+    legumesDn.length   ? legumesDn   : legumes,
+    dnKcal, seed + 3
+  );
+  if (dnMeal && dnMeal.length) slots.push({ label:'🌙 Dîner', composants:dnMeal });
+
+  // Collation
+  const coAlim = pickRandom(collItems, seed);
+  if (coAlim) {
+    slots.push({ label:'🍎 Collation', composants:[{ alim:coAlim, macro:macroAt(coAlim, 1) }] });
+  }
+
+  let totKcal=0, totP=0, totG=0, totL=0;
+  slots.forEach(s => s.composants.forEach(c => { totKcal+=c.macro.kcal; totP+=c.macro.p; totG+=c.macro.g; totL+=c.macro.l; }));
+
+  return { slots, totKcal, totP, totG, totL, targetKcal:kcal, targetP:p };
+}
+
+let generatedMenus = [];
+
+function generateMenus() {
+  const val = document.getElementById('menuDayType').value;
+  if (!val) { alert('Sélectionne un type de journée !'); return; }
+  if (!aliments.length) { alert('Ajoute d\'abord tes aliments !'); showPage('aliments'); return; }
+  const [kcal,p,g,l] = val.split('|').map(Number);
+  generatedMenus = [buildMenu(kcal,p,g,l,0), buildMenu(kcal,p,g,l,1), buildMenu(kcal,p,g,l,2)];
+  renderMenus();
+}
+
+function diffColor(diff) {
+  if (Math.abs(diff) <= 60) return 'var(--green)';
+  return diff > 0 ? 'var(--blue)' : 'var(--red)';
+}
+
+function renderMenus() {
+  const c = document.getElementById('menusContainer');
+  c.innerHTML = '';
+  generatedMenus.forEach((menu, idx) => {
+    const div = document.createElement('div');
+    div.className = 'menu-card';
+
+    const slotsHtml = menu.slots.map((s,si) => `
+      <div class="slot-block">
+        <div class="slot-label">${s.label}</div>
+        ${s.composants.map(c => `
+          <div class="compo-row">
+            <div class="compo-left">
+              <span class="compo-nom">${c.alim.nom}</span>
+              <span class="compo-cat">${CAT_LABELS[c.alim.cat]}</span>
+            </div>
+            <div class="compo-right">
+              <div class="compo-qty">${c.macro.unit === 'portion' ? '1 portion' : c.macro.qty+'g'}</div>
+              <div class="compo-kcal">${c.macro.kcal} kcal · P${c.macro.p}g</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      ${si < menu.slots.length-1 ? '<div class="divider"></div>' : ''}`).join('');
+
+    const dKcal = menu.totKcal - menu.targetKcal;
+    const dP    = menu.totP    - menu.targetP;
+    const pOk   = menu.totP >= menu.targetP * 0.88;
+
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;">MENU ${idx+1}</span>
+        <button class="badge-add" id="btn${idx}" onclick="addToCourses(${idx})">+ Courses</button>
+      </div>
+      ${slotsHtml}
+      <div class="macro-grid">
+        <div>
+          <div class="macro-num" style="color:${diffColor(dKcal)};">${menu.totKcal}</div>
+          <div class="macro-lbl">kcal</div>
+          <div class="macro-diff" style="color:${diffColor(dKcal)};">${dKcal>=0?'+':''}${dKcal}</div>
+        </div>
+        <div>
+          <div class="macro-num" style="color:${pOk?'var(--green)':'var(--red)'};">${menu.totP}g</div>
+          <div class="macro-lbl">prot</div>
+          <div class="macro-diff" style="color:${pOk?'var(--green)':'var(--red)'};">${dP>=0?'+':''}${dP}</div>
+        </div>
+        <div>
+          <div class="macro-num" style="color:var(--blue);">${menu.totG}g</div>
+          <div class="macro-lbl">gluc</div>
+        </div>
+        <div>
+          <div class="macro-num">${menu.totL}g</div>
+          <div class="macro-lbl">lip</div>
+        </div>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+
+async function addToCourses(idx) {
+  const menu = generatedMenus[idx];
+  const saved = JSON.parse(await dbGet('courses') || '[]');
+  saved.push(menu);
+  await dbSet('courses', JSON.stringify(saved));
+  const btn = document.getElementById('btn'+idx);
+  btn.textContent = '✓ Ajouté';
+  btn.className = 'badge-added';
+}
+
+// ── COURSES ───────────────────────────────────────────
+async function renderCourses() {
+  const saved = JSON.parse(await dbGet('courses') || '[]');
+  const el = document.getElementById('coursesList');
+  if (!saved.length) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--muted);">Génère et ajoute des menus d\'abord.</span>';
+    return;
+  }
+  // Agréger par aliment avec quantités totales
+  const totaux = {};
+  saved.forEach(menu => {
+    menu.slots.forEach(slot => {
+      slot.composants.forEach(c => {
+        const key = c.alim.nom;
+        if (!totaux[key]) totaux[key] = { qty:0, unit:c.macro.unit, cat:c.alim.cat };
+        if (c.macro.unit === 'portion') totaux[key].qty += 1;
+        else totaux[key].qty += c.macro.qty;
+      });
+    });
+  });
+
+  // Grouper par catégorie dans la liste de courses
+  const order = ['viande','accompagnement','legume','ptdej','collation'];
+  let html = `<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">${saved.length} menu(s) ajouté(s)</div>`;
+  order.forEach(cat => {
+    const items = Object.entries(totaux).filter(([,v]) => v.cat === cat);
+    if (!items.length) return;
+    html += `<div class="section-lbl">${CAT_LABELS[cat]}</div>`;
+    items.forEach(([nom, data]) => {
+      html += `<div class="cours-row">
+        <span style="font-size:13px;">${nom}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--orange);">${data.unit === 'portion' ? data.qty+'×' : data.qty+'g'}</span>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+async function clearCourses() {
+  if (confirm('Effacer la liste de courses ?')) { await dbDel('courses'); renderCourses(); }
+}
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  await openDB();
+  await loadAliments();
+}
+init();
+</script>
+</body>
+</html>

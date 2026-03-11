@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menus Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26;
+    --orange:#ff8c00; --orange2:#ff5500; --text:#f0f0f8;
+    --muted:#5a5a78; --border:#2a2a3a; --green:#4caf82;
+    --blue:#47aaff; --red:#ff4757;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; padding:24px 16px 100px; }
+
+  .title { font-family:'Bebas Neue',sans-serif; font-size:52px; letter-spacing:4px; background:linear-gradient(135deg,var(--orange),var(--orange2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; text-align:center; }
+  .subtitle { color:var(--muted); font-size:11px; letter-spacing:3px; text-transform:uppercase; margin-top:4px; text-align:center; margin-bottom:24px; }
+
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+  .tab { flex:1; padding:12px 8px 10px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; border:none; background:none; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; -webkit-tap-highlight-color:transparent; }
+  .tab.active { color:var(--orange); }
+  .tab-icon { font-size:20px; }
+
+  .page { display:none; }
+  .page.active { display:block; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px; margin-bottom:14px; }
+  .card-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; margin-bottom:12px; }
+
+  select, input[type=number], input[type=text] {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:9px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:13px; padding:10px 12px; margin-bottom:0; appearance:none;
+  }
+
+  .btn-primary { width:100%; padding:13px; background:linear-gradient(135deg,var(--orange),var(--orange2)); border:none; border-radius:10px; color:#000; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; cursor:pointer; }
+  .btn-secondary { width:100%; padding:10px; background:transparent; border:1px solid var(--border); border-radius:9px; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; margin-top:10px; }
+
+  .input-lbl { font-size:9px; color:var(--muted); margin-bottom:4px; display:block; text-transform:uppercase; letter-spacing:1px; }
+  .field { margin-bottom:10px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+
+  /* Slot checkboxes */
+  .slots-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .slot-chip { display:flex; align-items:center; gap:6px; padding:7px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.15s; user-select:none; }
+  .slot-chip.active { background:rgba(255,140,0,0.12); border-color:rgba(255,140,0,0.5); color:var(--orange); }
+  .slot-chip input { display:none; }
+
+  /* Plat card */
+  .plat-card { background:var(--surface2); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .plat-nom { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .plat-macros { font-size:11px; color:var(--muted); margin-bottom:6px; }
+  .plat-chips { display:flex; gap:5px; flex-wrap:wrap; }
+  .plat-chip { font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(255,140,0,0.12); color:var(--orange); border:1px solid rgba(255,140,0,0.3); }
+  .plat-actions { display:flex; gap:8px; margin-top:8px; }
+  .btn-del { background:none; border:none; color:var(--red); font-size:14px; cursor:pointer; padding:2px 6px; }
+  .btn-edit { background:none; border:1px solid var(--border); border-radius:6px; color:var(--muted); font-size:11px; cursor:pointer; padding:3px 10px; font-family:'DM Sans',sans-serif; }
+
+  /* Menu cards */
+  .menu-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px; margin-bottom:12px; }
+  .menu-slot { margin-bottom:12px; }
+  .menu-slot-title { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+  .menu-plat-nom { font-size:14px; font-weight:600; }
+  .menu-plat-macros { font-size:11px; color:var(--muted); margin-top:2px; }
+  .macro-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; text-align:center; background:var(--surface2); border-radius:9px; padding:10px; margin-top:10px; }
+  .macro-num { font-family:'Bebas Neue',sans-serif; font-size:22px; }
+  .macro-lbl { font-size:9px; color:var(--muted); }
+  .macro-diff { font-size:9px; margin-top:2px; }
+
+  .badge-add { padding:6px 14px; border-radius:8px; border:1px solid rgba(255,140,0,0.4); background:rgba(255,140,0,0.08); color:var(--orange); font-size:11px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .badge-added { padding:6px 14px; border-radius:8px; border:1px solid rgba(76,175,130,0.4); background:rgba(76,175,130,0.1); color:var(--green); font-size:11px; font-weight:600; font-family:'DM Sans',sans-serif; }
+
+  .target-box { background:var(--surface2); border-radius:9px; padding:10px; margin-bottom:12px; display:none; font-size:12px; color:var(--muted); }
+  .cours-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); }
+  .section-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:14px 0 6px; }
+  .empty-state { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; line-height:2; }
+  .empty-icon { font-size:40px; margin-bottom:12px; }
+
+  .divider { height:1px; background:var(--border); margin:12px 0; }
+</style>
+</head>
+<body>
+
+<!-- PAGE GÉNÉRER -->
+<div class="page active" id="page-gen">
+  <div class="title">MENUS</div>
+  <div class="subtitle">Générateur · Propositions</div>
+
+  <div class="card">
+    <div class="card-title">🎯 TYPE DE JOURNÉE</div>
+    <div class="field">
+      <select id="menuDayType" onchange="onTypeChange()">
+        <option value="">— Sélectionne —</option>
+        <option value="1700|170|131|55">😴 Repos</option>
+        <option value="1970|160|209|55">😴 Repos veille sortie longue</option>
+        <option value="1800|170|145|60">💪 Renfo seul</option>
+        <option value="2000|170|195|60">🏃 EF courte</option>
+        <option value="2000|170|190|62">🏃 EF longue</option>
+        <option value="2050|175|198|62">🏃💪 EF + Renfo</option>
+        <option value="2150|175|221|63">🏃 Séance intense / Seuil</option>
+        <option value="2200|175|233|63">🏃 Allure spécifique</option>
+        <option value="2300|165|270|62">🏃 Sortie longue</option>
+      </select>
+    </div>
+    <div class="target-box" id="targetBox"></div>
+    <button class="btn-primary" onclick="generateMenus()">GÉNÉRER 3 MENUS</button>
+  </div>
+
+  <div id="menusContainer"></div>
+</div>
+
+<!-- PAGE COURSES -->
+<div class="page" id="page-courses">
+  <div class="title">COURSES</div>
+  <div class="subtitle">Liste de la semaine</div>
+  <div class="card">
+    <div class="card-title">🛒 LISTE DE COURSES</div>
+    <div id="coursesList"><span style="font-size:12px;color:var(--muted);">Génère et ajoute des menus d'abord.</span></div>
+    <button class="btn-secondary" onclick="clearCourses()">↺ Effacer la liste</button>
+  </div>
+</div>
+
+<!-- PAGE PLATS -->
+<div class="page" id="page-plats">
+  <div class="title">PLATS</div>
+  <div class="subtitle">Ma bibliothèque</div>
+
+  <div class="card">
+    <div class="card-title" id="formTitle">+ AJOUTER UN PLAT</div>
+    <input type="hidden" id="editIdx" value="">
+
+    <div class="field">
+      <span class="input-lbl">Nom du plat</span>
+      <input type="text" id="newNom" placeholder="Ex : Poulet patate douce airfryer">
+    </div>
+
+    <div class="field">
+      <span class="input-lbl">Macros totales du plat</span>
+      <div class="grid4">
+        <div><span class="input-lbl">KCAL</span><input type="number" id="newKcal" placeholder="0"></div>
+        <div><span class="input-lbl">PROT g</span><input type="number" id="newP" placeholder="0"></div>
+        <div><span class="input-lbl">GLUC g</span><input type="number" id="newG" placeholder="0"></div>
+        <div><span class="input-lbl">LIP g</span><input type="number" id="newL" placeholder="0"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="input-lbl">Servi à quel(s) repas ?</span>
+      <div class="slots-row" id="slotsRow">
+        <div class="slot-chip" id="chip-ptdej" onclick="toggleChip('ptdej')">🌅 Petit déj</div>
+        <div class="slot-chip" id="chip-dejeuner" onclick="toggleChip('dejeuner')">🕛 Déjeuner</div>
+        <div class="slot-chip" id="chip-diner" onclick="toggleChip('diner')">🌙 Dîner</div>
+        <div class="slot-chip" id="chip-collation" onclick="toggleChip('collation')">🍎 Collation</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" style="font-size:15px;" onclick="savePlat()">ENREGISTRER</button>
+    <button class="btn-secondary" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">Annuler</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 MES PLATS</div>
+    <div id="platsList">
+      <div class="empty-state"><div class="empty-icon">🍽️</div>Aucun plat encore.<br>Ajoute tes plats habituels ci-dessus.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" id="tab-gen" onclick="showPage('gen')"><span class="tab-icon">🍽️</span>Menus</button>
+  <button class="tab" id="tab-courses" onclick="showPage('courses'); renderCourses()"><span class="tab-icon">🛒</span>Courses</button>
+  <button class="tab" id="tab-plats" onclick="showPage('plats')"><span class="tab-icon">📋</span>Plats</button>
+</div>
+
+<script>
+// ── STORAGE ───────────────────────────────────────────
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('menusapp2', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('kv', { keyPath: 'k' });
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = rej;
+  });
+}
+function dbGet(k) {
+  return new Promise(res => {
+    try { const r = db.transaction('kv','readonly').objectStore('kv').get(k); r.onsuccess = () => res(r.result ? r.result.v : null); r.onerror = () => res(null); }
+    catch(e) { res(null); }
+  });
+}
+function dbSet(k, v) {
+  return new Promise(res => {
+    try { const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').put({k, v}); tx.oncomplete = res; tx.onerror = res; }
+    catch(e) { res(); }
+  });
+}
+function dbDel(k) {
+  return new Promise(res => {
+    try { const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete = res; tx.onerror = res; }
+    catch(e) { res(); }
+  });
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── SLOT CHIPS ────────────────────────────────────────
+const SLOT_LABELS = { ptdej:'🌅 Petit déj', dejeuner:'🕛 Déjeuner', diner:'🌙 Dîner', collation:'🍎 Collation' };
+
+function toggleChip(val) {
+  const chip = document.getElementById('chip-' + val);
+  chip.classList.toggle('active');
+}
+
+function getSelectedSlots() {
+  return ['ptdej','dejeuner','diner','collation'].filter(v => document.getElementById('chip-'+v).classList.contains('active'));
+}
+
+function setSelectedSlots(slots) {
+  ['ptdej','dejeuner','diner','collation'].forEach(v => {
+    document.getElementById('chip-'+v).classList.toggle('active', slots.includes(v));
+  });
+}
+
+// ── PLATS ─────────────────────────────────────────────
+let plats = [];
+
+async function loadPlats() {
+  const saved = await dbGet('plats');
+  plats = saved ? JSON.parse(saved) : [];
+  renderPlats();
+}
+
+async function savePlat() {
+  const nom = document.getElementById('newNom').value.trim();
+  if (!nom) { alert('Entre un nom !'); return; }
+  const slots = getSelectedSlots();
+  if (!slots.length) { alert('Sélectionne au moins un repas !'); return; }
+
+  const plat = {
+    nom,
+    kcal: parseFloat(document.getElementById('newKcal').value) || 0,
+    p:    parseFloat(document.getElementById('newP').value)    || 0,
+    g:    parseFloat(document.getElementById('newG').value)    || 0,
+    l:    parseFloat(document.getElementById('newL').value)    || 0,
+    slots,
+  };
+
+  const editIdx = document.getElementById('editIdx').value;
+  if (editIdx !== '') {
+    plats[parseInt(editIdx)] = plat;
+  } else {
+    plats.push(plat);
+  }
+
+  await dbSet('plats', JSON.stringify(plats));
+  resetForm();
+  renderPlats();
+}
+
+function resetForm() {
+  document.getElementById('newNom').value = '';
+  ['newKcal','newP','newG','newL'].forEach(id => document.getElementById(id).value = '');
+  setSelectedSlots([]);
+  document.getElementById('editIdx').value = '';
+  document.getElementById('formTitle').textContent = '+ AJOUTER UN PLAT';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
+function editPlat(idx) {
+  const p = plats[idx];
+  document.getElementById('newNom').value = p.nom;
+  document.getElementById('newKcal').value = p.kcal;
+  document.getElementById('newP').value = p.p;
+  document.getElementById('newG').value = p.g;
+  document.getElementById('newL').value = p.l;
+  setSelectedSlots(p.slots);
+  document.getElementById('editIdx').value = idx;
+  document.getElementById('formTitle').textContent = '✏️ MODIFIER LE PLAT';
+  document.getElementById('cancelEditBtn').style.display = 'block';
+  showPage('plats');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function cancelEdit() {
+  resetForm();
+}
+
+async function deletePlat(idx) {
+  if (!confirm('Supprimer "' + plats[idx].nom + '" ?')) return;
+  plats.splice(idx, 1);
+  await dbSet('plats', JSON.stringify(plats));
+  renderPlats();
+}
+
+function renderPlats() {
+  const el = document.getElementById('platsList');
+  if (!plats.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div>Aucun plat encore.<br>Ajoute tes plats habituels ci-dessus.</div>';
+    return;
+  }
+
+  // Grouper par slot
+  const slotOrder = ['ptdej','dejeuner','diner','collation'];
+  let html = '';
+  slotOrder.forEach(slot => {
+    const items = plats.filter(p => p.slots.includes(slot));
+    if (!items.length) return;
+    html += `<div class="section-lbl">${SLOT_LABELS[slot]}</div>`;
+    items.forEach(p => {
+      const idx = plats.indexOf(p);
+      const chipHtml = p.slots.map(s => `<span class="plat-chip">${SLOT_LABELS[s]}</span>`).join('');
+      html += `<div class="plat-card">
+        <div class="plat-nom">${p.nom}</div>
+        <div class="plat-macros">${p.kcal} kcal · P${p.p}g · G${p.g}g · L${p.l}g</div>
+        <div class="plat-chips">${chipHtml}</div>
+        <div class="plat-actions">
+          <button class="btn-edit" onclick="editPlat(${idx})">✏️ Modifier</button>
+          <button class="btn-del" onclick="deletePlat(${idx})">✕ Supprimer</button>
+        </div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ── GÉNÉRATEUR ────────────────────────────────────────
+function onTypeChange() {
+  const val = document.getElementById('menuDayType').value;
+  const box = document.getElementById('targetBox');
+  if (!val) { box.style.display = 'none'; return; }
+  const [kcal,p,g,l] = val.split('|').map(Number);
+  box.style.display = 'block';
+  box.innerHTML = `Cible : <span style="color:var(--orange);font-weight:600;">${kcal} kcal</span> · P <b style="color:var(--text);">${p}g</b> · G <b style="color:var(--text);">${g}g</b> · L <b style="color:var(--text);">${l}g</b>`;
+}
+
+function pickBest(candidates, targetKcal, pct, exclude=[]) {
+  // Parmi les candidats, choisit celui dont les kcal sont les plus proches de la cible
+  const available = candidates.filter(p => !exclude.includes(p.nom));
+  if (!available.length) return candidates.find(p => !exclude.includes(p)) || candidates[0] || null;
+  const target = targetKcal * pct;
+  return available.reduce((best, p) => Math.abs(p.kcal - target) < Math.abs(best.kcal - target) ? p : best, available[0]);
+}
+
+function pickRandom(candidates, seed, exclude=[]) {
+  const available = candidates.filter(p => !exclude.includes(p.nom));
+  if (!available.length) return candidates[seed % candidates.length] || null;
+  return available[seed % available.length];
+}
+
+function buildMenu(kcal, p, g, l, seed) {
+  const bySlot = slot => plats.filter(p => p.slots.includes(slot));
+  const ptdejPlats   = bySlot('ptdej');
+  const dejPlats     = bySlot('dejeuner');
+  const dinerPlats   = bySlot('diner');
+  const collPlats    = bySlot('collation');
+
+  // Répartition calorique : PtDej 22% · Déj 35% · Dîner 33% · Collation 10%
+  const pdKcal = kcal * 0.22;
+  const djKcal = kcal * 0.35;
+  const dnKcal = kcal * 0.33;
+  const coKcal = kcal * 0.10;
+
+  const slots = [];
+  const used = [];
+
+  function addSlot(label, candidates, targetKcal) {
+    if (!candidates.length) return;
+    // Seed pair → pickBest, seed impair → pickRandom pour varier
+    const plat = seed % 2 === 0
+      ? pickBest(candidates, targetKcal, 1, used)
+      : pickRandom(candidates, seed, used);
+    if (!plat) return;
+    used.push(plat.nom);
+    slots.push({ label, plat });
+  }
+
+  addSlot('🌅 Petit déjeuner', ptdejPlats, pdKcal);
+  addSlot('🕛 Déjeuner',       dejPlats,   djKcal);
+  addSlot('🌙 Dîner',          dinerPlats, dnKcal);
+  addSlot('🍎 Collation',      collPlats,  coKcal);
+
+  let totKcal=0, totP=0, totG=0, totL=0;
+  slots.forEach(s => { totKcal+=s.plat.kcal; totP+=s.plat.p; totG+=s.plat.g; totL+=s.plat.l; });
+
+  return { slots, totKcal, totP, totG, totL, targetKcal:kcal, targetP:p, targetG:g, targetL:l };
+}
+
+let generatedMenus = [];
+
+function generateMenus() {
+  const val = document.getElementById('menuDayType').value;
+  if (!val) { alert('Sélectionne un type de journée !'); return; }
+  if (!plats.length) {
+    alert('Ajoute d\'abord tes plats dans l\'onglet 📋 Plats !');
+    showPage('plats');
+    return;
+  }
+  const [kcal,p,g,l] = val.split('|').map(Number);
+  generatedMenus = [
+    buildMenu(kcal,p,g,l,0),
+    buildMenu(kcal,p,g,l,1),
+    buildMenu(kcal,p,g,l,2),
+  ];
+  renderMenus();
+}
+
+function diffColor(diff) {
+  if (Math.abs(diff) <= 50) return 'var(--green)';
+  if (diff > 0) return 'var(--blue)';
+  return 'var(--red)';
+}
+
+function renderMenus() {
+  const c = document.getElementById('menusContainer');
+  c.innerHTML = '';
+  generatedMenus.forEach((menu, idx) => {
+    const div = document.createElement('div');
+    div.className = 'menu-card';
+
+    const slotsHtml = menu.slots.map(s => `
+      <div class="menu-slot">
+        <div class="menu-slot-title">${s.label}</div>
+        <div class="menu-plat-nom">${s.plat.nom}</div>
+        <div class="menu-plat-macros">${s.plat.kcal} kcal · P${s.plat.p}g · G${s.plat.g}g · L${s.plat.l}g</div>
+      </div>
+      <div class="divider"></div>`).join('');
+
+    const dKcal = menu.totKcal - menu.targetKcal;
+    const dP = menu.totP - menu.targetP;
+    const pOk = menu.totP >= menu.targetP * 0.88;
+
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;">MENU ${idx+1}</span>
+        <button class="badge-add" id="btn${idx}" onclick="addToCourses(${idx})">+ Courses</button>
+      </div>
+      ${slotsHtml}
+      <div class="macro-grid">
+        <div>
+          <div class="macro-num" style="color:${diffColor(dKcal)};">${menu.totKcal}</div>
+          <div class="macro-lbl">kcal</div>
+          <div class="macro-diff" style="color:${diffColor(dKcal)};">${dKcal>=0?'+':''}${dKcal}</div>
+        </div>
+        <div>
+          <div class="macro-num" style="color:${pOk?'var(--green)':'var(--red)'};">${menu.totP}g</div>
+          <div class="macro-lbl">prot</div>
+          <div class="macro-diff" style="color:${pOk?'var(--green)':'var(--red)'};">${dP>=0?'+':''}${dP}</div>
+        </div>
+        <div>
+          <div class="macro-num" style="color:var(--blue);">${menu.totG}g</div>
+          <div class="macro-lbl">gluc</div>
+        </div>
+        <div>
+          <div class="macro-num">${menu.totL}g</div>
+          <div class="macro-lbl">lip</div>
+        </div>
+      </div>`;
+    c.appendChild(div);
+  });
+}
+
+async function addToCourses(idx) {
+  const menu = generatedMenus[idx];
+  const saved = JSON.parse(await dbGet('courses') || '[]');
+  saved.push(menu);
+  await dbSet('courses', JSON.stringify(saved));
+  const btn = document.getElementById('btn'+idx);
+  btn.textContent = '✓ Ajouté';
+  btn.className = 'badge-added';
+}
+
+// ── COURSES ───────────────────────────────────────────
+async function renderCourses() {
+  const saved = JSON.parse(await dbGet('courses') || '[]');
+  const el = document.getElementById('coursesList');
+  if (!saved.length) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--muted);">Génère et ajoute des menus d\'abord.</span>';
+    return;
+  }
+  // Liste les plats uniques avec leur fréquence
+  const freq = {};
+  saved.forEach(menu => {
+    menu.slots.forEach(s => {
+      freq[s.plat.nom] = (freq[s.plat.nom] || 0) + 1;
+    });
+  });
+  el.innerHTML =
+    `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">${saved.length} menu(s) · ${Object.keys(freq).length} plat(s)</div>` +
+    Object.entries(freq)
+      .sort((a,b) => a[0].localeCompare(b[0]))
+      .map(([nom, n]) => `
+        <div class="cours-row">
+          <span style="font-size:13px;">${nom}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--orange);">×${n}</span>
+        </div>`).join('');
+}
+
+async function clearCourses() {
+  if (confirm('Effacer la liste de courses ?')) {
+    await dbDel('courses');
+    renderCourses();
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  await openDB();
+  await loadPlats();
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Liste de Courses</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --dark: #1A1A2E;
+    --cream: #E8D5B7;
+    --bg: #F7F3EE;
+    --line: #C4B49A;
+    --c1: #C17F24;
+    --c2: #2A7A4B;
+    --c3: #3A5FA0;
+    --c4: #A03A3A;
+    --c5: #7A3A9A;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--dark);
+    overflow: hidden;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg);
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--dark);
+    padding: 16px 20px 0;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--cream);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+
+  .tabs { display: flex; gap: 4px; }
+
+  .tab {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(232,213,183,0.5);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab.active { color: var(--cream); border-bottom-color: var(--c1); }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--dark);
+    opacity: 0.5;
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* FORMULAIRE */
+  .form-row { display: flex; gap: 8px; margin-bottom: 16px; }
+
+  input, select {
+    width: 100%;
+    padding: 12px 14px;
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--dark);
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus { border-color: var(--c1); }
+
+  .select-wrap { position: relative; flex: 1; }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--dark);
+    pointer-events: none;
+    font-size: 12px;
+  }
+
+  /* BOUTONS */
+  .btn {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: var(--dark); color: var(--cream); }
+  .btn-green { background: var(--c2); color: white; }
+  .btn-sm { padding: 8px 12px; font-size: 11px; }
+
+  .btn-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px; border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-icon:active { transform: scale(0.9); }
+  .btn-delete { background: #FFE8E8; color: var(--c4); }
+
+  /* LISTE ALIMENTS */
+  .food-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .food-item {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 10px;
+    padding: 10px 12px;
+    border-left: 4px solid var(--c1);
+    gap: 10px;
+  }
+  .food-item:nth-child(5n+1) { border-left-color: var(--c1); }
+  .food-item:nth-child(5n+2) { border-left-color: var(--c2); }
+  .food-item:nth-child(5n+3) { border-left-color: var(--c3); }
+  .food-item:nth-child(5n+4) { border-left-color: var(--c4); }
+  .food-item:nth-child(5n+5) { border-left-color: var(--c5); }
+
+  .food-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .food-unit {
+    font-size: 11px; color: var(--line); font-weight: 600;
+    background: var(--bg); padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* LISTE COURSES */
+  .add-row { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; }
+
+  .qty-wrap {
+    display: flex; align-items: center;
+    background: white; border: 2px solid var(--line);
+    border-radius: 10px; overflow: hidden; flex-shrink: 0;
+  }
+
+  .qty-btn {
+    width: 34px; height: 44px;
+    border: none; background: var(--bg);
+    font-size: 20px; cursor: pointer; color: var(--dark);
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:active { background: var(--line); }
+
+  .qty-input {
+    width: 48px; border: none; border-radius: 0;
+    text-align: center; font-weight: 600; font-size: 15px;
+    padding: 10px 2px;
+  }
+
+  .courses-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .course-item {
+    display: flex; align-items: center;
+    background: white; border-radius: 10px;
+    padding: 12px 14px; gap: 12px;
+    border-left: 4px solid var(--c2);
+    transition: opacity 0.2s;
+  }
+  .course-item.checked { opacity: 0.45; background: var(--bg); }
+  .course-item.checked .course-name { text-decoration: line-through; }
+
+  .course-cb {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid var(--line); flex-shrink: 0;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; background: white; font-size: 13px;
+  }
+  .course-cb.checked { background: var(--c2); border-color: var(--c2); color: white; }
+
+  .course-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .course-qty {
+    font-size: 13px; font-weight: 600; color: var(--c1);
+    background: #FFF8F0; padding: 3px 8px; border-radius: 6px; flex-shrink: 0;
+  }
+
+  .list-actions { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+
+  .counter-badge {
+    background: var(--dark); color: var(--cream);
+    font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+    letter-spacing: 1px; padding: 8px 14px; border-radius: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .counter-num { font-size: 16px; color: var(--c1); }
+
+  .checked-divider {
+    font-family: 'Bebas Neue', sans-serif; font-size: 11px;
+    letter-spacing: 1.5px; color: var(--line);
+    margin: 16px 0 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .checked-divider::before, .checked-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--line); opacity: 0.4;
+  }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--line); }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-text { font-size: 14px; line-height: 1.6; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--dark); color: var(--cream);
+    padding: 10px 20px; border-radius: 20px; font-size: 13px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-title">🛒 Liste de Courses</div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('aliments')">📦 Mes Aliments</div>
+      <div class="tab" onclick="switchTab('courses')">🛒 Ma Liste</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PANEL ALIMENTS -->
+    <div class="panel active" id="panel-aliments">
+      <div class="section-title">Ajouter un aliment</div>
+      <div class="form-row">
+        <input type="text" id="food-name-input" placeholder="Nom de l'aliment..."
+          onkeydown="if(event.key==='Enter') addFood()">
+        <div class="select-wrap" style="max-width:120px;">
+          <select id="food-unit-select">
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="unité">unité</option>
+            <option value="tranche">tranche</option>
+            <option value="sachet">sachet</option>
+            <option value="boîte">boîte</option>
+            <option value="pot">pot</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="addFood()">Ajouter</button>
+      </div>
+      <div class="section-title">Mes aliments (<span id="food-count">0</span>)</div>
+      <div class="food-list" id="food-list">
+        <div class="empty-state">
+          <div class="empty-icon">🥦</div>
+          <div class="empty-text">Aucun aliment encore.<br>Ajoute tes aliments habituels !</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL COURSES -->
+    <div class="panel" id="panel-courses">
+      <div class="section-title">Ajouter à la liste</div>
+      <div class="add-row">
+        <div class="select-wrap" style="flex:1;">
+          <select id="course-food-select">
+            <option value="">Choisir un aliment...</option>
+          </select>
+        </div>
+        <div class="qty-wrap">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input class="qty-input" id="course-qty" type="number" value="1" min="0.1" step="0.1">
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+        <button class="btn btn-green" onclick="addToList()">+</button>
+      </div>
+      <div class="list-actions">
+        <div class="counter-badge">
+          À acheter <span class="counter-num" id="remaining-count">0</span>
+        </div>
+        <button class="btn btn-sm" style="background:#FFE8E8;color:var(--c4);" onclick="clearChecked()">✓ Supprimer</button>
+        <button class="btn btn-sm" style="background:#FFF8F0;color:var(--c1);" onclick="clearAll()">Tout vider</button>
+      </div>
+      <div class="courses-list" id="courses-list">
+        <div class="empty-state">
+          <div class="empty-icon">🛒</div>
+          <div class="empty-text">Ta liste est vide.<br>Ajoute des articles !</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== INDEXEDDB =====
+const DB_NAME = 'coursesApp';
+const DB_VERSION = 1;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('foods')) {
+        const fs = d.createObjectStore('foods', { keyPath: 'id' });
+        fs.createIndex('name', 'name', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('courseList')) {
+        d.createObjectStore('courseList', { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function put(store, obj) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(obj);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function del(store, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function clearStore(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ===== STATE =====
+let foods = [];
+let courseList = [];
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0 && tab==='aliments') || (i===1 && tab==='courses'));
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (tab === 'courses') renderCourseSelect();
+}
+
+// ===== ALIMENTS =====
+async function addFood() {
+  const nameEl = document.getElementById('food-name-input');
+  const unitEl = document.getElementById('food-unit-select');
+  const name = nameEl.value.trim();
+  if (!name) return;
+
+  if (foods.find(f => f.name.toLowerCase() === name.toLowerCase())) {
+    showToast('⚠️ Cet aliment existe déjà !');
+    nameEl.style.borderColor = 'var(--c4)';
+    setTimeout(() => nameEl.style.borderColor = '', 1200);
+    return;
+  }
+
+  const food = { id: Date.now(), name, unit: unitEl.value };
+  await put('foods', food);
+  foods.push(food);
+  foods.sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+  nameEl.value = '';
+  nameEl.focus();
+  renderFoods();
+  showToast('✅ ' + name + ' ajouté !');
+}
+
+async function deleteFood(id) {
+  await del('foods', id);
+  foods = foods.filter(f => f.id !== id);
+  renderFoods();
+}
+
+function renderFoods() {
+  const list = document.getElementById('food-list');
+  document.getElementById('food-count').textContent = foods.length;
+
+  if (foods.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🥦</div><div class="empty-text">Aucun aliment encore.<br>Ajoute tes aliments habituels !</div></div>`;
+    return;
+  }
+
+  list.innerHTML = foods.map(f => `
+    <div class="food-item">
+      <span class="food-name">${f.name}</span>
+      <span class="food-unit">${f.unit}</span>
+      <button class="btn-icon btn-delete" onclick="deleteFood(${f.id})">🗑</button>
+    </div>
+  `).join('');
+}
+
+// ===== LISTE COURSES =====
+function renderCourseSelect() {
+  const sel = document.getElementById('course-food-select');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Choisir un aliment...</option>' +
+    foods.map(f => `<option value="${f.id}">${f.name} (${f.unit})</option>`).join('');
+  if (current) sel.value = current;
+}
+
+function changeQty(delta) {
+  const el = document.getElementById('course-qty');
+  let val = parseFloat(el.value) || 1;
+  val = Math.max(0.1, Math.round((val + delta) * 10) / 10);
+  el.value = val;
+}
+
+async function addToList() {
+  const foodId = parseInt(document.getElementById('course-food-select').value);
+  const qty = parseFloat(document.getElementById('course-qty').value) || 1;
+  if (!foodId) { showToast('⚠️ Choisis un aliment !'); return; }
+
+  const food = foods.find(f => f.id === foodId);
+  if (!food) return;
+
+  const existing = courseList.find(c => c.foodId === foodId);
+  if (existing) {
+    existing.qty = Math.round((existing.qty + qty) * 10) / 10;
+    existing.checked = false;
+    await put('courseList', existing);
+    showToast('➕ Quantité mise à jour');
+  } else {
+    const item = { id: Date.now(), foodId, name: food.name, unit: food.unit, qty, checked: false };
+    await put('courseList', item);
+    courseList.push(item);
+    showToast('✅ ' + food.name + ' ajouté à la liste');
+  }
+
+  courseList.sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+  document.getElementById('course-qty').value = 1;
+  renderCourseList();
+}
+
+async function toggleCheck(id) {
+  const item = courseList.find(c => c.id === id);
+  if (!item) return;
+  item.checked = !item.checked;
+  await put('courseList', item);
+  renderCourseList();
+}
+
+async function deleteCourse(id) {
+  await del('courseList', id);
+  courseList = courseList.filter(c => c.id !== id);
+  renderCourseList();
+}
+
+async function clearChecked() {
+  const checked = courseList.filter(c => c.checked);
+  for (const c of checked) await del('courseList', c.id);
+  courseList = courseList.filter(c => !c.checked);
+  showToast('🗑 Articles cochés supprimés');
+  renderCourseList();
+}
+
+async function clearAll() {
+  if (courseList.length === 0) return;
+  await clearStore('courseList');
+  courseList = [];
+  showToast('🗑 Liste vidée');
+  renderCourseList();
+}
+
+function renderCourseList() {
+  const list = document.getElementById('courses-list');
+  const remaining = courseList.filter(c => !c.checked).length;
+  document.getElementById('remaining-count').textContent = remaining;
+
+  if (courseList.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">Ta liste est vide.<br>Ajoute des articles !</div></div>`;
+    return;
+  }
+
+  const unchecked = courseList.filter(c => !c.checked);
+  const checked = courseList.filter(c => c.checked);
+
+  let html = unchecked.map(c => courseItemHTML(c)).join('');
+  if (checked.length > 0) {
+    html += `<div class="checked-divider">✓ Dans le panier (${checked.length})</div>`;
+    html += checked.map(c => courseItemHTML(c)).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+function courseItemHTML(c) {
+  return `
+    <div class="course-item ${c.checked ? 'checked' : ''}">
+      <div class="course-cb ${c.checked ? 'checked' : ''}" onclick="toggleCheck(${c.id})">${c.checked ? '✓' : ''}</div>
+      <span class="course-name">${c.name}</span>
+      <span class="course-qty">${c.qty} ${c.unit}</span>
+      <button class="btn-icon btn-delete" style="width:30px;height:30px;font-size:13px;" onclick="deleteCourse(${c.id})">🗑</button>
+    </div>
+  `;
+}
+
+// ===== INIT =====
+openDB().then(async () => {
+  foods = await getAll('foods');
+  foods.sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+  courseList = await getAll('courseList');
+  courseList.sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+  renderFoods();
+  renderCourseList();
+}).catch(err => {
+  console.error('DB error:', err);
+});
+</script>
+</body>
+</html>

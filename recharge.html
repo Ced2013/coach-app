@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recharge Marathon · Paris 12 Avril</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3a;
+    --orange:#ff6b35;--orange-dim:rgba(255,107,53,0.15);
+    --green:#4ade80;--green-dim:rgba(74,222,128,0.12);
+    --blue:#60a5fa;--blue-dim:rgba(96,165,250,0.12);
+    --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);
+    --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.12);
+    --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+    --text:#e8e8f0;--text-dim:#7070a0;--text-muted:#404060;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  .header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0f0a 100%);border-bottom:1px solid var(--border);padding:20px 20px 16px;position:sticky;top:0;z-index:100;}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .app-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;line-height:1;color:var(--orange);}
+  .app-subtitle{font-size:11px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+  .countdown-badge{background:var(--orange-dim);border:1px solid var(--orange);border-radius:8px;padding:6px 12px;text-align:center;}
+  .countdown-number{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--orange);line-height:1;}
+  .countdown-label{font-size:9px;color:var(--orange);letter-spacing:1px;text-transform:uppercase;}
+
+  .days-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+  .days-nav::-webkit-scrollbar{display:none;}
+  .day-btn{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;transition:all 0.2s;text-align:center;min-width:52px;}
+  .day-btn.active{background:var(--orange-dim);border-color:var(--orange);}
+  .day-btn.today{border-color:var(--green);}
+  .day-btn .day-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
+  .day-btn.active .day-label{color:var(--orange);}
+  .day-btn.today .day-label{color:var(--green);}
+  .day-btn .day-num{font-family:'Bebas Neue',sans-serif;font-size:18px;line-height:1.1;color:var(--text);}
+  .day-btn.active .day-num{color:var(--orange);}
+  .day-btn.today .day-num{color:var(--green);}
+  .day-btn .day-tag{font-size:8px;color:var(--text-muted);margin-top:1px;}
+  .day-btn.active .day-tag{color:var(--orange);opacity:0.7;}
+
+  .main{padding:16px 16px 40px;max-width:500px;margin:0 auto;}
+
+  .day-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;}
+  .day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .day-full-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--text);}
+  .day-type-badge{font-size:10px;padding:4px 10px;border-radius:20px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;}
+  .badge-run{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,0.3);}
+  .badge-rest{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(96,165,250,0.3);}
+  .badge-easy{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.3);}
+  .badge-race{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,107,53,0.3);}
+
+  .macros-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+  .macro-block{background:var(--surface);border-radius:12px;padding:10px 8px;text-align:center;border:1px solid var(--border);}
+  .macro-block.kcal{border-color:rgba(255,107,53,0.3);background:var(--orange-dim);}
+  .macro-block.proteine{border-color:rgba(74,222,128,0.3);background:var(--green-dim);}
+  .macro-block.glucide{border-color:rgba(96,165,250,0.3);background:var(--blue-dim);}
+  .macro-block.lipide{border-color:rgba(167,139,250,0.3);background:var(--purple-dim);}
+  .macro-value{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;margin-bottom:2px;}
+  .macro-block.kcal .macro-value{color:var(--orange);}
+  .macro-block.proteine .macro-value{color:var(--green);}
+  .macro-block.glucide .macro-value{color:var(--blue);}
+  .macro-block.lipide .macro-value{color:var(--purple);}
+  .macro-unit{font-size:9px;color:var(--text-dim);letter-spacing:0.5px;text-transform:uppercase;}
+
+  .glucide-focus{background:var(--blue-dim);border:1px solid rgba(96,165,250,0.3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;}
+  .glucide-icon{font-size:24px;flex-shrink:0;}
+  .glucide-title{font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+  .glucide-detail{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);}
+
+  .section-title{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  .progress-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:14px;}
+  .progress-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text);margin-bottom:12px;}
+  .progress-bars{display:flex;flex-direction:column;gap:8px;}
+  .progress-row{display:flex;align-items:center;gap:8px;}
+  .progress-label{font-size:11px;color:var(--text-dim);width:70px;flex-shrink:0;}
+  .progress-bg{flex:1;background:var(--surface);border-radius:4px;height:6px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:4px;}
+  .fill-glucide{background:linear-gradient(90deg,#60a5fa,#93c5fd);}
+  .fill-proteine{background:linear-gradient(90deg,#4ade80,#86efac);}
+  .fill-lipide{background:linear-gradient(90deg,#a78bfa,#c4b5fd);}
+  .progress-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);width:35px;text-align:right;flex-shrink:0;}
+
+  .hydra-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:14px;}
+  .hydra-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .hydra-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--blue);}
+  .hydra-target{font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);}
+  .hydra-bar-bg{background:var(--surface);border-radius:6px;height:10px;overflow:hidden;margin-bottom:8px;}
+  .hydra-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#60a5fa,#93c5fd);}
+  .hydra-steps{display:flex;justify-content:space-between;}
+  .hydra-step{font-size:10px;color:var(--text-muted);text-align:center;}
+
+  .seance-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:14px;}
+  .seance-text{font-size:13px;color:var(--text-dim);line-height:1.7;}
+
+  .recup-grid{display:flex;flex-direction:column;gap:8px;}
+  .recup-item{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid var(--border);cursor:pointer;transition:all 0.2s;-webkit-user-select:none;user-select:none;}
+  .recup-item.done{border-color:rgba(74,222,128,0.4);background:var(--green-dim);}
+  .recup-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-size:13px;}
+  .recup-item.done .recup-check{background:var(--green);border-color:var(--green);}
+  .recup-emoji{font-size:20px;flex-shrink:0;}
+  .recup-info{flex:1;}
+  .recup-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+  .recup-item.done .recup-name{color:var(--green);text-decoration:line-through;text-decoration-color:rgba(74,222,128,0.4);}
+  .recup-detail{font-size:11px;color:var(--text-dim);line-height:1.4;}
+  .recup-tag{font-size:9px;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;}
+  .tag-cryo{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(96,165,250,0.3);}
+  .tag-compression{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.3);}
+  .tag-complement{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,107,53,0.3);}
+  .tag-mobilite{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(45,212,191,0.3);}
+  .tag-sommeil{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+
+  .recup-progress{margin-top:14px;background:var(--surface);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+  .progress-text{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);flex-shrink:0;}
+  .progress-bar-bg{flex:1;background:var(--border);border-radius:4px;height:6px;overflow:hidden;}
+  .progress-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),#86efac);transition:width 0.4s ease;}
+
+  .alerte{background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.3);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text-dim);display:flex;gap:8px;align-items:flex-start;margin-top:12px;}
+
+  .marathon-card{background:linear-gradient(135deg,#1a0f08 0%,#0f0a18 100%);border:1px solid var(--orange);border-radius:16px;padding:20px;margin-bottom:14px;text-align:center;}
+  .marathon-emoji{font-size:40px;margin-bottom:8px;}
+  .marathon-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--orange);margin-bottom:4px;}
+  .marathon-subtitle{font-size:12px;color:var(--text-dim);margin-bottom:16px;}
+  .marathon-timeline{display:flex;flex-direction:column;gap:6px;text-align:left;}
+  .timeline-item{display:flex;align-items:center;gap:10px;background:rgba(255,107,53,0.08);border-radius:8px;padding:8px 10px;}
+  .timeline-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--orange);width:42px;flex-shrink:0;}
+  .timeline-text{font-size:12px;color:var(--text);}
+
+  .conseil-list{display:flex;flex-direction:column;gap:6px;}
+  .conseil-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-dim);line-height:1.5;}
+  .conseil-item::before{content:'→';color:var(--orange);flex-shrink:0;margin-top:1px;font-weight:bold;}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .animate-in{animation:fadeIn 0.3s ease;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="app-title">⚡ RECHARGE</div>
+      <div class="app-subtitle">Marathon Paris · 12 Avril 2026</div>
+    </div>
+    <div class="countdown-badge">
+      <div class="countdown-number" id="countdown">—</div>
+      <div class="countdown-label">jours</div>
+    </div>
+  </div>
+  <div class="days-nav" id="daysNav"></div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<script>
+const MARATHON_DATE = new Date('2026-04-12T09:24:00');
+
+const DAYS_DATA = [
+  {
+    date:'2026-04-05',label:'DIM',num:'05',tag:'Sortie',
+    fullName:'Dimanche 5 Avril',type:'run',typeBadge:'🏃 Sortie longue',badgeClass:'badge-run',
+    kcal:2300,P:180,G:260,L:70,hydra:3000,
+    seance:'Sortie longue 1h10 + 2×15 min à 5:33 · Test protocole COMPLET malto + petit déj marathon',
+    recup:[
+      {id:'cryo',emoji:'🧊',name:'Cryo Sleeve',detail:'15 min sur jambes après la sortie',tag:'cryo',tagClass:'tag-cryo'},
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'Après la cryo · Au repos toute la soirée · Cheville → cuisse',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'Avant de dormir · Récupération musculaire',tag:'complément',tagClass:'tag-complement'},
+      {id:'mob',emoji:'🧘',name:'Mobilité 10 min',detail:'Mollets + quadriceps + hanches · Doux',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Sommeil ≥ 7h30',detail:'Coucher tôt · Récupération active',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-06',label:'LUN',num:'06',tag:'EF',
+    fullName:'Lundi 6 Avril',type:'easy',typeBadge:'🏃 EF 40 min',badgeClass:'badge-easy',
+    kcal:2100,P:160,G:280,L:60,hydra:3000,
+    seance:'Endurance fondamentale 40 min · Zone 2 · FC < 145 bpm',
+    recup:[
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'En soirée au repos · Retour veineux · Cheville → cuisse',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'Avant de dormir',tag:'complément',tagClass:'tag-complement'},
+      {id:'mob',emoji:'🧘',name:'Mobilité 10 min',detail:'Mollets + ischio-jambiers · Léger',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Sommeil ≥ 7h30',detail:'Dernières nuits de récupération active',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-07',label:'MAR',num:'07',tag:'Allure',
+    fullName:'Mardi 7 Avril',type:'run',typeBadge:'🏃 Allure marathon',badgeClass:'badge-run',
+    kcal:2200,P:170,G:290,L:65,hydra:3000,
+    seance:'32 min allure marathon + 15 min EF + 3×3 min à 5:33 + 5 min EF · Dernière séance qualitative',
+    recup:[
+      {id:'cryo',emoji:'🧊',name:'Cryo Sleeve',detail:'15 min · Dernière séance intense → récup max',tag:'cryo',tagClass:'tag-cryo'},
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'Après la cryo · Soirée complète · Cheville → cuisse',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'Avant de dormir · Double dose si besoin',tag:'complément',tagClass:'tag-complement'},
+      {id:'baume',emoji:'🧴',name:'Baume Aroma + Thermcool',detail:'Achille droit + côté pied gauche · Soir',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'mob',emoji:'🧘',name:'Mobilité 10 min',detail:'Mollets + tendons · Doux',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Sommeil ≥ 7h30',detail:'Coucher tôt · 4 jours de repos arrivent',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-08',label:'MER',num:'08',tag:'Repos',
+    fullName:'Mercredi 8 Avril',type:'rest',typeBadge:'😴 Repos',badgeClass:'badge-rest',
+    kcal:2000,P:140,G:310,L:50,hydra:3500,
+    seance:'Repos complet · Corps qui absorbe 6 mois de prépa · Jambes lourdes = normal',
+    recup:[
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'Journée + soirée · Retour veineux optimal',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'Avant de dormir',tag:'complément',tagClass:'tag-complement'},
+      {id:'thermcool',emoji:'🧴',name:'Thermcool + Baume Aroma',detail:'Achille droit + côté pied gauche · Matin et soir',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'mob',emoji:'🧘',name:'Mobilité légère 10 min',detail:'Pas d\'étirements intenses · Juste bouger',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Sommeil ≥ 8h',detail:'Nuit longue · Corps qui stocke le glycogène',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-09',label:'JEU',num:'09',tag:'Repos',
+    fullName:'Jeudi 9 Avril',type:'rest',typeBadge:'😴 Repos',badgeClass:'badge-rest',
+    kcal:2000,P:140,G:320,L:45,hydra:3500,
+    seance:'Repos complet · SURCHARGE MAX 320g glucides · Réservoirs qui se remplissent',
+    recup:[
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'Soirée complète · Circulation optimale',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'Avant de dormir',tag:'complément',tagClass:'tag-complement'},
+      {id:'thermcool',emoji:'🧴',name:'Thermcool + Baume Aroma',detail:'Achille droit + côté pied gauche',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Sommeil ≥ 8h',detail:'Coucher tôt · Nuit avant départ Paris',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-10',label:'VEN',num:'10',tag:'Paris',
+    fullName:'Vendredi 10 Avril',type:'rest',typeBadge:'🚄 Trajet Paris',badgeClass:'badge-rest',
+    kcal:1900,P:140,G:300,L:45,hydra:4000,
+    seance:'Repos + trajet Paris · Mettre Cryo Sleeve au congélateur dès l\'arrivée à l\'appart',
+    recup:[
+      {id:'congelateur',emoji:'❄️',name:'Cryo Sleeve au congélateur',detail:'⚠️ À faire dès l\'arrivée → prêt pour demain soir',tag:'cryo',tagClass:'tag-cryo'},
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'Pendant le trajet + soirée · Idéal en position assise',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'Avant de dormir · Nuit longue',tag:'complément',tagClass:'tag-complement'},
+      {id:'thermcool',emoji:'🧴',name:'Thermcool',detail:'Achille droit · Soir seulement',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Sommeil ≥ 8h',detail:'Coucher tôt · Réveil 5h30 demain',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-11',label:'SAM',num:'11',tag:'J-1',
+    fullName:'Samedi 11 Avril',type:'easy',typeBadge:'🏅 Activation + Salon',badgeClass:'badge-easy',
+    kcal:1800,P:140,G:280,L:40,hydra:4000,
+    seance:'15 min EF + 3×15 sec allure rapide + 2 min EF · Matin → Salon expo l\'après-midi',
+    recup:[
+      {id:'cryo',emoji:'🧊',name:'Cryo Sleeve',detail:'🔑 19h · 15 min · Jambes fraîches pour demain',tag:'cryo',tagClass:'tag-cryo'},
+      {id:'flytex',emoji:'🩱',name:'Manchons Flytex',detail:'Après la cryo · Soirée complète',tag:'compression',tagClass:'tag-compression'},
+      {id:'mag',emoji:'💊',name:'Magnésium',detail:'22h · Avant de dormir',tag:'complément',tagClass:'tag-complement'},
+      {id:'baume',emoji:'🧴',name:'Baume Aroma',detail:'Achille droit · Soir seulement · ⚠️ Pas le matin course',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'nok',emoji:'🔵',name:'NOK métatarses',detail:'Préparer couche épaisse pour demain matin',tag:'mobilité',tagClass:'tag-mobilite'},
+      {id:'sleep',emoji:'😴',name:'Coucher 22h30 max',detail:'Réveil 5h30 · Même si mal dormi → reste allongé',tag:'sommeil',tagClass:'tag-sommeil'},
+    ]
+  },
+  {
+    date:'2026-04-12',label:'DIM',num:'12',tag:'🏆',
+    fullName:'Dimanche 12 Avril',type:'race',typeBadge:'🏆 MARATHON',badgeClass:'badge-race',
+    kcal:0,P:0,G:0,L:0,hydra:0,seance:'',recup:[]
+  }
+];
+
+const STORAGE_KEY='recharge_marathon_v4';
+function loadChecks(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');}catch{return{};}}
+function saveChecks(c){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(c));}catch{}}
+function toggleCheck(date,id){const c=loadChecks();c[`${date}_${id}`]=!c[`${date}_${id}`];saveChecks(c);buildContent();}
+function isChecked(date,id){return!!loadChecks()[`${date}_${id}`];}
+
+function updateCountdown(){
+  const diff=MARATHON_DATE-new Date();
+  const days=Math.ceil(diff/86400000);
+  document.getElementById('countdown').textContent=days>0?days:'🔥';
+}
+updateCountdown();
+
+function getCurrentDayIndex(){
+  const today=new Date().toISOString().split('T')[0];
+  const idx=DAYS_DATA.findIndex(d=>d.date===today);
+  return idx>=0?idx:0;
+}
+let activeDay=getCurrentDayIndex();
+
+function buildNav(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('daysNav').innerHTML=DAYS_DATA.map((d,i)=>`
+    <button class="day-btn ${i===activeDay?'active':''} ${d.date===today?'today':''}" onclick="selectDay(${i})">
+      <div class="day-label">${d.label}</div>
+      <div class="day-num">${d.num}</div>
+      <div class="day-tag">${d.tag}</div>
+    </button>`).join('');
+}
+
+function selectDay(idx){
+  activeDay=idx;buildNav();buildContent();
+  setTimeout(()=>{document.getElementById('daysNav').children[idx]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});},50);
+}
+
+function buildContent(){
+  const d=DAYS_DATA[activeDay];
+  const main=document.getElementById('mainContent');
+  if(d.type==='race'){main.innerHTML=buildRaceDay();return;}
+
+  const checked=d.recup.filter(r=>isChecked(d.date,r.id)).length;
+  const total=d.recup.length;
+  const pct=total>0?Math.round(checked/total*100):0;
+
+  const recupHtml=d.recup.map(r=>{
+    const done=isChecked(d.date,r.id);
+    return `<div class="recup-item ${done?'done':''}" onclick="toggleCheck('${d.date}','${r.id}')">
+      <div class="recup-check">${done?'✓':''}</div>
+      <span class="recup-emoji">${r.emoji}</span>
+      <div class="recup-info">
+        <div class="recup-name">${r.name}</div>
+        <div class="recup-detail">${r.detail}</div>
+      </div>
+      <span class="recup-tag ${r.tagClass}">${r.tag}</span>
+    </div>`;
+  }).join('');
+
+  main.innerHTML=`<div class="animate-in">
+    <div class="day-card">
+      <div class="day-header">
+        <div class="day-full-name">${d.fullName}</div>
+        <span class="day-type-badge ${d.badgeClass}">${d.typeBadge}</span>
+      </div>
+      <div class="macros-grid">
+        <div class="macro-block kcal"><div class="macro-value">${d.kcal}</div><div class="macro-unit">kcal</div></div>
+        <div class="macro-block proteine"><div class="macro-value">${d.P}g</div><div class="macro-unit">protéines</div></div>
+        <div class="macro-block glucide"><div class="macro-value">${d.G}g</div><div class="macro-unit">glucides</div></div>
+        <div class="macro-block lipide"><div class="macro-value">${d.L}g</div><div class="macro-unit">lipides</div></div>
+      </div>
+      <div class="glucide-focus">
+        <div class="glucide-icon">🍚</div>
+        <div class="glucide-info">
+          <div class="glucide-title">Objectif glucides</div>
+          <div class="glucide-detail">${d.G}g · ${(d.G/74.7).toFixed(1)}g/kg · ${Math.round(d.G/d.kcal*100)}% des calories</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-title">Répartition macros</div>
+      <div class="progress-bars">
+        <div class="progress-row"><div class="progress-label">Glucides</div><div class="progress-bg"><div class="progress-fill fill-glucide" style="width:${Math.min(100,d.G/320*100)}%"></div></div><div class="progress-val">${d.G}g</div></div>
+        <div class="progress-row"><div class="progress-label">Protéines</div><div class="progress-bg"><div class="progress-fill fill-proteine" style="width:${Math.min(100,d.P/200*100)}%"></div></div><div class="progress-val">${d.P}g</div></div>
+        <div class="progress-row"><div class="progress-label">Lipides</div><div class="progress-bg"><div class="progress-fill fill-lipide" style="width:${Math.min(100,d.L/100*100)}%"></div></div><div class="progress-val">${d.L}g</div></div>
+      </div>
+    </div>
+
+    <div class="hydra-card">
+      <div class="hydra-header">
+        <div class="hydra-title">💧 Hydratation</div>
+        <div class="hydra-target">${(d.hydra/1000).toFixed(1)}L minimum</div>
+      </div>
+      <div class="hydra-bar-bg"><div class="hydra-bar-fill" style="width:${Math.min(100,d.hydra/4000*100)}%"></div></div>
+      <div class="hydra-steps">
+        <div class="hydra-step">1L<br>matin</div>
+        <div class="hydra-step">2L<br>midi</div>
+        <div class="hydra-step">3L<br>aprèm</div>
+        <div class="hydra-step">4L<br>soir</div>
+      </div>
+    </div>
+
+    <div class="seance-card">
+      <div class="section-title">🏃 Séance du jour</div>
+      <div class="seance-text">${d.seance}</div>
+    </div>
+
+    <div class="day-card">
+      <div class="section-title">🔄 Routine récupération</div>
+      <div class="recup-grid">${recupHtml}</div>
+      <div class="recup-progress">
+        <div class="progress-text">${checked}/${total}</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        <div class="progress-text">${pct}%</div>
+      </div>
+      <div class="alerte"><span>⚠️</span><span>Zéro alcool · Rien de nouveau · Fais confiance au travail accompli.</span></div>
+    </div>
+  </div>`;
+}
+
+function buildRaceDay(){
+  return`<div class="animate-in">
+    <div class="marathon-card">
+      <div class="marathon-emoji">🏆</div>
+      <div class="marathon-title">MARATHON DE PARIS</div>
+      <div class="marathon-subtitle">Dimanche 12 Avril 2026 · Sub-4h · Sas 3h45 · Départ 9h24</div>
+      <div class="marathon-timeline">
+        <div class="timeline-item"><div class="timeline-time">5h30</div><div class="timeline-text">☀️ Réveil → 500ml eau + électrolytes TAA</div></div>
+        <div class="timeline-item"><div class="timeline-time">5h45</div><div class="timeline-text">🍳 3 œufs coque + pain complet + 100g grisons + smoothie</div></div>
+        <div class="timeline-item"><div class="timeline-time">8h00</div><div class="timeline-text">💊 Malto 30g dans 500ml → trajet</div></div>
+        <div class="timeline-item"><div class="timeline-time">8h30</div><div class="timeline-text">🏁 Sas → quelques gorgées</div></div>
+        <div class="timeline-item"><div class="timeline-time">9h24</div><div class="timeline-text">🔥 DÉPART · 5:52/km · FC max 155 bpm</div></div>
+        <div class="timeline-item"><div class="timeline-time">+30min</div><div class="timeline-text">🍬 1er gel TAA · Timer toutes les 30 min</div></div>
+        <div class="timeline-item"><div class="timeline-time">km 15</div><div class="timeline-text">💊 Pastille TAA → flasque · Ravito 16,8</div></div>
+        <div class="timeline-item"><div class="timeline-time">km 24</div><div class="timeline-text">🔁 Recharge électrolytes TAA · km 24,2</div></div>
+        <div class="timeline-item"><div class="timeline-time">km 30</div><div class="timeline-text">☕ Gel Wild Berry caféiné → boost final</div></div>
+        <div class="timeline-item"><div class="timeline-time">km 42</div><div class="timeline-text">🏅 ARRIVÉE · Avenue Foch · Tu l'as fait !</div></div>
+      </div>
+    </div>
+    <div class="day-card">
+      <div class="section-title">🧠 Mantras</div>
+      <div class="conseil-list">
+        <div class="conseil-item">Je me sens bien au km 5 → normal → je ralentis quand même</div>
+        <div class="conseil-item">FC > 155 bpm → je ralentis immédiatement</div>
+        <div class="conseil-item">Dans les montées → FC prime sur l'allure</div>
+        <div class="conseil-item">Un gel toutes les 30 min → timer → jamais sauter</div>
+        <div class="conseil-item">2-3 gorgées à chaque km · Ne jamais attendre d'avoir soif</div>
+      </div>
+    </div>
+    <div class="day-card">
+      <div class="section-title">😴 Récupération post-marathon</div>
+      <div class="conseil-list">
+        <div class="conseil-item">Protéines + glucides dans l'heure après l'arrivée</div>
+        <div class="conseil-item">🧊 Cryo Sleeve 15-20 min · Jambes</div>
+        <div class="conseil-item">🩱 Manchons Flytex au repos · Cheville → cuisse</div>
+        <div class="conseil-item">💊 Magnésium avant de dormir</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+buildNav();buildContent();
+setTimeout(()=>{document.getElementById('daysNav').children[activeDay]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});},100);
+</script>
+</body>
+</html>

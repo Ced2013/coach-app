@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Recharge · Marathon Paris 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --card: #222;
+    --border: #333;
+    --accent: #e8632a;
+    --accent-dim: rgba(232,99,42,0.12);
+    --green: #4caf50;
+    --green-dim: rgba(76,175,80,0.12);
+    --blue: #2196f3;
+    --blue-dim: rgba(33,150,243,0.12);
+    --purple: #9c27b0;
+    --purple-dim: rgba(156,39,176,0.12);
+    --teal: #009688;
+    --teal-dim: rgba(0,150,136,0.12);
+    --red: #f44336;
+    --red-dim: rgba(244,67,54,0.12);
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --text-muted: #555;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .app-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .countdown {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .countdown span {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  /* DAYS NAV */
+  .days-nav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .days-nav::-webkit-scrollbar { display: none; }
+
+  .day-pill {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    min-width: 48px;
+    transition: all 0.15s;
+  }
+
+  .day-pill.active { background: var(--accent-dim); border-color: var(--accent); }
+  .day-pill.today { border-color: var(--green); }
+
+  .day-pill .wd { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+  .day-pill.active .wd { color: var(--accent); }
+  .day-pill.today .wd { color: var(--green); }
+
+  .day-pill .dd { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .day-pill.active .dd { color: var(--accent); }
+  .day-pill.today .dd { color: var(--green); }
+
+  .day-pill .dt { font-size: 8px; color: var(--text-muted); }
+  .day-pill.active .dt { color: var(--accent); opacity: 0.7; }
+
+  /* MAIN */
+  .main { padding: 14px 14px 40px; max-width: 480px; margin: 0 auto; }
+
+  /* SECTION */
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .section-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-run { background: var(--green-dim); color: var(--green); }
+  .badge-rest { background: var(--blue-dim); color: var(--blue); }
+  .badge-easy { background: var(--purple-dim); color: var(--purple); }
+  .badge-race { background: var(--accent-dim); color: var(--accent); }
+
+  /* MACROS */
+  .macros-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 12px 14px;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .macro-item { text-align: center; }
+
+  .macro-val {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .macro-val.c-kcal { color: var(--accent); }
+  .macro-val.c-p { color: var(--green); }
+  .macro-val.c-g { color: var(--blue); }
+  .macro-val.c-l { color: var(--purple); }
+
+  .macro-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* GLUCIDE BAR */
+  .glucide-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .glucide-icon { font-size: 20px; }
+
+  .glucide-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .glucide-bar-bg {
+    background: var(--border);
+    border-radius: 3px;
+    height: 5px;
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 3px;
+  }
+
+  .glucide-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--blue);
+    transition: width 0.4s ease;
+  }
+
+  .glucide-text {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-feature-settings: 'tnum';
+  }
+
+  /* HYDRA */
+  .hydra-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .hydra-icon { font-size: 20px; }
+
+  .hydra-bar-bg {
+    flex: 1;
+    background: var(--border);
+    border-radius: 3px;
+    height: 5px;
+    overflow: hidden;
+  }
+
+  .hydra-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--blue);
+    transition: width 0.4s ease;
+  }
+
+  .hydra-text { font-size: 12px; color: var(--blue); font-weight: 600; white-space: nowrap; }
+
+  /* SEANCE */
+  .seance-content { padding: 12px 14px; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+
+  /* CHECKLIST */
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item:active { background: rgba(255,255,255,0.03); }
+  .check-item.done { background: rgba(76,175,80,0.05); }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+    color: transparent;
+  }
+
+  .check-item.done .check-box { background: var(--green); border-color: var(--green); color: white; }
+
+  .check-emoji { font-size: 18px; flex-shrink: 0; }
+
+  .check-body { flex: 1; }
+
+  .check-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 1px;
+  }
+
+  .check-item.done .check-name { color: var(--green); text-decoration: line-through; text-decoration-color: rgba(76,175,80,0.4); }
+
+  .check-detail { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  .check-tag {
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .t-cryo { background: var(--blue-dim); color: var(--blue); }
+  .t-comp { background: var(--purple-dim); color: var(--purple); }
+  .t-supp { background: var(--accent-dim); color: var(--accent); }
+  .t-mob { background: var(--teal-dim); color: var(--teal); }
+  .t-sleep { background: var(--red-dim); color: var(--red); }
+
+  /* PROGRESS */
+  .check-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .cp-label { font-size: 11px; color: var(--text-muted); }
+  .cp-bar-bg { flex: 1; background: var(--border); border-radius: 3px; height: 5px; overflow: hidden; }
+  .cp-bar-fill { height: 100%; border-radius: 3px; background: var(--green); transition: width 0.3s ease; }
+  .cp-pct { font-size: 11px; color: var(--green); font-weight: 600; white-space: nowrap; }
+
+  /* ALERTE */
+  .alerte {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+  }
+
+  /* RACE DAY */
+  .race-banner {
+    background: linear-gradient(135deg, #1a0f08, #0f0a18);
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    padding: 20px 16px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .race-emoji { font-size: 36px; margin-bottom: 8px; }
+  .race-title { font-size: 22px; font-weight: 800; letter-spacing: 2px; color: var(--accent); margin-bottom: 4px; }
+  .race-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 16px; }
+
+  .timeline { display: flex; flex-direction: column; gap: 5px; text-align: left; }
+
+  .tl-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(232,99,42,0.07);
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+
+  .tl-time { font-size: 11px; color: var(--accent); font-weight: 600; width: 40px; flex-shrink: 0; font-feature-settings: 'tnum'; }
+  .tl-text { font-size: 12px; color: var(--text); }
+
+  /* MANTRAS */
+  .mantra-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .mantra-item:last-child { border-bottom: none; }
+  .mantra-item::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 1px; font-weight: 700; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeUp 0.25s ease; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div class="app-name">⚡ Recharge Marathon</div>
+    <div class="countdown">J-<span id="countdown">—</span> · Paris 12 Avril</div>
+  </div>
+  <div class="days-nav" id="daysNav"></div>
+</div>
+
+<div class="main" id="main"></div>
+
+<script>
+const RACE = new Date('2026-04-12T09:24:00');
+
+const DAYS = [
+  {
+    date:'2026-04-05', wd:'DIM', dd:'05', dt:'Sortie',
+    name:'Dimanche 5 Avril', type:'run', badge:'🏃 Sortie longue', badgeClass:'badge-run',
+    kcal:2300, P:172, G:316, L:38, hydra:3.0,
+    seance:'Sortie longue 1h10 + 2×15 min à 5:33 · Test protocole COMPLET : petit déj marathon + malto',
+    recup:[
+      {id:'cryo', e:'🧊', n:'Cryo Sleeve', d:'15 min sur jambes après la sortie', tag:'cryo', tc:'t-cryo'},
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'Après la cryo · Au repos toute la soirée · Cheville → cuisse', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'Avant de dormir · Récupération musculaire', tag:'complément', tc:'t-supp'},
+      {id:'mob', e:'🧘', n:'Mobilité 10 min', d:'Mollets + quadriceps + hanches · Doux', tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Sommeil ≥ 7h30', d:'Coucher tôt · Récupération active', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-06', wd:'LUN', dd:'06', dt:'EF',
+    name:'Lundi 6 Avril', type:'easy', badge:'🏃 EF 40 min', badgeClass:'badge-easy',
+    kcal:2100, P:158, G:289, L:35, hydra:3.0,
+    seance:'Endurance fondamentale 40 min · Zone 2 · FC < 145 bpm · Léger',
+    recup:[
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'En soirée au repos · Retour veineux · Cheville → cuisse', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'Avant de dormir', tag:'complément', tc:'t-supp'},
+      {id:'mob', e:'🧘', n:'Mobilité 10 min', d:'Mollets + ischio-jambiers · Léger', tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Sommeil ≥ 7h30', d:'Dernières nuits de récupération active', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-07', wd:'MAR', dd:'07', dt:'Allure',
+    name:'Mardi 7 Avril', type:'run', badge:'🏃 Allure marathon', badgeClass:'badge-run',
+    kcal:2200, P:165, G:302, L:37, hydra:3.0,
+    seance:'32 min allure marathon + 15 min EF + 3×3 min à 5:33 + 5 min EF · Dernière séance qualitative',
+    recup:[
+      {id:'cryo', e:'🧊', n:'Cryo Sleeve', d:'15 min · Dernière séance intense → récup max', tag:'cryo', tc:'t-cryo'},
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'Après la cryo · Soirée complète · Cheville → cuisse', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'Avant de dormir · Double dose si besoin', tag:'complément', tc:'t-supp'},
+      {id:'baume', e:'🔥', n:'Baume Aroma', d:'Achille droit + côté pied gauche · Soir au repos', tag:'mobilité', tc:'t-mob'},
+      {id:'mob', e:'🧘', n:'Mobilité 10 min', d:'Mollets + tendons · Doux', tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Sommeil ≥ 7h30', d:'Coucher tôt · 4 jours de repos arrivent', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-08', wd:'MER', dd:'08', dt:'Repos',
+    name:'Mercredi 8 Avril', type:'rest', badge:'😴 Repos', badgeClass:'badge-rest',
+    kcal:2000, P:150, G:275, L:33, hydra:3.5,
+    seance:'Repos complet · Corps qui absorbe 6 mois de prépa · Jambes lourdes = normal · Surcharge glucides ↑',
+    recup:[
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'Journée + soirée · Retour veineux optimal', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'Avant de dormir', tag:'complément', tc:'t-supp'},
+      {id:'thermcool', e:'❄️', n:'Thermcool', d:'Achille droit + côté pied gauche · Après effort', tag:'mobilité', tc:'t-mob'},
+      {id:'mob', e:'🧘', n:'Mobilité légère 10 min', d:"Pas d'étirements intenses · Juste bouger", tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Sommeil ≥ 8h', d:'Nuit longue · Corps qui stocke le glycogène', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-09', wd:'JEU', dd:'09', dt:'Repos',
+    name:'Jeudi 9 Avril', type:'rest', badge:'😴 Repos', badgeClass:'badge-rest',
+    kcal:2000, P:150, G:275, L:33, hydra:3.5,
+    seance:'Repos complet · SURCHARGE MAX 320g glucides · Réservoirs qui se remplissent',
+    recup:[
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'Soirée complète · Circulation optimale', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'Avant de dormir', tag:'complément', tc:'t-supp'},
+      {id:'baume', e:'🔥', n:'Baume Aroma', d:'Achille droit + côté pied gauche · Soir au repos', tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Sommeil ≥ 8h', d:'Coucher tôt · Nuit avant départ Paris', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-10', wd:'VEN', dd:'10', dt:'Paris',
+    name:'Vendredi 10 Avril', type:'rest', badge:'🚄 Trajet Paris', badgeClass:'badge-rest',
+    kcal:1900, P:142, G:261, L:32, hydra:4.0,
+    seance:"Repos + trajet Paris · Mettre Cryo Sleeve au congélateur dès l'arrivée à l'appart",
+    recup:[
+      {id:'congelateur', e:'❄️', n:'Cryo Sleeve au congélateur', d:"⚠️ À faire dès l'arrivée → prêt pour demain soir", tag:'cryo', tc:'t-cryo'},
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'Pendant le trajet + soirée · Idéal en position assise', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'Avant de dormir · Nuit longue', tag:'complément', tc:'t-supp'},
+      {id:'baume', e:'🔥', n:'Baume Aroma', d:'Achille droit · Soir au repos', tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Sommeil ≥ 8h', d:'Coucher tôt · Réveil 5h30 demain', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-11', wd:'SAM', dd:'11', dt:'J-1',
+    name:'Samedi 11 Avril', type:'easy', badge:'🏅 Activation + Salon', badgeClass:'badge-easy',
+    kcal:1800, P:135, G:248, L:30, hydra:4.0,
+    seance:"15 min EF + 3×15 sec allure rapide + 2 min EF · Matin · Salon expo l'après-midi",
+    recup:[
+      {id:'cryo', e:'🧊', n:'Cryo Sleeve', d:'🔑 19h · 15 min · Jambes fraîches pour demain', tag:'cryo', tc:'t-cryo'},
+      {id:'flytex', e:'🩱', n:'Manchons Flytex', d:'Après la cryo · Soirée complète', tag:'compression', tc:'t-comp'},
+      {id:'mag', e:'💊', n:'Magnésium', d:'22h · Avant de dormir', tag:'complément', tc:'t-supp'},
+      {id:'baume', e:'🧴', n:'Baume Aroma', d:'Achille droit · Soir seulement · ⚠️ Pas le matin course', tag:'mobilité', tc:'t-mob'},
+      {id:'nok', e:'🔵', n:'NOK métatarses', d:'Préparer couche épaisse pour demain matin', tag:'mobilité', tc:'t-mob'},
+      {id:'sleep', e:'😴', n:'Coucher 22h30 max', d:'Réveil 5h30 · Même si mal dormi → reste allongé', tag:'sommeil', tc:'t-sleep'},
+    ]
+  },
+  {
+    date:'2026-04-12', wd:'DIM', dd:'12', dt:'🏆',
+    name:'Dimanche 12 Avril', type:'race', badge:'🏆 MARATHON', badgeClass:'badge-race',
+    kcal:0, P:0, G:0, L:0, hydra:0, seance:'', recup:[]
+  }
+];
+
+const KEY = 'recharge_v5';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch { return {}; } };
+const save = (c) => { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch {} };
+const toggle = (date, id) => { const c=load(); c[`${date}_${id}`]=!c[`${date}_${id}`]; save(c); render(); };
+const checked = (date, id) => !!load()[`${date}_${id}`];
+
+// Countdown
+const tick = () => {
+  const d = Math.ceil((RACE - new Date()) / 86400000);
+  document.getElementById('countdown').textContent = d > 0 ? d : '🔥';
+};
+tick();
+
+let active = (() => {
+  const t = new Date().toISOString().split('T')[0];
+  const i = DAYS.findIndex(d => d.date === t);
+  return i >= 0 ? i : 0;
+})();
+
+function buildNav() {
+  const t = new Date().toISOString().split('T')[0];
+  document.getElementById('daysNav').innerHTML = DAYS.map((d,i) => `
+    <button class="day-pill ${i===active?'active':''} ${d.date===t?'today':''}" onclick="go(${i})">
+      <span class="wd">${d.wd}</span>
+      <span class="dd">${d.dd}</span>
+      <span class="dt">${d.dt}</span>
+    </button>`).join('');
+}
+
+function go(i) {
+  active = i; buildNav(); render();
+  setTimeout(() => document.getElementById('daysNav').children[i]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}), 50);
+}
+
+function render() {
+  const d = DAYS[active];
+  if (d.type === 'race') { document.getElementById('main').innerHTML = raceDay(); return; }
+
+  const done = d.recup.filter(r => checked(d.date, r.id)).length;
+  const total = d.recup.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  const checks = d.recup.map(r => {
+    const ok = checked(d.date, r.id);
+    return `<div class="check-item ${ok?'done':''}" onclick="toggle('${d.date}','${r.id}')">
+      <div class="check-box">${ok?'✓':''}</div>
+      <span class="check-emoji">${r.e}</span>
+      <div class="check-body">
+        <div class="check-name">${r.n}</div>
+        <div class="check-detail">${r.d}</div>
+      </div>
+      <span class="check-tag ${r.tc}">${r.tag}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `<div class="fade-in">
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">${d.name}</span>
+      <span class="section-badge ${d.badgeClass}">${d.badge}</span>
+    </div>
+    <div class="macros-row">
+      <div class="macro-item"><div class="macro-val c-kcal">${d.kcal}</div><div class="macro-lbl">kcal</div></div>
+      <div class="macro-item"><div class="macro-val c-p">${d.P}g</div><div class="macro-lbl">protéines</div></div>
+      <div class="macro-item"><div class="macro-val c-g">${d.G}g</div><div class="macro-lbl">glucides</div></div>
+      <div class="macro-item"><div class="macro-val c-l">${d.L}g</div><div class="macro-lbl">lipides</div></div>
+    </div>
+    <div class="glucide-row">
+      <span class="glucide-icon">🍚</span>
+      <div style="flex:1;">
+        <div class="glucide-label">Objectif glucides · ${(d.G/74.7).toFixed(1)}g/kg · ${Math.round(d.G/d.kcal*100)}% calories</div>
+        <div class="glucide-bar-bg"><div class="glucide-bar-fill" style="width:${Math.min(100,d.G/320*100)}%"></div></div>
+        <div class="glucide-text">${d.G}g / 320g max</div>
+      </div>
+    </div>
+    <div class="hydra-row">
+      <span class="hydra-icon">💧</span>
+      <div class="hydra-bar-bg"><div class="hydra-bar-fill" style="width:${Math.min(100,d.hydra/4*100)}%"></div></div>
+      <span class="hydra-text">${d.hydra.toFixed(1)}L min</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-title">🏃 Séance du jour</span></div>
+    <div class="seance-content">${d.seance}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">🔄 Routine récupération</span>
+      <span style="font-size:11px;color:var(--text-muted);">${done}/${total}</span>
+    </div>
+    ${checks}
+    <div class="check-progress">
+      <span class="cp-label">Progression</span>
+      <div class="cp-bar-bg"><div class="cp-bar-fill" style="width:${pct}%"></div></div>
+      <span class="cp-pct">${pct}%</span>
+    </div>
+    <div class="alerte">⚠️ <span>Zéro alcool · Rien de nouveau · Fais confiance au travail accompli.</span></div>
+  </div>
+
+  </div>`;
+}
+
+function raceDay() {
+  return `<div class="fade-in">
+  <div class="race-banner">
+    <div class="race-emoji">🏆</div>
+    <div class="race-title">MARATHON DE PARIS</div>
+    <div class="race-sub">Dimanche 12 Avril 2026 · Sub-4h · Sas 3h45 · Départ 9h24</div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-time">5h30</div><div class="tl-text">☀️ Réveil → 500ml eau + électrolytes TAA</div></div>
+      <div class="tl-item"><div class="tl-time">5h45</div><div class="tl-text">🍳 3 œufs coque + pain complet + 100g grisons + smoothie</div></div>
+      <div class="tl-item"><div class="tl-time">8h00</div><div class="tl-text">💊 Malto 30g dans 500ml → trajet</div></div>
+      <div class="tl-item"><div class="tl-time">8h30</div><div class="tl-text">🏁 Sas → quelques gorgées</div></div>
+      <div class="tl-item"><div class="tl-time">9h24</div><div class="tl-text">🔥 DÉPART · 5:52/km · FC max 155 bpm</div></div>
+      <div class="tl-item"><div class="tl-time">+30min</div><div class="tl-text">🍬 1er gel TAA · Timer toutes les 30 min</div></div>
+      <div class="tl-item"><div class="tl-time">km 15</div><div class="tl-text">💊 Pastille TAA → flasque · Ravito 16,8</div></div>
+      <div class="tl-item"><div class="tl-time">km 24</div><div class="tl-text">🔁 Recharge électrolytes TAA · km 24,2</div></div>
+      <div class="tl-item"><div class="tl-time">km 30</div><div class="tl-text">☕ Gel Wild Berry caféiné → boost final</div></div>
+      <div class="tl-item"><div class="tl-time">km 42</div><div class="tl-text">🏅 ARRIVÉE · Avenue Foch · Tu l'as fait !</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-title">🧠 Mantras du 12 Avril</span></div>
+    <div class="mantra-item">Je me sens bien au km 5 → normal → je ralentis quand même</div>
+    <div class="mantra-item">FC > 155 bpm → je ralentis immédiatement</div>
+    <div class="mantra-item">Dans les montées → FC prime sur l'allure</div>
+    <div class="mantra-item">Un gel toutes les 30 min → timer → jamais sauter</div>
+    <div class="mantra-item">2-3 gorgées à chaque km · Ne jamais attendre d'avoir soif</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-title">😴 Récupération post-marathon</span></div>
+    <div class="mantra-item">Protéines + glucides dans l'heure après l'arrivée</div>
+    <div class="mantra-item">🧊 Cryo Sleeve 15-20 min · Jambes</div>
+    <div class="mantra-item">🩱 Manchons Flytex au repos · Cheville → cuisse</div>
+    <div class="mantra-item">💊 Magnésium avant de dormir</div>
+  </div>
+  </div>`;
+}
+
+buildNav(); render();
+setTimeout(() => document.getElementById('daysNav').children[active]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}), 100);
+</script>
+</body>
+</html>

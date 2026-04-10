@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Checklist · Marathon Paris 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --card: #222;
+    --border: #333;
+    --accent: #e8632a;
+    --accent-dim: rgba(232,99,42,0.12);
+    --green: #4caf50;
+    --green-dim: rgba(76,175,80,0.12);
+    --blue: #2196f3;
+    --blue-dim: rgba(33,150,243,0.12);
+    --purple: #9c27b0;
+    --purple-dim: rgba(156,39,176,0.12);
+    --yellow: #ffc107;
+    --yellow-dim: rgba(255,193,7,0.12);
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --text-muted: #555;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .app-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .progress-badge {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .global-bar-bg {
+    background: var(--border);
+    border-radius: 3px;
+    height: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .global-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), #f0a070);
+    transition: width 0.4s ease;
+  }
+
+  .main {
+    padding: 14px 14px 40px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .section-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-emoji { font-size: 16px; }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .section-count {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .section-count.done { color: var(--green); }
+
+  .section-body { display: block; }
+  .section-body.collapsed { display: none; }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item:active { background: rgba(255,255,255,0.03); }
+  .check-item.done { background: rgba(76,175,80,0.04); }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.15s;
+    color: transparent;
+  }
+
+  .check-item.done .check-box {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+
+  .check-emoji { font-size: 16px; flex-shrink: 0; }
+
+  .check-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .check-item.done .check-label {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: rgba(76,175,80,0.4);
+  }
+
+  .check-tag {
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .tag-sport { background: var(--accent-dim); color: var(--accent); }
+  .tag-tech { background: var(--blue-dim); color: var(--blue); }
+  .tag-recup { background: var(--purple-dim); color: var(--purple); }
+  .tag-food { background: var(--yellow-dim); color: var(--yellow); }
+  .tag-hygiene { background: rgba(0,150,136,0.12); color: #009688; }
+
+  .reset-btn {
+    display: block;
+    width: calc(100% - 28px);
+    margin: 0 14px 14px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:active { background: rgba(255,255,255,0.03); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeUp 0.25s ease; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div class="app-name">✅ Checklist Marathon</div>
+    <div class="progress-badge" id="progressBadge">0%</div>
+  </div>
+  <div class="global-bar-bg">
+    <div class="global-bar-fill" id="globalBar" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="main fade-in" id="main"></div>
+
+<script>
+const SECTIONS = [
+  {
+    id: 'sport',
+    emoji: '👟',
+    title: 'Équipement sport',
+    items: [
+      { id: 'vomero', e: '👟', label: 'Vomero 18', tag: 'sport' },
+      { id: 'bvsport', e: '🧦', label: 'Chaussettes BV Sport Run Marathon', tag: 'sport' },
+      { id: 'manchons', e: '🩱', label: 'Manchons compression', tag: 'sport' },
+      { id: 'cryo', e: '🧊', label: 'Cryo Sleeves', tag: 'recup' },
+      { id: 'short', e: '🩳', label: 'Short Kiprun 500 2en1', tag: 'sport' },
+      { id: 'tshirt', e: '👕', label: 'T-shirt orange Hoka', tag: 'sport' },
+      { id: 'gilet', e: '🧥', label: 'Gilet pour le matin', tag: 'sport' },
+      { id: 'casquette', e: '🧢', label: 'Casquette Dragon Ball', tag: 'sport' },
+      { id: 'ceinture', e: '💧', label: 'Ceinture hydratation Kiprun', tag: 'sport' },
+      { id: 'nb', e: '👟', label: 'New Balance bleues', tag: 'sport' },
+      { id: 'sac', e: '🎒', label: 'Petit sac consigne', tag: 'sport' },
+    ]
+  },
+  {
+    id: 'tech',
+    emoji: '⌚',
+    title: 'Tech & Électronique',
+    items: [
+      { id: 'ceinturecardio', e: '❤️', label: 'Ceinture cardio (pile neuve)', tag: 'tech' },
+      { id: 'vanguard', e: '🕶️', label: 'Oakley Meta Vanguard', tag: 'tech' },
+      { id: 'shokz', e: '🎧', label: 'Casque Shokz', tag: 'tech' },
+      { id: 'lunettes', e: '😎', label: 'Lunettes de soleil classiques', tag: 'tech' },
+      { id: 'chargeurmontre', e: '🔋', label: 'Chargeur montre Garmin', tag: 'tech' },
+      { id: 'chargeurbague', e: '🔋', label: 'Chargeur bague Ring Air', tag: 'tech' },
+      { id: 'chargeurwhoop', e: '🔋', label: 'Chargeur WHOOP', tag: 'tech' },
+      { id: 'chargeurtel', e: '🔋', label: 'Chargeur téléphone', tag: 'tech' },
+      { id: 'batterie', e: '⚡', label: 'Batterie externe', tag: 'tech' },
+      { id: 'gourde', e: '🫙', label: 'Gourde / flasque', tag: 'tech' },
+    ]
+  },
+  {
+    id: 'recup',
+    emoji: '💊',
+    title: 'Récupération & Soins',
+    items: [
+      { id: 'nok', e: '🔵', label: 'Crème NOK', tag: 'recup' },
+      { id: 'cremrecup', e: '🧴', label: 'Crème récup', tag: 'recup' },
+      { id: 'mag', e: '💊', label: 'Magnésium', tag: 'recup' },
+      { id: 'shaker', e: '🥤', label: 'Shaker', tag: 'recup' },
+      { id: 'whey', e: '🥛', label: 'Whey', tag: 'recup' },
+    ]
+  },
+  {
+    id: 'food',
+    emoji: '🍳',
+    title: 'Alimentation',
+    items: [
+      { id: 'banane', e: '🍌', label: 'Bananes', tag: 'food' },
+      { id: 'oeuf', e: '🥚', label: 'Œufs', tag: 'food' },
+      { id: 'paindemie', e: '🍞', label: 'Pain de mie', tag: 'food' },
+      { id: 'painaulait', e: '🥐', label: 'Pain au lait', tag: 'food' },
+      { id: 'riz', e: '🍚', label: 'Riz basmati', tag: 'food' },
+      { id: 'poulet', e: '🍗', label: 'Poulet', tag: 'food' },
+      { id: 'grison', e: '🥩', label: 'Grisons', tag: 'food' },
+      { id: 'cafe', e: '☕', label: 'Café', tag: 'food' },
+      { id: 'confiture', e: '🍯', label: 'Confiture', tag: 'food' },
+      { id: 'coca', e: '🥤', label: 'Coca', tag: 'food' },
+    ]
+  },
+  {
+    id: 'hygiene',
+    emoji: '🪥',
+    title: 'Hygiène',
+    items: [
+      { id: 'brosse', e: '🪥', label: 'Brosse à dents', tag: 'hygiene' },
+      { id: 'dentifrice', e: '🧴', label: 'Dentifrice', tag: 'hygiene' },
+    ]
+  }
+];
+
+const KEY = 'checklist_marathon_v1';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch { return {}; } };
+const save = (c) => { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch {} };
+
+const toggle = (id) => {
+  const c = load();
+  c[id] = !c[id];
+  save(c);
+  render();
+};
+
+const resetAll = () => {
+  save({});
+  render();
+};
+
+const toggleSection = (id) => {
+  const body = document.getElementById(`body_${id}`);
+  body.classList.toggle('collapsed');
+};
+
+function getStats() {
+  const c = load();
+  let total = 0, done = 0;
+  SECTIONS.forEach(s => s.items.forEach(item => {
+    total++;
+    if (c[item.id]) done++;
+  }));
+  return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+}
+
+function getSectionStats(section) {
+  const c = load();
+  const done = section.items.filter(i => c[i.id]).length;
+  return { done, total: section.items.length };
+}
+
+const TAG_CLASSES = {
+  sport: 'tag-sport',
+  tech: 'tag-tech',
+  recup: 'tag-recup',
+  food: 'tag-food',
+  hygiene: 'tag-hygiene',
+};
+
+function render() {
+  const c = load();
+  const { total, done, pct } = getStats();
+
+  document.getElementById('progressBadge').textContent = `${done}/${total}`;
+  document.getElementById('globalBar').style.width = `${pct}%`;
+
+  document.getElementById('main').innerHTML = SECTIONS.map(section => {
+    const stats = getSectionStats(section);
+    const allDone = stats.done === stats.total;
+
+    const items = section.items.map(item => {
+      const isDone = !!c[item.id];
+      return `
+        <div class="check-item ${isDone ? 'done' : ''}" onclick="toggle('${item.id}')">
+          <div class="check-box">${isDone ? '✓' : ''}</div>
+          <span class="check-emoji">${item.e}</span>
+          <span class="check-label">${item.label}</span>
+          <span class="check-tag ${TAG_CLASSES[item.tag]}">${item.tag}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="section">
+        <div class="section-header" onclick="toggleSection('${section.id}')">
+          <div class="section-left">
+            <span class="section-emoji">${section.emoji}</span>
+            <span class="section-title">${section.title}</span>
+          </div>
+          <span class="section-count ${allDone ? 'done' : ''}">${stats.done}/${stats.total} ${allDone ? '✓' : ''}</span>
+        </div>
+        <div class="section-body" id="body_${section.id}">${items}</div>
+      </div>`;
+  }).join('') + `<button class="reset-btn" onclick="resetAll()">↺ Réinitialiser tout</button>`;
+}
+
+render();
+</script>
+</body>
+</html>

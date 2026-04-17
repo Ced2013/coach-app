@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menus Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26;
+    --orange:#ff8c00; --orange2:#ff5500; --text:#f0f0f8;
+    --muted:#5a5a78; --border:#2a2a3a; --green:#4caf82;
+    --blue:#47aaff; --red:#ff4757; --purple:#a855f7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; padding:16px 16px 100px; }
+  .tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+  .tab { flex:1; padding:12px 8px 10px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; border:none; background:none; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; -webkit-tap-highlight-color:transparent; }
+  .tab.active { color:var(--orange); }
+  .tab-icon { font-size:20px; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:4px; background:linear-gradient(135deg,var(--orange),var(--orange2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; text-align:center; margin-bottom:4px; }
+  .page-sub { color:var(--muted); font-size:11px; letter-spacing:3px; text-transform:uppercase; text-align:center; margin-bottom:14px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px; margin-bottom:12px; }
+  .card-title { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; margin-bottom:12px; }
+  select, input[type=number], input[type=text] { background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; padding:9px 11px; appearance:none; width:100%; }
+  .lbl { font-size:9px; color:var(--muted); margin-bottom:3px; display:block; text-transform:uppercase; letter-spacing:1px; }
+  .field { margin-bottom:10px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .btn-primary { width:100%; padding:12px; background:linear-gradient(135deg,var(--orange),var(--orange2)); border:none; border-radius:10px; color:#000; font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:2px; cursor:pointer; }
+  .btn-ghost { width:100%; padding:9px; background:transparent; border:1px solid var(--border); border-radius:9px; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; margin-top:8px; }
+  .btn-sm { padding:5px 11px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .btn-add-line { width:100%; padding:8px; background:rgba(255,140,0,0.06); border:1px dashed rgba(255,140,0,0.35); border-radius:8px; color:var(--orange); font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:6px; }
+  .phase-toggle { display:flex; margin-bottom:10px; background:var(--surface); border:1px solid var(--border); border-radius:11px; overflow:hidden; }
+  .phase-btn { flex:1; padding:11px 8px; border:none; background:transparent; color:var(--muted); font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:2px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .phase-btn.active-seche { background:linear-gradient(135deg,var(--orange),var(--orange2)); color:#000; }
+  .phase-btn.active-prepa { background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; }
+  .phase-info { text-align:center; font-size:10px; margin-bottom:12px; letter-spacing:1px; }
+  .week-nav { display:flex; gap:8px; margin-bottom:10px; }
+  .week-nav button { flex:1; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:9px; color:var(--muted); font-size:20px; cursor:pointer; }
+  .week-bilan { background:linear-gradient(135deg,rgba(255,140,0,0.08),rgba(255,85,0,0.05)); border:1px solid rgba(255,140,0,0.2); border-radius:12px; padding:12px 14px; margin-bottom:12px; display:none; }
+  .week-bilan-title { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:var(--orange); margin-bottom:8px; }
+  .week-bilan-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center; }
+  .wb-val { font-family:'Bebas Neue',sans-serif; font-size:18px; }
+  .wb-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .day-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; margin-bottom:10px; overflow:hidden; }
+  .day-card.is-today { border-color:rgba(255,140,0,0.5); }
+  .day-header { padding:13px 14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; -webkit-tap-highlight-color:transparent; user-select:none; }
+  .day-name { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
+  .today-badge { font-size:9px; font-weight:700; background:var(--orange); color:#000; padding:2px 7px; border-radius:20px; margin-left:8px; letter-spacing:1px; text-transform:uppercase; }
+  .day-seance-lbl { font-size:11px; color:var(--muted); margin-top:2px; }
+  .day-kcal { font-family:'Bebas Neue',sans-serif; font-size:18px; text-align:right; }
+  .day-macros-sm { font-size:10px; color:var(--muted); text-align:right; margin-top:2px; }
+  .day-body { display:none; padding:0 14px 14px; border-top:1px solid var(--border); }
+  .day-body.open { display:block; }
+  .macro-pills { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 12px; }
+  .mpill { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .mpill.k { background:rgba(255,140,0,0.1); color:var(--orange); border:1px solid rgba(255,140,0,0.3); }
+  .mpill.p { background:rgba(76,175,130,0.1); color:var(--green); border:1px solid rgba(76,175,130,0.3); }
+  .mpill.g { background:rgba(71,170,255,0.1); color:var(--blue); border:1px solid rgba(71,170,255,0.3); }
+  .mpill.l { background:rgba(168,85,247,0.1); color:var(--purple); border:1px solid rgba(168,85,247,0.3); }
+  .macro-progress { margin:10px 0 12px; }
+  .mp-row { margin-bottom:7px; }
+  .mp-header { display:flex; justify-content:space-between; margin-bottom:3px; }
+  .mp-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .mp-vals { font-size:10px; font-weight:600; }
+  .mp-bar { height:5px; background:var(--surface2); border-radius:20px; overflow:hidden; }
+  .mp-fill { height:100%; border-radius:20px; transition:width 0.3s; }
+  .fill-ok { background:var(--green); }
+  .fill-over { background:var(--red); }
+  .fill-low { background:var(--orange); }
+  .repas-block { margin-bottom:10px; }
+  .repas-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; padding:4px 0; border-bottom:1px solid var(--border); }
+  .repas-line { background:var(--surface2); border-radius:9px; padding:9px 10px; margin-bottom:5px; }
+  .repas-line-top { display:grid; grid-template-columns:1fr 70px 28px; gap:6px; align-items:center; }
+  .repas-line-info { font-size:10px; color:var(--muted); margin-top:5px; padding-left:2px; }
+  .mult-input { text-align:center; font-size:13px; font-weight:600; color:var(--orange) !important; padding:9px 6px !important; }
+  .btn-del-line { background:none; border:none; color:var(--red); font-size:16px; cursor:pointer; padding:2px; }
+  .total-bar { background:var(--surface2); border-radius:9px; padding:10px 12px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; }
+  .total-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .total-vals { display:flex; gap:10px; }
+  .total-val { font-size:12px; font-weight:600; }
+  .plat-item { background:var(--surface2); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .plat-nom { font-size:13px; font-weight:600; margin-bottom:3px; }
+  .plat-macros { font-size:11px; color:var(--muted); margin-bottom:5px; }
+  .plat-ingr { font-size:10px; color:var(--muted); margin-bottom:6px; line-height:1.7; }
+  .section-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:12px 0 6px; }
+  .ingr-row { display:grid; grid-template-columns:1fr 70px 56px 28px; gap:5px; align-items:center; margin-bottom:5px; }
+  .ingr-row input, .ingr-row select { font-size:12px !important; padding:7px 8px !important; }
+  .cours-row { display:flex; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .cours-check { width:18px; height:18px; border-radius:5px; border:2px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; margin-right:10px; }
+  .cours-row.done .cours-check { background:var(--green); border-color:var(--green); }
+  .cours-row.done .cours-nom { text-decoration:line-through; color:var(--muted); }
+  .cours-nom { flex:1; font-size:13px; }
+  .cours-qty { font-size:12px; font-weight:600; color:var(--orange); }
+  .empty-state { text-align:center; padding:32px 16px; color:var(--muted); font-size:12px; line-height:2; }
+</style>
+</head>
+<body>
+
+<div class="page active" id="page-semaine">
+  <div class="page-title">SEMAINE</div>
+  <div class="page-sub" id="weekLabel">--</div>
+  <div class="phase-toggle">
+    <button class="phase-btn" id="btnSeche" onclick="setPhase('seche')">SECHE</button>
+    <button class="phase-btn" id="btnPrepa" onclick="setPhase('prepa')">PREPA</button>
+  </div>
+  <div class="phase-info" id="phaseInfo"></div>
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">&#8249;</button>
+    <button onclick="changeWeek(1)">&#8250;</button>
+  </div>
+  <div class="week-bilan" id="weekBilan">
+    <div class="week-bilan-title">BILAN SEMAINE (moy/jour)</div>
+    <div class="week-bilan-grid">
+      <div><div class="wb-val" id="wbK" style="color:var(--orange)">0</div><div class="wb-lbl">kcal</div></div>
+      <div><div class="wb-val" id="wbP" style="color:var(--green)">0g</div><div class="wb-lbl">prot</div></div>
+      <div><div class="wb-val" id="wbG" style="color:var(--blue)">0g</div><div class="wb-lbl">gluc</div></div>
+      <div><div class="wb-val" id="wbL" style="color:var(--purple)">0g</div><div class="wb-lbl">lip</div></div>
+    </div>
+  </div>
+  <div id="weekContainer"></div>
+</div>
+
+<div class="page" id="page-courses">
+  <div class="page-title">COURSES</div>
+  <div class="page-sub">Semaine en cours</div>
+  <div class="card">
+    <div class="card-title">&#128722; LISTE</div>
+    <div id="coursesList"><div class="empty-state">Planifie ta semaine d abord.</div></div>
+    <button class="btn-ghost" onclick="clearWeek()">&#8635; Effacer la semaine</button>
+  </div>
+</div>
+
+<div class="page" id="page-plats">
+  <div class="page-title">PLATS</div>
+  <div class="page-sub">Ma bibliotheque</div>
+  <div class="card">
+    <div class="card-title" id="platFormTitle">+ NOUVEAU PLAT</div>
+    <input type="hidden" id="platEditIdx" value="">
+    <div class="field"><span class="lbl">Nom</span><input type="text" id="platNom" placeholder="Ex : Poulet riz courgettes"></div>
+    <div class="field">
+      <span class="lbl">Servi au</span>
+      <select id="platRepas">
+        <option value="ptdej">&#9728;&#65039; Petit dejeuner</option>
+        <option value="colmatin">&#127820; Collation matin</option>
+        <option value="dejeuner">&#127869; Dejeuner</option>
+        <option value="colapm">&#127822; Collation apres-midi</option>
+        <option value="diner">&#127769; Diner</option>
+        <option value="any">&#127860; Tous repas</option>
+      </select>
+    </div>
+    <div class="field">
+      <span class="lbl">Macros pour 1 portion</span>
+      <div class="grid4">
+        <div><span class="lbl">KCAL</span><input type="number" id="platKcal" placeholder="0"></div>
+        <div><span class="lbl">PROT g</span><input type="number" id="platP" placeholder="0"></div>
+        <div><span class="lbl">GLUC g</span><input type="number" id="platG" placeholder="0"></div>
+        <div><span class="lbl">LIP g</span><input type="number" id="platL" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">Ingredients</span>
+      <div id="ingrList"></div>
+      <button class="btn-add-line" onclick="addIngrRow()">+ Ingredient</button>
+    </div>
+    <button class="btn-primary" onclick="savePlat()">ENREGISTRER</button>
+    <button class="btn-ghost" id="platCancelBtn" style="display:none" onclick="cancelPlatEdit()">Annuler</button>
+  </div>
+  <div class="card">
+    <div class="card-title">MES PLATS</div>
+    <div id="platsList"><div class="empty-state">Aucun plat encore.</div></div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" id="tab-semaine" onclick="showPage('semaine')"><span class="tab-icon">&#128197;</span>Semaine</button>
+  <button class="tab" id="tab-courses" onclick="showPage('courses');renderCourses()"><span class="tab-icon">&#128722;</span>Courses</button>
+  <button class="tab" id="tab-plats" onclick="showPage('plats')"><span class="tab-icon">&#127869;</span>Plats</button>
+</div>
+
+<script>
+// ── STORAGE ───────────────────────────────────────────
+let db;
+function openDB() {
+  return new Promise((res,rej) => {
+    const req = indexedDB.open('menuscoach9',1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('kv',{keyPath:'k'});
+    req.onsuccess = e => { db=e.target.result; res(); };
+    req.onerror = rej;
+  });
+}
+const dbGet = k => new Promise(res => {
+  try { const r=db.transaction('kv','readonly').objectStore('kv').get(k); r.onsuccess=()=>res(r.result?r.result.v:null); r.onerror=()=>res(null); } catch(e){res(null);}
+});
+const dbSet = (k,v) => new Promise(res => {
+  try { const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put({k,v}); tx.oncomplete=res; tx.onerror=res; } catch(e){res();}
+});
+const dbDel = k => new Promise(res => {
+  try { const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete=res; tx.onerror=res; } catch(e){res();}
+});
+
+// ── PHASES ────────────────────────────────────────────
+let currentPhase = 'seche';
+
+const MACROS_SECHE = {
+  repos:           { kcal:1700, p:140, g:136, l:66,  label:'😴 Repos',                    col:false },
+  reposvelo:       { kcal:2000, p:150, g:196, l:68,  label:'😴🚴 Repos + Velo taf', col:false },
+  muscumaison:     { kcal:1950, p:161, g:156, l:76,  label:'💪 Muscu maison',              col:true  },
+  muscumaisonvelo: { kcal:2250, p:171, g:186, l:80,  label:'💪🚴 Muscu maison + Velo taf', col:true },
+  muscusal:        { kcal:2000, p:165, g:160, l:78,  label:'🏋 Muscu salle',               col:true  },
+  muscusalvelo:    { kcal:2300, p:175, g:190, l:82,  label:'🏋🚴 Muscu salle + Velo taf', col:true },
+  muscurun:        { kcal:2100, p:173, g:168, l:82,  label:'💪🏃 Muscu + Run',      col:true  },
+  muscurunvelo:    { kcal:2400, p:183, g:198, l:86,  label:'💪🏃🚴 Muscu + Run + Velo', col:true },
+  runef:           { kcal:2100, p:173, g:168, l:82,  label:'🏃 Run EF',                    col:true  },
+  runefvelo:       { kcal:2400, p:183, g:198, l:86,  label:'🏃🚴 Run EF + Velo taf', col:true },
+  runvitesse:      { kcal:2200, p:170, g:220, l:73,  label:'⚡ Run Vitesse',                  col:true  },
+  runvitessevelo:  { kcal:2500, p:180, g:250, l:77,  label:'⚡🚴 Run Vitesse + Velo taf', col:true },
+  runrythme:       { kcal:2200, p:170, g:220, l:73,  label:'🎯 Run Rythme',                col:true  },
+  runrythmevelo:   { kcal:2500, p:180, g:250, l:77,  label:'🎯🚴 Run Rythme + Velo taf', col:true },
+  long:            { kcal:2300, p:190, g:184, l:90,  label:'🏅 Sortie longue',             col:true  },
+  longvelo:        { kcal:2600, p:200, g:214, l:94,  label:'🏅🚴 Sortie longue + Velo taf', col:true },
+  race20km:        { kcal:2800, p:160, g:330, l:75,  label:'🏆 Course 20km',               col:true  },
+  racemarathon:    { kcal:3500, p:150, g:450, l:60,  label:'🏆 Marathon',                  col:true  },
+  recup:           { kcal:2200, p:170, g:220, l:75,  label:'🛌 Recup post-effort',         col:false },
+};
+
+const MACROS_PREPA = {
+  repos:           { kcal:1700, p:140, g:136, l:66,  label:'😴 Repos',                    col:false },
+  reposvelo:       { kcal:2300, p:155, g:230, l:72,  label:'😴🚴 Repos + Velo taf', col:false },
+  muscumaison:     { kcal:1950, p:161, g:156, l:76,  label:'💪 Muscu maison',              col:true  },
+  muscumaisonvelo: { kcal:2550, p:176, g:221, l:82,  label:'💪🚴 Muscu maison + Velo taf', col:true },
+  muscusal:        { kcal:2000, p:165, g:160, l:78,  label:'🏋 Muscu salle',               col:true  },
+  muscusalvelo:    { kcal:2600, p:180, g:225, l:84,  label:'🏋🚴 Muscu salle + Velo taf', col:true },
+  muscurun:        { kcal:2100, p:173, g:168, l:82,  label:'💪🏃 Muscu + Run',      col:true  },
+  muscurunvelo:    { kcal:2700, p:188, g:233, l:88,  label:'💪🏃🚴 Muscu + Run + Velo', col:true },
+  runef:           { kcal:2100, p:173, g:168, l:82,  label:'🏃 Run EF',                    col:true  },
+  runefvelo:       { kcal:2700, p:188, g:233, l:88,  label:'🏃🚴 Run EF + Velo taf', col:true },
+  runvitesse:      { kcal:2200, p:170, g:220, l:73,  label:'⚡ Run Vitesse',                  col:true  },
+  runvitessevelo:  { kcal:2800, p:185, g:285, l:79,  label:'⚡🚴 Run Vitesse + Velo taf', col:true },
+  runrythme:       { kcal:2200, p:170, g:220, l:73,  label:'🎯 Run Rythme',                col:true  },
+  runrythmevelo:   { kcal:2800, p:185, g:285, l:79,  label:'🎯🚴 Run Rythme + Velo taf', col:true },
+  long:            { kcal:2300, p:190, g:184, l:90,  label:'🏅 Sortie longue',             col:true  },
+  longvelo:        { kcal:2900, p:205, g:249, l:96,  label:'🏅🚴 Sortie longue + Velo taf', col:true },
+  race20km:        { kcal:2800, p:160, g:330, l:75,  label:'🏆 Course 20km',               col:true  },
+  racemarathon:    { kcal:3500, p:150, g:450, l:60,  label:'🏆 Marathon',                  col:true  },
+  recup:           { kcal:2200, p:170, g:220, l:75,  label:'🛌 Recup post-effort',         col:false },
+};
+
+function getMACROS() { return currentPhase === 'seche' ? MACROS_SECHE : MACROS_PREPA; }
+
+function setPhase(phase) {
+  currentPhase = phase;
+  const bs = document.getElementById('btnSeche');
+  const bp = document.getElementById('btnPrepa');
+  const info = document.getElementById('phaseInfo');
+  if (phase === 'seche') {
+    bs.className = 'phase-btn active-seche';
+    bp.className = 'phase-btn';
+    info.textContent = 'Deficit -300 kcal/j  |  Velo taf = +300 kcal';
+    info.style.color = 'var(--orange)';
+  } else {
+    bp.className = 'phase-btn active-prepa';
+    bs.className = 'phase-btn';
+    info.textContent = 'Equilibre  |  Velo taf = +600 kcal';
+    info.style.color = 'var(--blue)';
+  }
+  renderWeek();
+}
+
+// ── SLOTS ─────────────────────────────────────────────
+const ALL_SLOTS   = ['ptdej','colmatin','dejeuner','colapm','diner'];
+const SLOTS_NOCOL = ['ptdej','dejeuner','diner'];
+const SLOT_LABELS = {
+  ptdej:   '☀️ Petit-dejeuner',
+  colmatin:'🍌 Collation matin',
+  dejeuner:'\uD83C\uDF7D️ Dejeuner',
+  colapm:  '🍎 Collation apres-midi',
+  diner:   '🌙 Diner'
+};
+
+// ── DATES ─────────────────────────────────────────────
+const DAYS_FR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+function localISO(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+function todayISO() { return localISO(new Date()); }
+
+function getMonday(offset) {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff + offset * 7);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function getWeekDays(offset) {
+  const mon = getMonday(offset);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    return d;
+  });
+}
+function weekKey(days) {
+  const d = days[0];
+  const jan1 = new Date(d.getFullYear(),0,1);
+  const wk = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + String(wk).padStart(2,'0');
+}
+
+let weekOffset = 0;
+function changeWeek(dir) { weekOffset += dir; renderWeek(); }
+
+// ── PROGRESSION ───────────────────────────────────────
+function progBar(val, cible, color, label) {
+  const pct = cible > 0 ? Math.round(val/cible*100) : 0;
+  const cls = pct > 105 ? 'fill-over' : pct < 80 ? 'fill-low' : 'fill-ok';
+  const diff = val - cible;
+  const ds = diff === 0 ? '' : (diff > 0 ? ' (+'+diff+')' : ' ('+diff+')');
+  const div = document.createElement('div');
+  div.className = 'mp-row';
+  div.innerHTML = '<div class="mp-header">' +
+    '<span class="mp-label" style="color:'+color+'">'+label+'</span>' +
+    '<span class="mp-vals" style="color:'+color+'">'+val+' / '+cible+ds+'</span>' +
+    '</div>' +
+    '<div class="mp-bar"><div class="mp-fill '+cls+'" style="width:'+Math.min(100,pct)+'%"></div></div>';
+  return div;
+}
+
+// ── RENDU SEMAINE ─────────────────────────────────────
+let plats = [];
+let coursesDone = {};
+
+async function renderWeek() {
+  const days = getWeekDays(weekOffset);
+  const wk = weekKey(days);
+  const saved = JSON.parse(await dbGet('week_'+wk) || '{}');
+  const today = todayISO();
+  const macros = getMACROS();
+
+  const fmt = d => d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  document.getElementById('weekLabel').textContent = fmt(days[0]) + ' - ' + fmt(days[6]);
+
+  const openDays = new Set([...document.querySelectorAll('.day-body.open')].map(el => el.dataset.iso));
+  const container = document.getElementById('weekContainer');
+  container.innerHTML = '';
+
+  let wK=0, wP=0, wG=0, wL=0, wN=0;
+
+  days.forEach((day, di) => {
+    const iso = localISO(day);
+    const isToday = iso === today;
+    const dd = saved[iso] || { seance:'repos', repas:{} };
+    const mac = macros[dd.seance] || macros.repos;
+    const slots = ALL_SLOTS; // Toujours afficher les 5 slots
+
+    // Totaux jour
+    let totK=0, totP=0, totG=0, totL=0;
+    ALL_SLOTS.forEach(slot => {
+      (dd.repas[slot]||[]).forEach(e => {
+        const pl = plats[e.idx];
+        if (!pl) return;
+        const m = parseFloat(e.mult)||1;
+        totK += Math.round(pl.kcal*m);
+        totP += Math.round(pl.p*m);
+        totG += Math.round(pl.g*m);
+        totL += Math.round(pl.l*m);
+      });
+    });
+    if (totK > 0) { wK+=totK; wP+=totP; wG+=totG; wL+=totL; wN++; }
+
+    const diffK = totK - mac.kcal;
+    const kcalCol = Math.abs(diffK)<150 ? 'var(--green)' : diffK>0 ? 'var(--red)' : 'var(--orange)';
+
+    const card = document.createElement('div');
+    card.className = 'day-card' + (isToday ? ' is-today' : '');
+
+    // HEADER
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    const todayBadge = isToday ? '<span class="today-badge">Aujourd hui</span>' : '';
+    header.innerHTML = '<div>' +
+      '<div class="day-name">'+DAYS_FR[di]+' <span style="font-size:12px;color:var(--muted)">'+day.getDate()+'/'+(day.getMonth()+1)+'</span>'+todayBadge+'</div>' +
+      '<div class="day-seance-lbl">'+mac.label+'</div>' +
+      '</div>' +
+      '<div>' +
+      '<div class="day-kcal" style="color:'+(totK>0?kcalCol:'var(--muted)')+'">'+( totK>0 ? totK+' kcal' : mac.kcal+' kcal' )+'</div>' +
+      '<div class="day-macros-sm">'+(totK>0 ? 'P'+totP+'g G'+totG+'g L'+totL+'g' : 'cible P'+mac.p+'g')+'</div>' +
+      '</div>';
+
+    // BODY
+    const body = document.createElement('div');
+    body.className = 'day-body' + (openDays.has(iso)||isToday ? ' open' : '');
+    body.dataset.iso = iso;
+
+    header.onclick = () => body.classList.toggle('open');
+    card.appendChild(header);
+
+    // Select seance
+    const seanceWrap = document.createElement('div');
+    seanceWrap.style.marginTop = '10px';
+    const seanceLbl = document.createElement('span');
+    seanceLbl.className = 'lbl';
+    seanceLbl.textContent = 'Type de journee';
+    const seanceSel = document.createElement('select');
+    seanceSel.style.marginBottom = '10px';
+    Object.entries(macros).forEach(([k,v]) => {
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = v.label;
+      if (dd.seance === k) opt.selected = true;
+      seanceSel.appendChild(opt);
+    });
+    seanceSel.onchange = function() { updateSeance(iso, this.value); };
+    seanceWrap.appendChild(seanceLbl);
+    seanceWrap.appendChild(seanceSel);
+    body.appendChild(seanceWrap);
+
+    // Pills cibles
+    const pills = document.createElement('div');
+    pills.className = 'macro-pills';
+    pills.innerHTML = '<span class="mpill k">🎯 '+mac.kcal+' kcal</span>' +
+      '<span class="mpill p">P '+mac.p+'g</span>' +
+      '<span class="mpill g">G '+mac.g+'g</span>' +
+      '<span class="mpill l">L '+mac.l+'g</span>';
+    body.appendChild(pills);
+
+    // Slots repas
+    slots.forEach(slot => {
+      const entries = dd.repas[slot] || [];
+      const available = plats.filter(pl =>
+        pl.repas === slot || pl.repas === 'any' ||
+        (pl.repas === 'collation' && (slot === 'colmatin' || slot === 'colapm'))
+      );
+
+      const block = document.createElement('div');
+      block.className = 'repas-block';
+      const title = document.createElement('div');
+      title.className = 'repas-title';
+      title.textContent = SLOT_LABELS[slot];
+      block.appendChild(title);
+
+      entries.forEach((e, li) => {
+        const pl = plats[e.idx];
+        const m = parseFloat(e.mult)||1;
+
+        const line = document.createElement('div');
+        line.className = 'repas-line';
+
+        const top = document.createElement('div');
+        top.className = 'repas-line-top';
+
+        // Select plat
+        const platSel = document.createElement('select');
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '-- Aucun --';
+        platSel.appendChild(noneOpt);
+        available.forEach(pl2 => {
+          const ri = plats.indexOf(pl2);
+          const opt = document.createElement('option');
+          opt.value = ri;
+          opt.textContent = pl2.nom;
+          if (String(e.idx) === String(ri)) opt.selected = true;
+          platSel.appendChild(opt);
+        });
+        platSel.onchange = function() { updateLine(iso, slot, li, 'idx', this.value); };
+
+        // Coeff
+        const multInp = document.createElement('input');
+        multInp.type = 'number';
+        multInp.className = 'mult-input';
+        multInp.value = e.mult || 1;
+        multInp.step = '0.1'; multInp.min = '0.1'; multInp.max = '5';
+        multInp.onblur = function() { updateLine(iso, slot, li, 'mult', this.value); };
+
+        // Suppr
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn-del-line';
+        delBtn.innerHTML = '&#10005;';
+        delBtn.onclick = () => removeLine(iso, slot, li);
+
+        top.appendChild(platSel);
+        top.appendChild(multInp);
+        top.appendChild(delBtn);
+        line.appendChild(top);
+
+        if (pl) {
+          const info = document.createElement('div');
+          info.className = 'repas-line-info';
+          const macTxt = Math.round(pl.kcal*m)+' kcal - P'+Math.round(pl.p*m)+'g G'+Math.round(pl.g*m)+'g L'+Math.round(pl.l*m)+'g';
+          const ingrTxt = (pl.ingredients||[]).length
+            ? pl.ingredients.map(i => i.nom+' '+Math.round((parseFloat(i.qty)||0)*m*10)/10+i.unit).join(' - ')
+            : '';
+          info.innerHTML = 'x'+m+' - '+macTxt + (ingrTxt ? '<br>'+ingrTxt : '');
+          line.appendChild(info);
+        }
+        block.appendChild(line);
+      });
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn-add-line';
+      addBtn.textContent = '+ Ajouter';
+      addBtn.onclick = () => addLine(iso, slot);
+      block.appendChild(addBtn);
+      body.appendChild(block);
+    });
+
+    // Barres de progression
+    if (totK > 0) {
+      const prog = document.createElement('div');
+      prog.className = 'macro-progress';
+      prog.appendChild(progBar(totK, mac.kcal, 'var(--orange)', 'Calories'));
+      prog.appendChild(progBar(totP, mac.p, 'var(--green)', 'Proteines (g)'));
+      prog.appendChild(progBar(totG, mac.g, 'var(--blue)', 'Glucides (g)'));
+      prog.appendChild(progBar(totL, mac.l, 'var(--purple)', 'Lipides (g)'));
+      body.appendChild(prog);
+
+      const totalBar = document.createElement('div');
+      totalBar.className = 'total-bar';
+      totalBar.innerHTML = '<span class="total-label">Total jour</span>' +
+        '<div class="total-vals">' +
+        '<span class="total-val" style="color:'+kcalCol+'">'+totK+' kcal</span>' +
+        '<span class="total-val" style="color:var(--green)">P'+totP+'g</span>' +
+        '<span class="total-val" style="color:var(--blue)">G'+totG+'g</span>' +
+        '<span class="total-val" style="color:var(--purple)">L'+totL+'g</span>' +
+        '</div>';
+      body.appendChild(totalBar);
+    }
+
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+
+  // Bilan semaine
+  const bilan = document.getElementById('weekBilan');
+  if (wN > 0) {
+    bilan.style.display = 'block';
+    document.getElementById('wbK').textContent = Math.round(wK/wN);
+    document.getElementById('wbP').textContent = Math.round(wP/wN)+'g';
+    document.getElementById('wbG').textContent = Math.round(wG/wN)+'g';
+    document.getElementById('wbL').textContent = Math.round(wL/wN)+'g';
+  } else {
+    bilan.style.display = 'none';
+  }
+}
+
+// ── CRUD SEMAINE ──────────────────────────────────────
+async function getWS() {
+  const days = getWeekDays(weekOffset);
+  const wk = weekKey(days);
+  const saved = JSON.parse(await dbGet('week_'+wk)||'{}');
+  return { saved, wk };
+}
+async function updateSeance(iso, seance) {
+  const { saved, wk } = await getWS();
+  if (!saved[iso]) saved[iso] = { seance:'repos', repas:{} };
+  saved[iso].seance = seance;
+  await dbSet('week_'+wk, JSON.stringify(saved));
+  renderWeek();
+}
+async function addLine(iso, slot) {
+  const { saved, wk } = await getWS();
+  if (!saved[iso]) saved[iso] = { seance:'repos', repas:{} };
+  if (!saved[iso].repas[slot]) saved[iso].repas[slot] = [];
+  saved[iso].repas[slot].push({ idx:'', mult:1 });
+  await dbSet('week_'+wk, JSON.stringify(saved));
+  renderWeek();
+}
+async function removeLine(iso, slot, li) {
+  const { saved, wk } = await getWS();
+  saved[iso].repas[slot].splice(li, 1);
+  await dbSet('week_'+wk, JSON.stringify(saved));
+  renderWeek();
+}
+async function updateLine(iso, slot, li, field, value) {
+  const { saved, wk } = await getWS();
+  if (!saved[iso]||!saved[iso].repas[slot]||saved[iso].repas[slot][li]===undefined) return;
+  if (field==='idx') saved[iso].repas[slot][li].idx = value===''?'':parseInt(value);
+  if (field==='mult') saved[iso].repas[slot][li].mult = parseFloat(value)||1;
+  await dbSet('week_'+wk, JSON.stringify(saved));
+  renderWeek();
+}
+async function clearWeek() {
+  if (!confirm('Effacer toute la semaine ?')) return;
+  const days = getWeekDays(weekOffset);
+  await dbDel('week_'+weekKey(days));
+  renderWeek();
+}
+
+// ── COURSES ───────────────────────────────────────────
+async function renderCourses() {
+  const days = getWeekDays(weekOffset);
+  const wk = weekKey(days);
+  const saved = JSON.parse(await dbGet('week_'+wk)||'{}');
+  const savedDone = await dbGet('courses_done_'+wk);
+  coursesDone = savedDone ? JSON.parse(savedDone) : {};
+  const totaux = {};
+  days.forEach(day => {
+    const dd = saved[localISO(day)];
+    if (!dd) return;
+    ALL_SLOTS.forEach(slot => {
+      (dd.repas[slot]||[]).forEach(e => {
+        const pl = plats[e.idx];
+        if (!pl||!pl.ingredients) return;
+        const m = parseFloat(e.mult)||1;
+        pl.ingredients.forEach(i => {
+          if (!i.nom) return;
+          if (!totaux[i.nom]) totaux[i.nom] = { qty:0, unit:i.unit };
+          totaux[i.nom].qty += Math.round((parseFloat(i.qty)||0)*m*10)/10;
+        });
+      });
+    });
+  });
+  const el = document.getElementById('coursesList');
+  const entries = Object.entries(totaux).sort((a,b)=>a[0].localeCompare(b[0]));
+  if (!entries.length) { el.innerHTML='<div class="empty-state">Aucun ingredient planifie.</div>'; return; }
+  el.innerHTML = '';
+  entries.forEach(([nom, d]) => {
+    const done = coursesDone[nom] || false;
+    const row = document.createElement('div');
+    row.className = 'cours-row' + (done ? ' done' : '');
+    row.innerHTML = '<div class="cours-check">'+(done?'&#10003;':'')+'</div><span class="cours-nom">'+nom+'</span><span class="cours-qty">'+d.qty+' '+d.unit+'</span>';
+    row.onclick = async () => {
+      coursesDone[nom] = !coursesDone[nom];
+      await dbSet('courses_done_'+wk, JSON.stringify(coursesDone));
+      renderCourses();
+    };
+    el.appendChild(row);
+  });
+}
+
+// ── PLATS ─────────────────────────────────────────────
+let ingrCounter = 0;
+function addIngrRow(nom,qty,unit) {
+  nom = nom||''; qty = qty||''; unit = unit||'g';
+  ingrCounter++;
+  const id = 'ir-'+ingrCounter;
+  const div = document.createElement('div');
+  div.className = 'ingr-row';
+  div.id = id;
+  const ni = document.createElement('input'); ni.type='text'; ni.placeholder='Ingredient'; ni.value=nom;
+  const qi = document.createElement('input'); qi.type='number'; qi.placeholder='Qte'; qi.value=qty; qi.step='0.1';
+  const us = document.createElement('select');
+  ['g','ml','unite'].forEach(u => { const o=document.createElement('option'); o.value=u; o.textContent=u; if(u===unit)o.selected=true; us.appendChild(o); });
+  const db2 = document.createElement('button'); db2.className='btn-del-line'; db2.innerHTML='&#10005;';
+  db2.onclick = () => document.getElementById(id).remove();
+  div.appendChild(ni); div.appendChild(qi); div.appendChild(us); div.appendChild(db2);
+  document.getElementById('ingrList').appendChild(div);
+}
+function getIngrs() {
+  return [...document.querySelectorAll('#ingrList .ingr-row')].map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { nom:inputs[0].value.trim(), qty:inputs[1].value, unit:row.querySelector('select').value };
+  }).filter(i=>i.nom);
+}
+async function savePlat() {
+  const nom = document.getElementById('platNom').value.trim();
+  if (!nom) { alert('Entre un nom !'); return; }
+  const plat = {
+    nom,
+    repas: document.getElementById('platRepas').value,
+    kcal: parseFloat(document.getElementById('platKcal').value)||0,
+    p:    parseFloat(document.getElementById('platP').value)||0,
+    g:    parseFloat(document.getElementById('platG').value)||0,
+    l:    parseFloat(document.getElementById('platL').value)||0,
+    ingredients: getIngrs(),
+  };
+  const idx = document.getElementById('platEditIdx').value;
+  if (idx !== '') plats[parseInt(idx)] = plat; else plats.push(plat);
+  await dbSet('plats', JSON.stringify(plats));
+  resetPlatForm();
+  renderPlats();
+  renderWeek();
+}
+function resetPlatForm() {
+  ['platNom','platKcal','platP','platG','platL'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('platEditIdx').value = '';
+  document.getElementById('platFormTitle').textContent = '+ NOUVEAU PLAT';
+  document.getElementById('platCancelBtn').style.display = 'none';
+  document.getElementById('ingrList').innerHTML = '';
+  ingrCounter = 0;
+}
+function editPlat(idx) {
+  const pl = plats[idx];
+  document.getElementById('platNom').value = pl.nom;
+  document.getElementById('platRepas').value = pl.repas;
+  document.getElementById('platKcal').value = pl.kcal;
+  document.getElementById('platP').value = pl.p;
+  document.getElementById('platG').value = pl.g;
+  document.getElementById('platL').value = pl.l;
+  document.getElementById('platEditIdx').value = idx;
+  document.getElementById('platFormTitle').textContent = 'MODIFIER';
+  document.getElementById('platCancelBtn').style.display = 'block';
+  document.getElementById('ingrList').innerHTML = '';
+  ingrCounter = 0;
+  (pl.ingredients||[]).forEach(i => addIngrRow(i.nom, i.qty, i.unit));
+  showPage('plats');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function cancelPlatEdit() { resetPlatForm(); }
+async function deletePlat(idx) {
+  if (!confirm('Supprimer "'+plats[idx].nom+'" ?')) return;
+  plats.splice(idx, 1);
+  await dbSet('plats', JSON.stringify(plats));
+  renderPlats();
+}
+function renderPlats() {
+  const el = document.getElementById('platsList');
+  if (!plats.length) { el.innerHTML='<div class="empty-state">Aucun plat encore.</div>'; return; }
+  const order = ['ptdej','colmatin','dejeuner','colapm','diner','collation','any'];
+  const labels = { ptdej:'☀️ Petit-dejeuner', colmatin:'🍌 Collation matin', dejeuner:'\uD83C\uDF7D️ Dejeuner', colapm:'🍎 Collation apres-midi', diner:'🌙 Diner', collation:'Collation (ancien)', any:'Tous repas' };
+  let html = '';
+  order.forEach(cat => {
+    const items = plats.filter(pl => pl.repas === cat);
+    if (!items.length) return;
+    html += '<div class="section-lbl">'+labels[cat]+'</div>';
+    items.forEach(pl => {
+      const idx = plats.indexOf(pl);
+      const ingrTxt = (pl.ingredients||[]).length ? pl.ingredients.map(i=>i.nom+' '+i.qty+i.unit).join(' - ') : 'Aucun ingredient';
+      html += '<div class="plat-item"><div class="plat-nom">'+pl.nom+'</div>' +
+        '<div class="plat-macros">'+pl.kcal+' kcal - P'+pl.p+'g - G'+pl.g+'g - L'+pl.l+'g</div>' +
+        '<div class="plat-ingr">'+ingrTxt+'</div>' +
+        '<div style="display:flex;gap:8px">' +
+        '<button class="btn-sm" onclick="editPlat('+idx+')">Modifier</button>' +
+        '<button class="btn-sm" style="color:var(--red)" onclick="deletePlat('+idx+')">Supprimer</button>' +
+        '</div></div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ── NAV ───────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── INIT ─────────────────────────────────────────────
+async function init() {
+  await openDB();
+  const saved = await dbGet('plats');
+  plats = saved ? JSON.parse(saved) : [];
+  renderPlats();
+  setPhase('seche');
+}
+init();
+</script>
+</body>
+</html>

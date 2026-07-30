@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planning Repas – We Nutrition</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'Inter', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e8e8e8;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #12161f 100%);
+      border-bottom: 1px solid #2a2f3e;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-bar {
+      width: 8px; height: 36px;
+      background: #4ade80;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    header h1 { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    header p  { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+    main { max-width: 860px; margin: 0 auto; padding: 16px; }
+
+    /* Days */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .day-btn {
+      background: #1a1f2e;
+      border: 1px solid #2a2f3e;
+      border-radius: 10px;
+      padding: 10px 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.12s;
+    }
+
+    .day-btn.active {
+      background: #4ade80;
+      border-color: #4ade80;
+    }
+
+    .day-btn .day-name {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b7280;
+      margin-bottom: 5px;
+    }
+
+    .day-btn.active .day-name { color: #0f1117; }
+
+    .day-dots { display: flex; justify-content: center; gap: 2px; }
+
+    .day-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #2a2f3e;
+    }
+
+    .day-btn.active .day-dot { background: rgba(0,0,0,0.25); }
+    .day-dot.filled { background: #4ade80; }
+    .day-btn.active .day-dot.filled { background: #0f1117; }
+
+    /* Actions */
+    .day-actions { display: flex; gap: 8px; margin-bottom: 14px; }
+
+    .btn-ghost {
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid;
+    }
+
+    .btn-green { background: #1a2e1a; border-color: #2a4a2a; color: #4ade80; }
+    .btn-red   { background: #2e1a1a; border-color: #4a2a2a; color: #f87171; }
+
+    /* Meal tabs */
+    .meal-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .meal-tab {
+      background: #1a1f2e;
+      border: 1px solid #2a2f3e;
+      border-radius: 10px;
+      padding: 10px 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.12s;
+      position: relative;
+    }
+
+    .meal-tab.active { background: #1a2e1a; border-color: #4ade80; }
+
+    .meal-tab .dot-indicator {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 6px; height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+      display: none;
+    }
+
+    .meal-tab.has-content .dot-indicator { display: block; }
+    .meal-tab.active .dot-indicator { display: none; }
+
+    .meal-tab .tab-emoji { font-size: 20px; margin-bottom: 4px; }
+
+    .meal-tab .tab-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b7280;
+      line-height: 1.3;
+    }
+
+    .meal-tab.active .tab-label { color: #4ade80; }
+
+    /* Editor */
+    .editor {
+      background: #1a1f2e;
+      border: 1px solid #2a2f3e;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .editor-title { display: flex; align-items: center; gap: 10px; }
+    .editor-title .title-emoji { font-size: 24px; }
+    .editor-title h2 { font-size: 16px; font-weight: 700; color: #fff; }
+    .editor-title .subtitle { font-size: 12px; color: #6b7280; }
+
+    .time-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f1117;
+      border: 1px solid #2a2f3e;
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+
+    .time-input-wrap input[type="time"] {
+      background: transparent;
+      border: none;
+      color: #4ade80;
+      font-size: 15px;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .items-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 90px 34px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .item-row input, .item-row select {
+      background: #0f1117;
+      border: 1px solid #2a2f3e;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #e8e8e8;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+    }
+
+    .item-row input[type="number"] {
+      color: #4ade80;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .item-row select { color: #a0aec0; font-size: 12px; cursor: pointer; }
+
+    .btn-remove {
+      background: #2e1a1a;
+      border: 1px solid #4a2a2a;
+      border-radius: 8px;
+      width: 34px; height: 34px;
+      color: #f87171;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .btn-add {
+      margin-top: 10px;
+      background: transparent;
+      border: 1px dashed #2a4a2a;
+      border-radius: 8px;
+      padding: 8px;
+      color: #4ade80;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 500;
+    }
+
+    /* Summary */
+    .summary {
+      background: #1a1f2e;
+      border: 1px solid #2a2f3e;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .summary-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid #2a2f3e;
+    }
+
+    .summary-header span {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-row {
+      display: flex;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid #12161f;
+    }
+
+    .summary-time {
+      min-width: 46px;
+      color: #4ade80;
+      font-size: 13px;
+      font-weight: 700;
+      padding-top: 2px;
+    }
+
+    .summary-meal-label {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .summary-item { font-size: 13px; color: #e8e8e8; }
+    .summary-empty { font-size: 12px; color: #3a3f4e; font-style: italic; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a2e1a;
+      border: 1px solid #4ade80;
+      color: #4ade80;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 600px) {
+      .days-grid { gap: 4px; }
+      .day-btn { padding: 8px 2px; }
+      .day-btn .day-name { font-size: 9px; }
+      .meal-tabs { gap: 4px; }
+      .item-row { grid-template-columns: 1fr 65px 80px 34px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-bar"></div>
+  <div>
+    <h1>Planning Repas</h1>
+    <p>We Nutrition • 5 repas / jour</p>
+  </div>
+</header>
+
+<main>
+  <div class="days-grid" id="days-grid"></div>
+  <div class="day-actions">
+    <button class="btn-ghost btn-green" onclick="copyDayToAll()">Copier vers tous les jours</button>
+    <button class="btn-ghost btn-red" onclick="clearDay()">Effacer ce jour</button>
+  </div>
+  <div class="meal-tabs" id="meal-tabs"></div>
+  <div class="editor" id="editor"></div>
+  <div class="summary" id="summary"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAYS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const MEAL_SLOTS = [
+  { id:"ptitdej",   label:"Petit-déjeuner", emoji:"🌅", defaultTime:"07:30" },
+  { id:"collation1",label:"Collation 1",    emoji:"🍎", defaultTime:"10:30" },
+  { id:"dejeuner",  label:"Déjeuner",       emoji:"🍽️", defaultTime:"13:00" },
+  { id:"collation2",label:"Collation 2",    emoji:"🥜", defaultTime:"16:00" },
+  { id:"diner",     label:"Dîner",          emoji:"🌙", defaultTime:"20:00" },
+];
+const UNITS = ["g","ml","pièce(s)","tranche(s)","cuillère(s)","portion(s)"];
+
+// State
+let activeDay = "Lundi";
+let activeMeal = "ptitdej";
+
+const STORAGE_KEY = "planning_repas_v2";
+
+function emptyMeal(defaultTime) {
+  return { time: defaultTime, items: [{ name:"", quantity:"", unit:"g" }] };
+}
+
+function emptyDay() {
+  const d = {};
+  MEAL_SLOTS.forEach(s => d[s.id] = emptyMeal(s.defaultTime));
+  return d;
+}
+
+function emptyWeek() {
+  const w = {};
+  DAYS.forEach(day => w[day] = emptyDay());
+  return w;
+}
+
+function load() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return emptyWeek();
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(week)); } catch(e) {}
+}
+
+let week = load();
+
+// Ensure all days/meals exist (in case structure changed)
+DAYS.forEach(day => {
+  if (!week[day]) week[day] = emptyDay();
+  MEAL_SLOTS.forEach(s => {
+    if (!week[day][s.id]) week[day][s.id] = emptyMeal(s.defaultTime);
+  });
+});
+
+function hasMealContent(day, mealId) {
+  return week[day][mealId].items.some(i => i.name.trim() !== "");
+}
+
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2000);
+}
+
+function copyDayToAll() {
+  DAYS.forEach(day => {
+    if (day !== activeDay) week[day] = JSON.parse(JSON.stringify(week[activeDay]));
+  });
+  save();
+  renderAll();
+  showToast("✓ Copié vers tous les jours");
+}
+
+function clearDay() {
+  week[activeDay] = emptyDay();
+  save();
+  renderAll();
+  showToast("✓ Journée effacée");
+}
+
+function setActiveDay(day) {
+  activeDay = day;
+  renderAll();
+}
+
+function setActiveMeal(mealId) {
+  activeMeal = mealId;
+  renderEditor();
+  renderMealTabs();
+}
+
+function updateTime(value) {
+  week[activeDay][activeMeal].time = value;
+  save();
+  renderSummary();
+}
+
+function updateItem(idx, field, value) {
+  week[activeDay][activeMeal].items[idx][field] = value;
+  save();
+  renderMealTabs();
+  renderSummary();
+  renderDaysGrid();
+}
+
+function addItem() {
+  week[activeDay][activeMeal].items.push({ name:"", quantity:"", unit:"g" });
+  save();
+  renderEditor();
+}
+
+function removeItem(idx) {
+  const items = week[activeDay][activeMeal].items;
+  if (items.length === 1) {
+    items[0] = { name:"", quantity:"", unit:"g" };
+  } else {
+    items.splice(idx, 1);
+  }
+  save();
+  renderEditor();
+  renderMealTabs();
+  renderSummary();
+  renderDaysGrid();
+}
+
+// Render functions
+
+function renderDaysGrid() {
+  const grid = document.getElementById("days-grid");
+  grid.innerHTML = DAYS.map(day => {
+    const isActive = day === activeDay;
+    const dots = MEAL_SLOTS.map(slot => {
+      const filled = hasMealContent(day, slot.id);
+      return `<div class="day-dot${filled ? " filled" : ""}"></div>`;
+    }).join("");
+    return `
+      <button class="day-btn${isActive ? " active" : ""}" onclick="setActiveDay('${day}')">
+        <div class="day-name">${day.slice(0,3)}</div>
+        <div class="day-dots">${dots}</div>
+      </button>`;
+  }).join("");
+}
+
+function renderMealTabs() {
+  const tabs = document.getElementById("meal-tabs");
+  tabs.innerHTML = MEAL_SLOTS.map(slot => {
+    const isActive = slot.id === activeMeal;
+    const hasContent = hasMealContent(activeDay, slot.id);
+    return `
+      <button class="meal-tab${isActive ? " active" : ""}${hasContent ? " has-content" : ""}" onclick="setActiveMeal('${slot.id}')">
+        <div class="dot-indicator"></div>
+        <div class="tab-emoji">${slot.emoji}</div>
+        <div class="tab-label">${slot.label}</div>
+      </button>`;
+  }).join("");
+}
+
+function renderEditor() {
+  const meal = week[activeDay][activeMeal];
+  const slot = MEAL_SLOTS.find(s => s.id === activeMeal);
+
+  const itemsHTML = meal.items.map((item, idx) => `
+    <div class="item-row">
+      <input type="text" placeholder="Aliment..." value="${escHtml(item.name)}"
+        oninput="updateItem(${idx}, 'name', this.value)" />
+      <input type="number" placeholder="Qté" value="${escHtml(item.quantity)}"
+        oninput="updateItem(${idx}, 'quantity', this.value)" />
+      <select onchange="updateItem(${idx}, 'unit', this.value)">
+        ${UNITS.map(u => `<option value="${u}"${item.unit===u?" selected":""}>${u}</option>`).join("")}
+      </select>
+      <button class="btn-remove" onclick="removeItem(${idx})">×</button>
+    </div>
+  `).join("");
+
+  document.getElementById("editor").innerHTML = `
+    <div class="editor-header">
+      <div class="editor-title">
+        <span class="title-emoji">${slot.emoji}</span>
+        <div>
+          <h2>${slot.label}</h2>
+          <div class="subtitle">${activeDay}</div>
+        </div>
+      </div>
+      <div class="time-input-wrap">
+        <span>⏰</span>
+        <input type="time" value="${meal.time}" onchange="updateTime(this.value)" />
+      </div>
+    </div>
+    <div class="items-list">${itemsHTML}</div>
+    <button class="btn-add" onclick="addItem()">+ Ajouter un aliment</button>
+  `;
+}
+
+function renderSummary() {
+  const rows = MEAL_SLOTS.map(slot => {
+    const m = week[activeDay][slot.id];
+    const hasItems = m.items.some(i => i.name.trim());
+    const itemsHTML = hasItems
+      ? m.items.filter(i => i.name.trim()).map(i =>
+          `<div class="summary-item">${escHtml(i.name)}${i.quantity ? ` — ${escHtml(i.quantity)} ${escHtml(i.unit)}` : ""}</div>`
+        ).join("")
+      : `<div class="summary-empty">Non renseigné</div>`;
+    return `
+      <div class="summary-row">
+        <div class="summary-time">${m.time}</div>
+        <div>
+          <div class="summary-meal-label">${slot.emoji} ${slot.label}</div>
+          ${itemsHTML}
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("summary").innerHTML = `
+    <div class="summary-header"><span>Résumé • ${activeDay}</span></div>
+    ${rows}
+  `;
+}
+
+function renderAll() {
+  renderDaysGrid();
+  renderMealTabs();
+  renderEditor();
+  renderSummary();
+}
+
+function escHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+renderAll();
+</script>
+</body>
+</html>

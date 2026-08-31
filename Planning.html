@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planning Entraînement</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --run: #58a6ff;
+      --run-bg: rgba(88,166,255,0.12);
+      --strength: #f78166;
+      --strength-bg: rgba(247,129,102,0.12);
+      --wod: #d2a8ff;
+      --wod-bg: rgba(210,168,255,0.12);
+      --rest: #3d444d;
+      --rest-bg: rgba(61,68,77,0.15);
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .logo {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--run), var(--wod));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+
+    header h1 { font-size: 16px; font-weight: 600; }
+    header p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .nav {
+      display: flex; align-items: center; gap: 8px; margin-left: auto;
+    }
+
+    .view-toggle {
+      display: flex;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .view-btn {
+      background: none;
+      border: none;
+      padding: 6px 12px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .view-btn.active { background: var(--run); color: #0d1117; }
+
+    .nav-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 11px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .period-label {
+      font-size: 13px; font-weight: 600;
+      min-width: 160px; text-align: center;
+    }
+
+    main { max-width: 960px; margin: 0 auto; padding: 16px; }
+
+    /* Legend */
+    .legend {
+      display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--muted);
+    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── WEEK VIEW ─────────────────────────────── */
+    .week-grid {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* sticky column header */
+    .week-col-headers {
+      display: grid;
+      grid-template-columns: 64px repeat(7, 1fr);
+      border-bottom: 2px solid var(--border);
+      background: var(--surface);
+    }
+
+    .week-col-headers .corner { border-right: 1px solid var(--border); }
+
+    .week-day-header {
+      padding: 10px 6px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .week-day-header:last-child { border-right: none; }
+
+    .wdh-name {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .wdh-date {
+      font-size: 18px; font-weight: 700; margin-top: 2px; color: var(--text);
+    }
+    .wdh-date.today-num {
+      background: var(--run);
+      color: #0d1117;
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 2px auto 0;
+    }
+
+    /* Time slot rows */
+    .time-slot-row {
+      display: grid;
+      grid-template-columns: 64px repeat(7, 1fr);
+      border-bottom: 1px solid var(--border);
+      min-height: 80px;
+    }
+    .time-slot-row:last-child { border-bottom: none; }
+
+    .time-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 2px;
+      border-right: 1px solid var(--border);
+      padding: 8px 4px;
+    }
+
+    .time-emoji { font-size: 16px; }
+    .time-text  { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+    .time-slot-row.matin    { background: rgba(88,166,255,0.02); }
+    .time-slot-row.midi     { background: rgba(247,129,102,0.02); }
+    .time-slot-row.soir     { background: rgba(210,168,255,0.02); }
+
+    .week-cell {
+      border-right: 1px solid var(--border);
+      padding: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+      min-height: 80px;
+    }
+    .week-cell:last-child { border-right: none; }
+    .week-cell:hover { background: var(--surface2); }
+
+    .session-pill {
+      font-size: 10px; font-weight: 600;
+      padding: 4px 7px;
+      border-radius: 5px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      line-height: 1.3;
+    }
+    .session-pill.run      { background: var(--run-bg);      color: var(--run); }
+    .session-pill.strength { background: var(--strength-bg); color: var(--strength); }
+    .session-pill.wod      { background: var(--wod-bg);      color: var(--wod); }
+    .session-pill.rest     { background: var(--rest-bg);     color: var(--rest); }
+
+    .pill-name { font-weight: 700; }
+    .pill-meta { font-size: 9px; opacity: 0.8; margin-top: 1px; }
+
+    /* ── MONTH VIEW ─────────────────────────────── */
+    .month-grid {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .month-header-row {
+      display: grid; grid-template-columns: repeat(7,1fr);
+      border-bottom: 1px solid var(--border);
+    }
+    .month-header-row div {
+      padding: 9px; text-align: center;
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .month-cells { display: grid; grid-template-columns: repeat(7,1fr); }
+
+    .month-cell {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      min-height: 80px;
+      padding: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .month-cell:nth-child(7n) { border-right: none; }
+    .month-cell:hover { background: var(--surface2); }
+    .month-cell.other-month { opacity: 0.3; }
+
+    .month-day-num {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      margin-bottom: 5px; width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .month-day-num.today {
+      background: var(--run); color: #0d1117; border-radius: 50%;
+    }
+
+    .month-pill {
+      font-size: 9px; font-weight: 600;
+      padding: 2px 5px; border-radius: 4px; margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .month-pill.run      { background: var(--run-bg);      color: var(--run); }
+    .month-pill.strength { background: var(--strength-bg); color: var(--strength); }
+    .month-pill.wod      { background: var(--wod-bg);      color: var(--wod); }
+    .month-pill.rest     { background: var(--rest-bg);     color: var(--rest); }
+
+    /* ── MODALS ─────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 16px;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%; max-width: 380px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+
+    .form-group { margin-bottom: 13px; }
+    .form-group label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--muted); margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 11px; color: var(--text); font-size: 13px; outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--run); }
+    .form-group textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+    .btn-primary {
+      flex: 1; background: var(--run); border: none;
+      border-radius: var(--radius); padding: 9px;
+      color: #0d1117; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .btn-secondary {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 9px 14px;
+      color: var(--text); font-size: 13px; cursor: pointer;
+    }
+    .btn-danger {
+      background: rgba(247,129,102,0.12); border: 1px solid var(--strength);
+      border-radius: var(--radius); padding: 9px 12px;
+      color: var(--strength); font-size: 13px; cursor: pointer;
+    }
+
+    .session-list-modal { margin-bottom: 10px; }
+
+    .session-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 9px 11px; margin-bottom: 7px;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 6px;
+    }
+    .si-left { flex: 1; min-width: 0; }
+    .si-title { font-size: 12px; font-weight: 700; }
+    .si-meta  { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .si-note  { font-size: 10px; color: var(--muted); margin-top: 3px; font-style: italic; }
+
+    .btn-icon { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; }
+    .btn-icon:hover { color: var(--strength); }
+
+    .add-session-btn {
+      width: 100%; background: transparent;
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      padding: 8px; color: var(--run); font-size: 12px; cursor: pointer;
+    }
+    .add-session-btn:hover { background: var(--run-bg); }
+
+    .empty-slot { color: var(--muted); font-size: 11px; text-align: center; padding: 8px 0; font-style: italic; }
+
+    @media (max-width: 640px) {
+      .week-col-headers { grid-template-columns: 44px repeat(7,1fr); }
+      .time-slot-row    { grid-template-columns: 44px repeat(7,1fr); min-height: 60px; }
+      .week-cell { padding: 4px; min-height: 60px; }
+      .time-label { padding: 4px 2px; }
+      .time-emoji { font-size: 13px; }
+      .time-text  { display: none; }
+      .session-pill { font-size: 9px; padding: 3px 4px; }
+      .period-label { min-width: 110px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏃</div>
+  <div>
+    <h1>Planning Entraînement</h1>
+    <p>Campus · Freeletics · Course</p>
+  </div>
+  <div class="nav">
+    <div class="view-toggle">
+      <button class="view-btn active" id="btn-week" onclick="setView('week')">Semaine</button>
+      <button class="view-btn" id="btn-month" onclick="setView('month')">Mois</button>
+    </div>
+    <button class="nav-btn" onclick="navigate(-1)">‹</button>
+    <span class="period-label" id="period-label"></span>
+    <button class="nav-btn" onclick="navigate(1)">›</button>
+  </div>
+</header>
+
+<main>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--run)"></div>Course</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--strength)"></div>Muscu</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--wod)"></div>WOD / Corps libre</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3d444d"></div>Repos</div>
+  </div>
+  <div id="view-container"></div>
+</main>
+
+<!-- Day modal (list) -->
+<div class="modal-overlay" id="day-modal" style="display:none" onclick="closeDayModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2 id="day-modal-title"></h2>
+    <div class="session-list-modal" id="session-list-modal"></div>
+    <button class="add-session-btn" onclick="openAddSession()">+ Ajouter une séance</button>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeDayModal()">Fermer</button></div>
+  </div>
+</div>
+
+<!-- Add/Edit session modal -->
+<div class="modal-overlay" id="session-modal" style="display:none" onclick="closeSessionModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2 id="session-modal-title">Nouvelle séance</h2>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="s-type">
+        <option value="run">🏃 Course à pied</option>
+        <option value="strength">🏋️ Muscu (Freeletics / barre)</option>
+        <option value="wod">⚡ WOD / Corps libre</option>
+        <option value="rest">😴 Repos</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Intitulé</label>
+      <input type="text" id="s-name" placeholder="EF 45 min, Séance seuil, Back squat..." />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Moment</label>
+        <select id="s-moment">
+          <option value="matin">🌅 Matin</option>
+          <option value="midi">☀️ Midi</option>
+          <option value="soir">🌙 Soir</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Durée prévue</label>
+        <input type="text" id="s-duration" placeholder="ex: 45 min" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="s-note" placeholder="Charges, allure cible, ressenti..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeSessionModal()">Annuler</button>
+      <button class="btn-danger" id="btn-delete" style="display:none" onclick="deleteSession()">Supprimer</button>
+      <button class="btn-primary" onclick="saveSession()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const MONTHS_FR  = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTHS_SHORT = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+const TIME_SLOTS = [
+  { key:'matin', emoji:'🌅', label:'Matin' },
+  { key:'midi',  emoji:'☀️', label:'Midi'  },
+  { key:'soir',  emoji:'🌙', label:'Soir'  },
+];
+const STORAGE_KEY = 'training_planner_v2';
+
+let today = new Date();
+let view  = 'week';
+let refDate = new Date(today);
+
+let data = load();
+let selectedDate = null;
+let editingIdx   = null;
+let prefillMoment = null;
+
+function load() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if(s) return JSON.parse(s); } catch(e) {}
+  return {};
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function dateKey(dt) {
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+function isToday(dt) {
+  return dt.getDate()===today.getDate() && dt.getMonth()===today.getMonth() && dt.getFullYear()===today.getFullYear();
+}
+
+function mondayOf(dt) {
+  const d = new Date(dt);
+  const dow = d.getDay() === 0 ? 6 : d.getDay()-1;
+  d.setDate(d.getDate()-dow);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function setView(v) {
+  view = v;
+  document.getElementById('btn-week').classList.toggle('active', v==='week');
+  document.getElementById('btn-month').classList.toggle('active', v==='month');
+  render();
+}
+
+function navigate(dir) {
+  if(view==='week') refDate.setDate(refDate.getDate() + dir*7);
+  else { refDate.setDate(1); refDate.setMonth(refDate.getMonth()+dir); }
+  render();
+}
+
+function typeLabel(t) { return {run:'Course',strength:'Muscu',wod:'WOD',rest:'Repos'}[t]||t; }
+function typeEmoji(t) { return {run:'🏃',strength:'🏋️',wod:'⚡',rest:'😴'}[t]||'📋'; }
+
+// ── RENDER ──────────────────────────────────────────
+function render() {
+  if(view==='week') renderWeek();
+  else renderMonth();
+}
+
+function renderWeek() {
+  const monday = mondayOf(refDate);
+  const days = Array.from({length:7}, (_,i) => { const d=new Date(monday); d.setDate(d.getDate()+i); return d; });
+
+  // Label
+  const from = `${days[0].getDate()} ${MONTHS_SHORT[days[0].getMonth()]}`;
+  const to   = `${days[6].getDate()} ${MONTHS_SHORT[days[6].getMonth()]} ${days[6].getFullYear()}`;
+  document.getElementById('period-label').textContent = `${from} – ${to}`;
+
+  // Headers
+  let html = `<div class="week-grid">
+  <div class="week-col-headers">
+    <div class="corner"></div>
+    ${days.map(d => {
+      const numClass = isToday(d) ? 'today-num' : '';
+      return `<div class="week-day-header">
+        <div class="wdh-name">${DAYS_SHORT[d.getDay()===0?6:d.getDay()-1]}</div>
+        <div class="wdh-date ${numClass}">${d.getDate()}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // Time slot rows
+  TIME_SLOTS.forEach(slot => {
+    html += `<div class="time-slot-row ${slot.key}">
+      <div class="time-label">
+        <span class="time-emoji">${slot.emoji}</span>
+        <span class="time-text">${slot.label}</span>
+      </div>`;
+
+    days.forEach(d => {
+      const key = dateKey(d);
+      const sessions = (data[key]||[]).filter(s => s.moment===slot.key);
+      html += `<div class="week-cell" onclick="openDayModal('${key}','${slot.key}')">`;
+      sessions.forEach(s => {
+        html += `<div class="session-pill ${s.type}">
+          <div class="pill-name">${s.name||typeLabel(s.type)}</div>
+          ${s.duration?`<div class="pill-meta">${s.duration}</div>`:''}
+        </div>`;
+      });
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('view-container').innerHTML = html;
+}
+
+function renderMonth() {
+  const y = refDate.getFullYear(), m = refDate.getMonth();
+  document.getElementById('period-label').textContent = `${MONTHS_FR[m]} ${y}`;
+
+  const first = new Date(y,m,1);
+  let startDow = first.getDay(); startDow = startDow===0?6:startDow-1;
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const prevDays    = new Date(y,m,0).getDate();
+  const total = Math.ceil((startDow+daysInMonth)/7)*7;
+
+  let html = `<div class="month-grid">
+  <div class="month-header-row">${DAYS_SHORT.map(d=>`<div>${d}</div>`).join('')}</div>
+  <div class="month-cells">`;
+
+  for(let i=0; i<total; i++) {
+    let d,mo,yo,other=false;
+    if(i<startDow){ d=prevDays-startDow+i+1; mo=m-1; yo=y; if(mo<0){mo=11;yo--;} other=true; }
+    else if(i>=startDow+daysInMonth){ d=i-startDow-daysInMonth+1; mo=m+1; yo=y; if(mo>11){mo=0;yo++;} other=true; }
+    else { d=i-startDow+1; mo=m; yo=y; }
+
+    const dt = new Date(yo,mo,d);
+    const key = dateKey(dt);
+    const sessions = data[key]||[];
+    const numClass = isToday(dt)?'today':'';
+
+    html += `<div class="month-cell${other?' other-month':''}" onclick="openDayModal('${key}',null)">
+      <div class="month-day-num ${numClass}">${d}</div>
+      ${sessions.slice(0,3).map(s=>`<div class="month-pill ${s.type}">${typeEmoji(s.type)} ${s.name||typeLabel(s.type)}</div>`).join('')}
+      ${sessions.length>3?`<div style="font-size:9px;color:var(--muted)">+${sessions.length-3}</div>`:''}
+    </div>`;
+  }
+
+  html += `</div></div>`;
+  document.getElementById('view-container').innerHTML = html;
+}
+
+// ── DAY MODAL ───────────────────────────────────────
+function openDayModal(key, prefillSlot) {
+  selectedDate  = key;
+  prefillMoment = prefillSlot || 'matin';
+  const [y,m,d] = key.split('-').map(Number);
+  const dt = new Date(y,m-1,d);
+  const dow = DAYS_SHORT[dt.getDay()===0?6:dt.getDay()-1];
+  document.getElementById('day-modal-title').textContent = `${dow} ${d} ${MONTHS_SHORT[m-1]} ${y}`;
+  renderDaySessionList();
+  document.getElementById('day-modal').style.display='flex';
+}
+
+function closeDayModal(e) {
+  if(e && e.target!==document.getElementById('day-modal')) return;
+  document.getElementById('day-modal').style.display='none';
+  selectedDate=null; render();
+}
+
+function renderDaySessionList() {
+  const sessions = data[selectedDate]||[];
+  const list = document.getElementById('session-list-modal');
+
+  if(sessions.length===0) {
+    list.innerHTML='<p class="empty-slot">Aucune séance — cliquez + pour ajouter</p>';
+    return;
+  }
+
+  // Group by moment
+  const bySlot = {matin:[],midi:[],soir:[]};
+  sessions.forEach((s,i)=>{ (bySlot[s.moment]||bySlot.matin).push({...s,_idx:i}); });
+
+  let html='';
+  TIME_SLOTS.forEach(slot=>{
+    const items = bySlot[slot.key];
+    if(!items.length) return;
+    html+=`<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 5px">${slot.emoji} ${slot.label}</div>`;
+    items.forEach(s=>{
+      html+=`<div class="session-item">
+        <div class="si-left">
+          <div class="si-title" style="color:var(--${s.type})">${typeEmoji(s.type)} ${s.name||typeLabel(s.type)}</div>
+          ${s.duration?`<div class="si-meta">${s.duration}</div>`:''}
+          ${s.note?`<div class="si-note">${s.note}</div>`:''}
+        </div>
+        <button class="btn-icon" onclick="editSession(${s._idx})">✏️</button>
+      </div>`;
+    });
+  });
+
+  list.innerHTML=html;
+}
+
+// ── SESSION MODAL ────────────────────────────────────
+function openAddSession() {
+  editingIdx=null;
+  document.getElementById('session-modal-title').textContent='Nouvelle séance';
+  document.getElementById('s-type').value='run';
+  document.getElementById('s-name').value='';
+  document.getElementById('s-moment').value=prefillMoment||'matin';
+  document.getElementById('s-duration').value='';
+  document.getElementById('s-note').value='';
+  document.getElementById('btn-delete').style.display='none';
+  document.getElementById('session-modal').style.display='flex';
+}
+
+function editSession(idx) {
+  const s=(data[selectedDate]||[])[idx]; if(!s) return;
+  editingIdx=idx;
+  document.getElementById('session-modal-title').textContent='Modifier la séance';
+  document.getElementById('s-type').value=s.type||'run';
+  document.getElementById('s-name').value=s.name||'';
+  document.getElementById('s-moment').value=s.moment||'matin';
+  document.getElementById('s-duration').value=s.duration||'';
+  document.getElementById('s-note').value=s.note||'';
+  document.getElementById('btn-delete').style.display='block';
+  document.getElementById('session-modal').style.display='flex';
+}
+
+function closeSessionModal(e) {
+  if(e && e.target!==document.getElementById('session-modal')) return;
+  document.getElementById('session-modal').style.display='none';
+}
+
+function saveSession() {
+  const s={
+    type:    document.getElementById('s-type').value,
+    name:    document.getElementById('s-name').value.trim(),
+    moment:  document.getElementById('s-moment').value,
+    duration:document.getElementById('s-duration').value.trim(),
+    note:    document.getElementById('s-note').value.trim(),
+  };
+  if(!data[selectedDate]) data[selectedDate]=[];
+  if(editingIdx!==null) data[selectedDate][editingIdx]=s;
+  else data[selectedDate].push(s);
+  save();
+  document.getElementById('session-modal').style.display='none';
+  renderDaySessionList();
+  render();
+}
+
+function deleteSession() {
+  if(editingIdx===null) return;
+  data[selectedDate].splice(editingIdx,1);
+  if(!data[selectedDate].length) delete data[selectedDate];
+  save();
+  document.getElementById('session-modal').style.display='none';
+  renderDaySessionList();
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

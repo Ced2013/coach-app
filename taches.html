@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tâches">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F3F0EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14110F" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<title>Tâches maison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one narrow column. Parents get four tabs (Aujourd'hui, Semaine, Tâches, Partage); each daughter gets one screen with her checklist. */
+:root {
+  --bg: #F3F0EE;
+  --surface: #FFFFFF;
+  --surface-2: #EAE5E1;
+  --ink: #1E1814;
+  --muted: #6D625A;
+  --line: #DDD5CF;
+  --accent: #D9480F;
+  --accent-text: #B93E0B;
+  --accent-bg: #FDE6D8;
+  --accent-ink: #FFFFFF;
+  --good: #17794D;
+  --good-bg: #DDF1E6;
+  --bad: #B42346;
+  --bad-bg: #F9DCE3;
+  --vic: #C2255C;
+  --vic-bg: #FCE4EE;
+  --cas: #0B7285;
+  --cas-bg: #DDF3F6;
+  --font-display: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14110F; --surface: #1E1A17; --surface-2: #2A2420; --ink: #EFE9E4; --muted: #A89A90; --line: #3A322C;
+    --accent: #FF8A3D; --accent-text: #FFA05E; --accent-bg: #3A2212; --accent-ink: #1A0F08;
+    --good: #59D08F; --good-bg: #15382A; --bad: #FF6B7D; --bad-bg: #451B24;
+    --vic: #F783AC; --vic-bg: #3D1A28; --cas: #66D9E8; --cas-bg: #12323A;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 var(--font-body);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wrap {
+  max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 40px;
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.vic { --kid: var(--vic); --kid-bg: var(--vic-bg); }
+.cas { --kid: var(--cas); --kid-bg: var(--cas-bg); }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); font-weight: 600; }
+h1 { font: 700 26px/1.15 var(--font-display); text-wrap: balance; }
+h2 { font: 600 17px/1.2 var(--font-display); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kid-name { display: flex; align-items: center; gap: 8px; }
+.kid-name i { width: 10px; height: 10px; border-radius: 50%; background: var(--kid); }
+.count { font: 600 15px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--kid, var(--accent)); border-radius: 999px; transition: width .25s ease; }
+.sub { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+.tabs { display: flex; background: var(--surface-2); border-radius: 12px; padding: 3px; }
+.tabs button { flex: 1; min-height: 40px; border: 0; background: transparent; border-radius: 9px; font-weight: 600; font-size: 13.5px; color: var(--muted); padding: 0 4px; }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+.task {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  min-height: 52px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+}
+.task .box { flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); display: grid; place-items: center; }
+.task .box svg { width: 16px; height: 16px; stroke: var(--accent-ink); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.task .t { flex: 1; min-width: 0; font-weight: 500; }
+.task .meta { font-size: 12px; color: var(--muted); }
+.task.done { background: var(--kid-bg, var(--good-bg)); border-color: transparent; }
+.task.done .box { background: var(--kid, var(--good)); border-color: var(--kid, var(--good)); }
+.task.done .box svg { visibility: visible; }
+.task.done .t { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--muted); }
+.task.big { min-height: 60px; font-size: 16px; }
+.task.big .box { width: 30px; height: 30px; }
+.empty { color: var(--muted); font-size: 14px; }
+
+.hero { background: var(--kid); color: #fff; border: 0; }
+.hero .count { font-size: 34px; }
+.hero .bar { background: rgba(255,255,255,.3); }
+.hero .bar > i { background: #fff; }
+.hero p { font-weight: 500; }
+@media (prefers-color-scheme: dark) { .hero { color: #14110F; } .hero .bar { background: rgba(0,0,0,.2); } .hero .bar > i { background: #14110F; } }
+
+.strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.strip div { text-align: center; padding: 8px 0 6px; border-radius: 10px; background: var(--surface-2); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.strip div b { display: block; font: 600 14px/1.2 var(--font-display); color: var(--ink); }
+.strip div.full { background: var(--kid); color: #fff; }
+.strip div.full b { color: #fff; }
+.strip div.today { outline: 2px solid var(--kid); outline-offset: -2px; }
+
+.btn { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn.block { width: 100%; }
+.link-btn { border: 0; background: transparent; color: var(--accent-text); font-weight: 600; font-size: 13px; padding: 8px 0; min-height: 36px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+label.fld { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+input.in { width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: 500 16px var(--font-body); }
+input.in:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+input.pin { letter-spacing: .5em; text-align: center; font: 600 24px var(--font-display); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 40px; min-width: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip.vic[aria-pressed="true"], .chip.cas[aria-pressed="true"] { background: var(--kid); border-color: var(--kid); color: #fff; }
+
+.m-task { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.m-task:first-of-type { border-top: 0; }
+.m-task .t { flex: 1; min-width: 0; }
+.m-task .t b { display: block; font-weight: 500; }
+
+.table-wrap { overflow-x: auto; margin: 0 -4px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 1px; text-align: center; }
+th { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+th.today { color: var(--accent-text); }
+td.name { text-align: left; max-width: 96px; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 4px; }
+tbody tr + tr td { border-top: 1px solid var(--line); }
+.cell { width: 26px; height: 26px; border-radius: 8px; border: 0; background: transparent; display: inline-grid; place-items: center; font-weight: 700; font-size: 13px; padding: 0; }
+.cell.ok { background: var(--good-bg); color: var(--good); }
+.cell.ko { background: var(--bad-bg); color: var(--bad); }
+.cell.todo { background: var(--surface-2); color: var(--muted); }
+.cell.off { color: var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .cell { width: 18px; height: 18px; border-radius: 5px; font-size: 10px; }
+
+.share-link { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface-2); padding: 10px 12px; border-radius: 10px; word-break: break-all; user-select: all; -webkit-user-select: all; }
+.banner { padding: 10px 14px; border-radius: 12px; background: var(--accent-bg); color: var(--accent-text); font-size: 13.5px; font-weight: 500; }
+.banner.bad { background: var(--bad-bg); color: var(--bad); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; z-index: 20; }
+.foot { text-align: center; font-size: 12px; color: var(--muted); }
+.center { text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><p class="muted">Chargement…</p></main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* ============================================================
+   CONFIG FIREBASE — colle ici l'objet donné par Firebase
+   (Paramètres du projet → Vos applications → Configuration).
+   Tant que c'est null, l'appli tourne en mode démo sur un seul téléphone.
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDy819Xl53iTX--G6l_kIWj18WK9Oel91k",
+  authDomain: "taches-maison-b055c.firebaseapp.com",
+  projectId: "taches-maison-b055c",
+  storageBucket: "taches-maison-b055c.firebasestorage.app",
+  messagingSenderId: "24246233804",
+  appId: "1:24246233804:web:b18e4799af6a3a5ff2f069"
+};
+
+(function () {
+  'use strict';
+  const FB_VERSION = '10.12.2';
+  const KIDS = [
+    { id: 'victoria', name: 'Victoria', cls: 'vic' },
+    { id: 'cassandra', name: 'Cassandra', cls: 'cas' }
+  ];
+  const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const EXAMPLES = [
+    { child: 'victoria', title: 'Faire son lit', freq: 'daily' },
+    { child: 'victoria', title: 'Vider le lave-vaisselle', freq: 'days', days: [1, 3, 5] },
+    { child: 'victoria', title: 'Ranger sa chambre', freq: 'weekly' },
+    { child: 'cassandra', title: 'Faire son lit', freq: 'daily' },
+    { child: 'cassandra', title: 'Mettre la table', freq: 'days', days: [2, 4, 6] },
+    { child: 'cassandra', title: 'Ranger sa chambre', freq: 'weekly' }
+  ];
+  const $ = (s) => document.querySelector(s);
+  const app = $('#app');
+  const kidOf = (id) => KIDS.find((k) => k.id === id);
+
+  /* ---------- dates ---------- */
+  const pad = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const parse = (s) => { const p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const today = () => ymd(new Date());
+  const dow = (s) => (parse(s).getDay() + 6) % 7 + 1; // 1 = lundi
+  const weekStart = (s) => addDays(s, 1 - dow(s));
+  const weekDates = (ws) => [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(ws, i));
+  const fmtLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const fmtShort = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  /* ---------- helpers ---------- */
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function rid(n) {
+    const a = 'abcdefghijkmnpqrstuvwxyz23456789', out = [];
+    const r = new Uint8Array(n);
+    (window.crypto || window.msCrypto).getRandomValues(r);
+    r.forEach((v) => out.push(a[v % a.length]));
+    return out.join('');
+  }
+  async function hashPin(code, pin) {
+    const data = new TextEncoder().encode('taches:' + code + ':' + pin);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  const ls = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  let toastTimer;
+  function toast(t) {
+    const el = $('#toast'); el.textContent = t; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
+  }
+  const ICON_CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  /* ---------- stores ---------- */
+  function loadScript(src) {
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = res; s.onerror = () => rej(new Error('script'));
+      document.head.appendChild(s);
+    });
+  }
+  async function firebaseStore(code) {
+    const base = 'https://www.gstatic.com/firebasejs/' + FB_VERSION + '/';
+    await loadScript(base + 'firebase-app-compat.js');
+    await loadScript(base + 'firebase-firestore-compat.js');
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    const fs = firebase.firestore();
+    try { await fs.enablePersistence({ synchronizeTabs: true }); } catch (e) {}
+    const root = fs.collection('familles').doc(code);
+    const docs = (s) => s.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+    return {
+      kind: 'firebase',
+      onMeta: (cb, err) => root.onSnapshot((s) => cb(s.exists ? s.data() : null, !s.metadata.fromCache), err),
+      setMeta: (d) => root.set(d, { merge: true }),
+      onTasks: (cb, err) => root.collection('taches').onSnapshot((s) => cb(docs(s)), err),
+      addTask: (t) => root.collection('taches').add(t),
+      delTask: (id) => root.collection('taches').doc(id).delete(),
+      onChecks: (week, cb, err) => root.collection('coches').where('week', '==', week).onSnapshot((s) => {
+        const m = {}; s.docs.forEach((d) => { m[d.id] = d.data(); }); cb(m);
+      }, err),
+      setCheck: (id, d) => root.collection('coches').doc(id).set(d),
+      delCheck: (id) => root.collection('coches').doc(id).delete()
+    };
+  }
+  async function demoStore(code) {
+    const KEY = 'taches-demo-' + code;
+    let data;
+    try { data = JSON.parse(ls.get(KEY)) || null; } catch (e) { data = null; }
+    data = data || { meta: null, tasks: {}, checks: {} };
+    const subs = new Set();
+    const save = () => { ls.set(KEY, JSON.stringify(data)); subs.forEach((f) => f()); return Promise.resolve(); };
+    const sub = (fn) => { subs.add(fn); setTimeout(fn, 0); return () => subs.delete(fn); };
+    window.addEventListener('storage', (e) => {
+      if (e.key !== KEY) return;
+      try { data = JSON.parse(e.newValue) || data; } catch (err) {}
+      subs.forEach((f) => f());
+    });
+    return {
+      kind: 'demo',
+      onMeta: (cb) => sub(() => cb(data.meta, true)),
+      setMeta: (d) => { data.meta = Object.assign({}, data.meta, d); return save(); },
+      onTasks: (cb) => sub(() => cb(Object.keys(data.tasks).map((id) => Object.assign({ id: id }, data.tasks[id])))),
+      addTask: (t) => { data.tasks[rid(12)] = t; return save(); },
+      delTask: (id) => { delete data.tasks[id]; return save(); },
+      onChecks: (week, cb) => sub(() => {
+        const m = {}; Object.keys(data.checks).forEach((k) => { if (data.checks[k].week === week) m[k] = data.checks[k]; }); cb(m);
+      }),
+      setCheck: (id, d) => { data.checks[id] = d; return save(); },
+      delCheck: (id) => { delete data.checks[id]; return save(); }
+    };
+  }
+
+  /* ---------- session ---------- */
+  const params = new URLSearchParams(location.search);
+  let code = (params.get('f') || '').trim();
+  let profile = (params.get('p') || '').trim();
+  if (!code) {
+    try {
+      const saved = JSON.parse(ls.get('taches-session') || 'null');
+      if (saved && saved.f) { code = saved.f; profile = saved.p || ''; }
+    } catch (e) {}
+  }
+  if (profile && profile !== 'parent' && !kidOf(profile)) profile = '';
+
+  function goTo(f, p) {
+    ls.set('taches-session', JSON.stringify({ f: f, p: p }));
+    location.replace(location.pathname + '?f=' + encodeURIComponent(f) + (p ? '&p=' + encodeURIComponent(p) : ''));
+  }
+  // Keep the code in the address so an icon added to the home screen opens straight on the right profile.
+  if (code && (params.get('f') !== code || (profile && params.get('p') !== profile))) { goTo(code, profile); return; }
+  if (code) ls.set('taches-session', JSON.stringify({ f: code, p: profile }));
+
+  /* ---------- state ---------- */
+  const S = {
+    store: null, meta: undefined, metaConfirmed: false, tasks: null, checks: {},
+    week: weekStart(today()), tab: 'today', unlocked: false,
+    error: '', slow: false, pending: {},
+    form: { title: '', who: 'victoria', freq: 'daily', days: [] },
+    confirmDel: null, setup: null, needsRender: false
+  };
+  let unsubChecks = null;
+
+  /* ---------- scheduling ---------- */
+  // A task only counts from the day it was created, so earlier days never show as missed.
+  const created = (t) => (t.createdAt ? ymd(new Date(t.createdAt)) : '0000-00-00');
+  const isOn = (t, ds) => ds >= created(t) && (t.freq === 'daily' || (t.freq === 'days' && (t.days || []).indexOf(dow(ds)) >= 0));
+  const checkId = (t, ds) => (t.freq === 'weekly' ? 'w' + weekStart(ds) : ds) + '_' + t.id;
+  const isDone = (t, ds) => !!S.checks[checkId(t, ds)];
+  const tasksOf = (kid) => (S.tasks || []).filter((t) => t.child === kid).sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+  function freqLabel(t) {
+    if (t.freq === 'daily') return 'Tous les jours';
+    if (t.freq === 'weekly') return '1 fois par semaine';
+    return (t.days || []).slice().sort().map((d) => DAYS[d - 1]).join(', ');
+  }
+  function dayStats(kid, ds) {
+    const list = tasksOf(kid).filter((t) => isOn(t, ds));
+    return { done: list.filter((t) => isDone(t, ds)).length, total: list.length, list: list };
+  }
+  function weekStats(kid, ws) {
+    let done = 0, total = 0;
+    const t0 = today();
+    tasksOf(kid).forEach((t) => {
+      if (t.freq === 'weekly') { total++; if (isDone(t, ws)) done++; return; }
+      weekDates(ws).forEach((ds) => { if (ds <= t0 && isOn(t, ds)) { total++; if (isDone(t, ds)) done++; } });
+    });
+    return { done: done, total: total };
+  }
+
+  /* ---------- actions ---------- */
+  function fail(e) {
+    console.error(e);
+    toast("Pas enregistré : vérifie la connexion internet");
+  }
+  function toggle(taskId, ds) {
+    const t = (S.tasks || []).find((x) => x.id === taskId);
+    if (!t) return;
+    const id = checkId(t, ds);
+    if (S.checks[id]) {
+      delete S.checks[id]; render();
+      S.store.delCheck(id).catch(fail);
+    } else {
+      const d = { taskId: t.id, child: t.child, week: weekStart(ds), date: t.freq === 'weekly' ? null : ds, doneAt: new Date().toISOString(), by: profile };
+      S.checks[id] = d; render();
+      S.store.setCheck(id, d).catch(fail);
+      if (profile !== 'parent' && t.freq !== 'weekly') {
+        const st = dayStats(profile, ds);
+        if (st.total && st.done === st.total) toast('Bravo, tout est fait pour aujourd\'hui !');
+      }
+    }
+  }
+  function subscribeChecks(ws) {
+    if (unsubChecks) unsubChecks();
+    S.checks = {};
+    unsubChecks = S.store.onChecks(ws, (m) => { S.checks = m; scheduleRender(); }, onErr);
+  }
+  function onErr(e) {
+    console.error(e);
+    S.error = (e && e.code === 'permission-denied')
+      ? "Firebase refuse l'accès : vérifie les règles de la base (étape 4 du guide)."
+      : "Connexion à la base impossible pour le moment.";
+    render();
+  }
+  async function seedIfNeeded() {
+    if (profile !== 'parent' || !S.meta || S.meta.seeded || !S.tasks || S.tasks.length) return;
+    await S.store.setMeta({ seeded: true });
+    const now = Date.now();
+    for (let i = 0; i < EXAMPLES.length; i++) {
+      const ex = EXAMPLES[i];
+      await S.store.addTask(Object.assign({ days: [] }, ex, { createdAt: new Date(now + i).toISOString() }));
+    }
+  }
+
+  /* ---------- render ---------- */
+  function isTyping() { const a = document.activeElement; return a && a.tagName === 'INPUT'; }
+  function scheduleRender() { if (isTyping()) S.needsRender = true; else render(); }
+  document.addEventListener('focusout', () => setTimeout(() => { if (S.needsRender && !isTyping()) render(); }, 0));
+
+  function render() {
+    S.needsRender = false;
+    let html;
+    if (!code) html = viewWelcome();
+    else if (S.error && S.meta === undefined) html = viewError();
+    else if (S.meta === undefined || (S.meta === null && !S.metaConfirmed)) html = viewLoading();
+    else if (S.meta === null) html = viewUnknownFamily();
+    else if (!profile) html = viewPickProfile();
+    else if (profile === 'parent' && !S.unlocked) html = viewPin();
+    else if (S.tasks === null) html = viewLoading();
+    else html = profile === 'parent' ? viewParent() : viewKid(kidOf(profile));
+    if (S.store && S.store.kind === 'demo' && code) html = '<p class="banner">Mode démo : rien n\'est partagé entre téléphones tant que Firebase n\'est pas relié.</p>' + html;
+    if (S.error && S.meta !== undefined) html = '<p class="banner bad">' + esc(S.error) + '</p>' + html;
+    app.innerHTML = html;
+  }
+  function viewLoading() {
+    return '<p class="muted center" style="padding-top:40px">' + (S.slow ? 'La connexion est lente… les données arrivent dès que le téléphone capte.' : 'Chargement…') + '</p>';
+  }
+  function viewError() {
+    return '<div class="card"><h2>Impossible de se connecter</h2><p class="muted">' + esc(S.error) + '</p><button class="btn primary" data-action="reload">Réessayer</button></div>';
+  }
+
+  /* welcome / setup */
+  function viewWelcome() {
+    const st = S.setup || { step: 'start' };
+    if (st.step === 'create') {
+      return '<div><p class="eyebrow">Première installation</p><h1>Choisis un code parent</h1></div>' +
+        '<div class="card"><p class="muted small">4 chiffres. Il protège ton suivi et la gestion des tâches : les filles ne l\'auront pas.</p>' +
+        '<label class="fld">Code à 4 chiffres<input class="in pin" id="pin1" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label>' +
+        '<label class="fld">Confirme le code<input class="in pin" id="pin2" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label>' +
+        '<p class="small" style="color:var(--bad)" id="setup-err">' + esc(st.err || '') + '</p>' +
+        '<button class="btn primary block" data-action="create-family">Créer l\'espace famille</button>' +
+        '<button class="link-btn" data-action="setup-back">Retour</button></div>';
+    }
+    if (st.step === 'join') {
+      return '<div><p class="eyebrow">Rejoindre</p><h1>Entre le code famille</h1></div>' +
+        '<div class="card"><p class="muted small">Il figure dans le lien envoyé par tes parents, après « f= ».</p>' +
+        '<label class="fld">Code famille<input class="in" id="join-code" autocomplete="off" autocapitalize="off" spellcheck="false"></label>' +
+        '<p class="small" style="color:var(--bad)">' + esc(st.err || '') + '</p>' +
+        '<button class="btn primary block" data-action="join-family">Continuer</button>' +
+        '<button class="link-btn" data-action="setup-back">Retour</button></div>';
+    }
+    return '<div><p class="eyebrow">Tâches maison</p><h1>Bienvenue</h1></div>' +
+      '<div class="card"><h2>Je suis un parent</h2><p class="muted small">Crée l\'espace de la famille, puis envoie un lien à Victoria et à Cassandra.</p>' +
+      '<button class="btn primary block" data-action="setup-create">Créer l\'espace famille</button></div>' +
+      '<div class="card"><h2>J\'ai déjà un code</h2><p class="muted small">Si le lien reçu ne s\'ouvre pas sur le bon profil.</p>' +
+      '<button class="btn block" data-action="setup-join">Entrer un code</button></div>';
+  }
+  function viewUnknownFamily() {
+    return '<div class="card"><h2>Code famille introuvable</h2><p class="muted">Ce lien ne correspond à aucun espace famille. Demande le bon lien à tes parents.</p>' +
+      '<button class="btn" data-action="forget">Recommencer</button></div>';
+  }
+  function viewPickProfile() {
+    return '<div><p class="eyebrow">Tâches maison</p><h1>Qui est-ce ?</h1></div><div class="list">' +
+      KIDS.map((k) => '<button class="task big ' + k.cls + '" data-action="pick" data-p="' + k.id + '"><span class="kid-name"><i></i></span><span class="t">' + k.name + '</span></button>').join('') +
+      '<button class="task big" data-action="pick" data-p="parent"><span class="t">Parent</span><span class="meta">code requis</span></button></div>';
+  }
+  function viewPin() {
+    return '<div><p class="eyebrow">Espace parent</p><h1>Entre ton code</h1></div>' +
+      '<div class="card"><label class="fld">Code à 4 chiffres<input class="in pin" id="pin-in" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label>' +
+      '<p class="small" style="color:var(--bad)" id="pin-err"></p>' +
+      '<button class="btn primary block" data-action="unlock">Ouvrir</button>' +
+      '<button class="link-btn" data-action="switch">Changer de profil</button></div>';
+  }
+
+  /* kid */
+  function taskBtn(t, ds, big) {
+    const done = isDone(t, ds);
+    return '<button class="task ' + (big ? 'big ' : '') + (done ? 'done' : '') + '" data-action="toggle" data-id="' + t.id + '" data-date="' + ds + '" aria-pressed="' + done + '">' +
+      '<span class="box">' + ICON_CHECK + '</span><span class="t">' + esc(t.title) + '</span></button>';
+  }
+  function viewKid(k) {
+    const t0 = today(), ws = weekStart(t0), st = dayStats(k.id, t0);
+    const weekly = tasksOf(k.id).filter((t) => t.freq === 'weekly');
+    const wDone = weekly.filter((t) => isDone(t, t0)).length;
+    const msg = !st.total ? 'Rien de prévu aujourd\'hui.' : st.done === st.total ? 'Tout est fait, bravo !' : (st.total - st.done) + ' tâche' + (st.total - st.done > 1 ? 's' : '') + ' à faire';
+    let h = '<div class="top ' + k.cls + '"><div><p class="eyebrow">' + cap(fmtLong.format(parse(t0))) + '</p><h1>Salut ' + k.name + ' !</h1></div></div>';
+    h += '<section class="card hero ' + k.cls + '"><div class="card-head"><p>' + msg + '</p><span class="count">' + st.done + '/' + st.total + '</span></div>' +
+      '<div class="bar"><i style="width:' + (st.total ? Math.round(st.done / st.total * 100) : 0) + '%"></i></div></section>';
+    h += '<section class="card ' + k.cls + '"><h2>Aujourd\'hui</h2><div class="list">' +
+      (st.list.length ? st.list.map((t) => taskBtn(t, t0, true)).join('') : '<p class="empty">Aucune tâche aujourd\'hui.</p>') + '</div></section>';
+    if (weekly.length) {
+      h += '<section class="card ' + k.cls + '"><div class="card-head"><h2>Cette semaine</h2><span class="count small">' + wDone + '/' + weekly.length + '</span></div><p class="muted small">À faire une fois, le jour que tu veux.</p><div class="list">' +
+        weekly.map((t) => taskBtn(t, t0, true)).join('') + '</div></section>';
+    }
+    h += '<section class="card ' + k.cls + '"><h2>Ma semaine</h2><div class="strip">' + weekDates(ws).map((ds, i) => {
+      const s = dayStats(k.id, ds);
+      const cls = (s.total && s.done === s.total ? 'full ' : '') + (ds === t0 ? 'today' : '');
+      return '<div class="' + cls + '">' + DAYS[i] + '<b>' + (s.total ? s.done + '/' + s.total : '–') + '</b></div>';
+    }).join('') + '</div></section>';
+    h += '<p class="foot"><button class="link-btn" data-action="switch">Changer de profil</button></p>';
+    return h;
+  }
+
+  /* parent */
+  function viewParent() {
+    const tabs = [['today', 'Aujourd\'hui'], ['week', 'Semaine'], ['tasks', 'Tâches'], ['share', 'Partage']];
+    let h = '<div class="top"><div><p class="eyebrow">Espace parent</p><h1>' +
+      (S.tab === 'week' ? 'Semaine du ' + fmtShort.format(parse(S.week)) : S.tab === 'tasks' ? 'Gérer les tâches' : S.tab === 'share' ? 'Installer chez les filles' : cap(fmtLong.format(parse(today())))) +
+      '</h1></div></div>';
+    h += '<div class="tabs" role="tablist">' + tabs.map((t) => '<button role="tab" data-action="tab" data-tab="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + '</button>').join('') + '</div>';
+    if (S.tab === 'today') h += parentToday();
+    else if (S.tab === 'week') h += parentWeek();
+    else if (S.tab === 'tasks') h += parentTasks();
+    else h += parentShare();
+    h += '<p class="foot"><button class="link-btn" data-action="switch">Changer de profil</button></p>';
+    return h;
+  }
+  function parentToday() {
+    const t0 = today();
+    if (S.week !== weekStart(t0)) { S.week = weekStart(t0); subscribeChecks(S.week); }
+    return KIDS.map((k) => {
+      const st = dayStats(k.id, t0), w = weekStats(k.id, weekStart(t0));
+      const weekly = tasksOf(k.id).filter((t) => t.freq === 'weekly');
+      return '<section class="card ' + k.cls + '"><div class="card-head"><h2 class="kid-name"><i></i>' + k.name + '</h2><span class="count">' + st.done + '/' + st.total + '</span></div>' +
+        '<div class="bar"><i style="width:' + (st.total ? Math.round(st.done / st.total * 100) : 0) + '%"></i></div>' +
+        '<div class="list">' + (st.list.length ? st.list.map((t) => taskBtn(t, t0, false)).join('') : '<p class="empty">Rien de prévu aujourd\'hui.</p>') + '</div>' +
+        (weekly.length ? '<p class="sub">Cette semaine</p><div class="list">' + weekly.map((t) => taskBtn(t, t0, false)).join('') + '</div>' : '') +
+        '<p class="muted small">Semaine : ' + w.done + '/' + w.total + ' tâches faites jusqu\'ici</p></section>';
+    }).join('');
+  }
+  function parentWeek() {
+    const t0 = today(), dates = weekDates(S.week);
+    let h = '<div class="row" style="justify-content:space-between"><button class="btn" data-action="week" data-d="-7" aria-label="Semaine précédente">‹ Préc.</button>' +
+      (S.week !== weekStart(t0) ? '<button class="link-btn" data-action="week" data-d="0">Cette semaine</button>' : '<span class="muted small">Semaine en cours</span>') +
+      '<button class="btn" data-action="week" data-d="7" aria-label="Semaine suivante"' + (S.week >= weekStart(t0) ? ' disabled style="opacity:.4"' : '') + '>Suiv. ›</button></div>';
+    h += KIDS.map((k) => {
+      const list = tasksOf(k.id), w = weekStats(k.id, S.week);
+      if (!list.length) return '<section class="card ' + k.cls + '"><h2 class="kid-name"><i></i>' + k.name + '</h2><p class="empty">Aucune tâche.</p></section>';
+      const rows = list.map((t) => {
+        if (t.freq === 'weekly') {
+          const d = S.checks[checkId(t, S.week)];
+          const cls = d ? 'ok' : (addDays(S.week, 6) < t0 ? 'ko' : 'todo');
+          const label = d && d.doneAt ? 'Fait ' + DAYS[dow(ymd(new Date(d.doneAt))) - 1].toLowerCase() + '.' : cls === 'ko' ? 'Pas fait' : 'À faire';
+          return '<tr><td class="name">' + esc(t.title) + '</td><td colspan="7"><button class="cell ' + cls + '" style="width:auto;padding:0 10px" data-action="toggle" data-id="' + t.id + '" data-date="' + S.week + '">' + label + '</button></td></tr>';
+        }
+        return '<tr><td class="name">' + esc(t.title) + '</td>' + dates.map((ds) => {
+          if (!isOn(t, ds)) return '<td><span class="cell off">·</span></td>';
+          const done = isDone(t, ds);
+          const cls = done ? 'ok' : ds < t0 ? 'ko' : 'todo';
+          const sym = done ? '✓' : ds < t0 ? '✕' : '';
+          if (ds > t0) return '<td><span class="cell todo" aria-label="À venir"></span></td>';
+          return '<td><button class="cell ' + cls + '" data-action="toggle" data-id="' + t.id + '" data-date="' + ds + '" aria-label="' + esc(t.title) + ', ' + DAYS[dow(ds) - 1] + ', ' + (done ? 'fait' : 'pas fait') + '">' + sym + '</button></td>';
+        }).join('') + '</tr>';
+      }).join('');
+      return '<section class="card ' + k.cls + '"><div class="card-head"><h2 class="kid-name"><i></i>' + k.name + '</h2><span class="count">' + w.done + '/' + w.total + '</span></div>' +
+        '<div class="table-wrap"><table><thead><tr><th style="text-align:left">Tâche</th>' + dates.map((ds, i) => '<th class="' + (ds === t0 ? 'today' : '') + '">' + DAYS[i].charAt(0) + '<br>' + parse(ds).getDate() + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div></section>';
+    }).join('');
+    h += '<div class="legend"><span><i class="cell ok">✓</i>Fait</span><span><i class="cell ko">✕</i>Pas fait</span><span><i class="cell todo"></i>À faire</span><span><i class="cell off">·</i>Pas prévu</span></div>';
+    h += '<p class="muted small">Touche une case pour corriger une coche.</p>';
+    return h;
+  }
+  function parentTasks() {
+    const f = S.form;
+    let h = '<section class="card"><h2>Ajouter une tâche</h2>' +
+      '<label class="fld">Tâche<input class="in" id="f-title" data-form="title" placeholder="Ex. : sortir les poubelles" value="' + esc(f.title) + '" maxlength="80"></label>' +
+      '<div class="fld"><span>Pour</span><div class="chips">' +
+      KIDS.map((k) => '<button class="chip ' + k.cls + '" data-action="form-who" data-v="' + k.id + '" aria-pressed="' + (f.who === k.id) + '">' + k.name + '</button>').join('') +
+      '<button class="chip" data-action="form-who" data-v="both" aria-pressed="' + (f.who === 'both') + '">Les deux</button></div></div>' +
+      '<div class="fld"><span>Quand</span><div class="chips">' +
+      [['daily', 'Tous les jours'], ['days', 'Certains jours'], ['weekly', '1 fois par semaine']].map((o) => '<button class="chip" data-action="form-freq" data-v="' + o[0] + '" aria-pressed="' + (f.freq === o[0]) + '">' + o[1] + '</button>').join('') + '</div></div>';
+    if (f.freq === 'days') h += '<div class="chips">' + DAYS.map((d, i) => '<button class="chip" data-action="form-day" data-v="' + (i + 1) + '" aria-pressed="' + (f.days.indexOf(i + 1) >= 0) + '">' + d + '</button>').join('') + '</div>';
+    h += '<p class="small" style="color:var(--bad)" id="form-err"></p><button class="btn primary block" data-action="add-task">Ajouter</button></section>';
+    if (S.meta && S.meta.seeded && !S.meta.examplesSeen) h += '<p class="banner">Les tâches de départ sont des exemples : supprime celles qui ne servent pas.</p>';
+    h += KIDS.map((k) => {
+      const list = tasksOf(k.id);
+      return '<section class="card ' + k.cls + '"><h2 class="kid-name"><i></i>' + k.name + '</h2><div>' + (list.length ? list.map((t) => {
+        const confirm = S.confirmDel === t.id;
+        return '<div class="m-task"><div class="t"><b>' + esc(t.title) + '</b><span class="muted small">' + freqLabel(t) + '</span></div>' +
+          '<button class="btn ' + (confirm ? 'danger' : '') + '" data-action="del-task" data-id="' + t.id + '">' + (confirm ? 'Confirmer' : 'Supprimer') + '</button></div>';
+      }).join('') : '<p class="empty">Aucune tâche.</p>') + '</div></section>';
+    }).join('');
+    return h;
+  }
+  function linkFor(p) { return location.origin + location.pathname + '?f=' + encodeURIComponent(code) + '&p=' + p; }
+  function parentShare() {
+    let h = '<p class="muted">Envoie à chacune son lien (par SMS par exemple). Sur son iPhone : ouvrir le lien dans Safari, puis Partager → <b>Sur l\'écran d\'accueil</b>.</p>';
+    h += KIDS.map((k) => '<section class="card ' + k.cls + '"><h2 class="kid-name"><i></i>Lien de ' + k.name + '</h2><p class="share-link">' + esc(linkFor(k.id)) + '</p>' +
+      '<button class="btn" data-action="copy" data-p="' + k.id + '">Copier le lien</button></section>').join('');
+    h += '<section class="card"><h2>Lien parent</h2><p class="muted small">Pour un deuxième parent. Le code à 4 chiffres reste demandé.</p><p class="share-link">' + esc(linkFor('parent')) + '</p>' +
+      '<button class="btn" data-action="copy" data-p="parent">Copier le lien</button></section>';
+    h += '<p class="muted small">Garde ces liens pour toi : toute personne qui a le lien d\'une fille peut cocher ses tâches.</p>';
+    return h;
+  }
+
+  /* ---------- events ---------- */
+  app.addEventListener('input', (e) => {
+    const k = e.target.dataset.form;
+    if (k) S.form[k] = e.target.value;
+  });
+  app.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const id = e.target.id;
+    if (id === 'pin-in') click('unlock');
+    else if (id === 'pin2') click('create-family');
+    else if (id === 'join-code') click('join-family');
+    else if (id === 'f-title') click('add-task');
+  });
+  function click(action) { const b = app.querySelector('[data-action="' + action + '"]'); if (b) b.click(); }
+
+  app.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-action]');
+    if (!b) return;
+    const a = b.dataset.action;
+    if (a !== 'del-task' && S.confirmDel) S.confirmDel = null;
+    switch (a) {
+      case 'toggle': toggle(b.dataset.id, b.dataset.date); break;
+      case 'tab': S.tab = b.dataset.tab; render(); window.scrollTo(0, 0);
+        if (S.tab === 'tasks' && S.meta && S.meta.seeded && !S.meta.examplesSeen) S.store.setMeta({ examplesSeen: true }).catch(() => {});
+        break;
+      case 'week': {
+        const d = +b.dataset.d;
+        S.week = d === 0 ? weekStart(today()) : addDays(S.week, d);
+        if (S.week > weekStart(today())) S.week = weekStart(today());
+        subscribeChecks(S.week); render(); break;
+      }
+      case 'form-who': S.form.who = b.dataset.v; render(); break;
+      case 'form-freq': S.form.freq = b.dataset.v; render(); break;
+      case 'form-day': {
+        const v = +b.dataset.v, i = S.form.days.indexOf(v);
+        if (i >= 0) S.form.days.splice(i, 1); else S.form.days.push(v);
+        render(); break;
+      }
+      case 'add-task': {
+        const f = S.form, title = f.title.trim(), err = $('#form-err');
+        if (!title) { err.textContent = 'Écris le nom de la tâche.'; return; }
+        if (f.freq === 'days' && !f.days.length) { err.textContent = 'Choisis au moins un jour.'; return; }
+        const who = f.who === 'both' ? KIDS.map((k) => k.id) : [f.who];
+        const base = { title: title, freq: f.freq, days: f.freq === 'days' ? f.days.slice().sort() : [], createdAt: new Date().toISOString() };
+        S.form.title = '';
+        render();
+        try {
+          for (const c of who) await S.store.addTask(Object.assign({ child: c }, base));
+          toast('Tâche ajoutée');
+        } catch (er) { fail(er); }
+        break;
+      }
+      case 'del-task':
+        if (S.confirmDel !== b.dataset.id) { S.confirmDel = b.dataset.id; render(); break; }
+        S.confirmDel = null;
+        S.store.delTask(b.dataset.id).then(() => toast('Tâche supprimée'), fail);
+        break;
+      case 'copy': {
+        const url = linkFor(b.dataset.p);
+        try { await navigator.clipboard.writeText(url); toast('Lien copié'); }
+        catch (er) {
+          const p = b.previousElementSibling, r = document.createRange();
+          r.selectNodeContents(p); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+          toast('Lien sélectionné : copie-le');
+        }
+        break;
+      }
+      case 'switch':
+        ls.set('taches-unlock-' + code, '');
+        goTo(code, ''); break;
+      case 'pick':
+        goTo(code, b.dataset.p); break;
+      case 'unlock': {
+        const v = ($('#pin-in').value || '').trim();
+        if ((await hashPin(code, v)) === S.meta.pinHash) {
+          S.unlocked = true; ls.set('taches-unlock-' + code, '1'); render(); seedIfNeeded().catch(fail);
+        } else { $('#pin-err').textContent = 'Code incorrect.'; $('#pin-in').value = ''; }
+        break;
+      }
+      case 'reload': location.reload(); break;
+      case 'forget': ls.set('taches-session', ''); location.replace(location.pathname); break;
+      case 'setup-create': S.setup = { step: 'create' }; render(); break;
+      case 'setup-join': S.setup = { step: 'join' }; render(); break;
+      case 'setup-back': S.setup = null; render(); break;
+      case 'join-family': {
+        let v = ($('#join-code').value || '').trim();
+        const m = v.match(/[?&]f=([^&\s]+)/); if (m) v = decodeURIComponent(m[1]);
+        if (!/^[a-z0-9]{12,40}$/.test(v)) { S.setup = { step: 'join', err: 'Ce code ne ressemble pas à un code famille.' }; render(); return; }
+        goTo(v, ''); break;
+      }
+      case 'create-family': {
+        const p1 = ($('#pin1').value || '').trim(), p2 = ($('#pin2').value || '').trim();
+        if (!/^\d{4}$/.test(p1)) { S.setup = { step: 'create', err: 'Le code doit faire 4 chiffres.' }; render(); return; }
+        if (p1 !== p2) { S.setup = { step: 'create', err: 'Les deux codes ne sont pas identiques.' }; render(); return; }
+        b.disabled = true; b.textContent = 'Création…';
+        const c = rid(20);
+        try {
+          const st = await makeStore(c);
+          await st.setMeta({ pinHash: await hashPin(c, p1), createdAt: new Date().toISOString(), seeded: false });
+          ls.set('taches-unlock-' + c, '1');
+          goTo(c, 'parent');
+        } catch (er) {
+          console.error(er);
+          S.setup = { step: 'create', err: er && er.code === 'permission-denied' ? "Firebase refuse l'accès : vérifie les règles de la base." : 'Création impossible : vérifie la connexion internet.' };
+          render();
+        }
+        break;
+      }
+    }
+  });
+
+  /* ---------- boot ---------- */
+  function makeStore(c) { return FIREBASE_CONFIG ? firebaseStore(c) : demoStore(c); }
+
+  async function boot() {
+    render();
+    if (!code) return;
+    S.unlocked = profile === 'parent' && ls.get('taches-unlock-' + code) === '1';
+    const slowTimer = setTimeout(() => { S.slow = true; if (S.meta === undefined || S.tasks === null) render(); }, 10000);
+    try { S.store = await makeStore(code); }
+    catch (e) { S.error = 'Impossible de charger la base (connexion internet ?).'; render(); return; }
+    S.store.onMeta((m, confirmed) => {
+      S.meta = m; S.metaConfirmed = S.metaConfirmed || confirmed;
+      if (m !== undefined) clearTimeout(slowTimer);
+      scheduleRender(); seedIfNeeded().catch(fail);
+    }, onErr);
+    S.store.onTasks((list) => { S.tasks = list; scheduleRender(); seedIfNeeded().catch(fail); }, onErr);
+    subscribeChecks(S.week);
+    // A tab left open overnight moves on to the new day.
+    let lastDay = today();
+    setInterval(() => {
+      if (today() !== lastDay) {
+        lastDay = today();
+        if (profile !== 'parent' || S.tab !== 'week') { S.week = weekStart(lastDay); subscribeChecks(S.week); }
+        scheduleRender();
+      }
+    }, 60000);
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

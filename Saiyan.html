@@ -56,10 +56,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .icon-btn.small { width: 36px; height: 36px; border-radius: 10px; font-size: 20px; line-height: 1; color: var(--muted); }
 .icon-btn.tiny { width: 30px; height: 30px; border-radius: 8px; font-size: 17px; line-height: 1; color: var(--muted); background: transparent; border-color: transparent; }
 .tabs { display: flex; align-items: center; gap: 8px; }
-.seg-tabs { display: flex; flex: 1; background: var(--surface-2); border-radius: 12px; padding: 3px; }
+.seg-tabs { display: flex; flex: 1; min-width: 0; background: var(--surface-2); border-radius: 12px; padding: 3px; }
 .seg-tabs button { flex: 1; min-width: 0; padding: 0 4px; font-size: 14px; min-height: 40px; border: 0; background: transparent; border-radius: 9px; font-weight: 600; color: var(--muted); }
 .seg-tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
-.today-btn { min-height: 44px; padding: 0 14px; border: 1px solid var(--accent); color: var(--accent-text); background: var(--surface); border-radius: 12px; font-weight: 600; font-size: 13px; }
+.today-btn { flex: none; min-height: 44px; padding: 0 12px; border: 1px solid var(--accent); color: var(--accent-text); background: var(--surface); border-radius: 12px; font-weight: 600; font-size: 13px; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 .m-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -182,6 +182,8 @@ tr.today td.day button { color: var(--accent-text); }
 .h-date { font-weight: 600; font-size: 14px; }
 .h-sets { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .h-top { font: 600 16px/1.2 var(--font-display); color: var(--accent-text); white-space: nowrap; }
+/* iOS zoome sur un champ dont le texte fait moins de 16 px */
+textarea, select, input[type=text], input[type=date], input[type=file] { font-size: 16px !important; }
 .foot { font-size: 12px; color: var(--muted); text-align: center; }
 .tip { font-size: 12.5px; color: var(--ink); background: var(--surface); border-radius: 8px; padding: 6px 10px; }
 .tip b { color: var(--good); }
@@ -294,7 +296,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         <button role="tab" id="tab-prog" data-action="tab" data-view="prog">Progrès</button>
         <button role="tab" id="tab-race" data-action="tab" data-view="race">Courses</button>
       </div>
-      <button class="today-btn" id="today-btn" data-action="today">Aujourd'hui</button>
+      <button class="today-btn" id="today-btn" data-action="today" aria-label="Revenir à aujourd'hui">Auj.</button>
     </div>
   </header>
   <main id="content" style="display:flex;flex-direction:column;gap:14px"></main>
@@ -1494,7 +1496,55 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       '<p class="note" id="health-msg" role="status">' + (healthMsg || 'Appuie longuement dans le cadre puis « Coller », ou utilise « Coller automatiquement ».') + '</p>' +
       '<p class="note" style="font-size:12px">Pour tester sans raccourci, colle : poids=73,4|mg=14,9|actives=600|repos=1800|fcrepos=52</p></section>';
   }
+  /* Historique : une ligne par mesure, « type;date;valeur ». La date peut être 2026-11-20, 20/11/2026 ou « 20 nov. 2026 à 07:12 ». */
+  var MOIS = { janv: 1, jan: 1, janvier: 1, fevr: 2, fev: 2, fevrier: 2, mars: 3, avr: 4, avril: 4, mai: 5, juin: 6, juil: 7, juillet: 7, aout: 8, sept: 9, sep: 9, septembre: 9, oct: 10, octobre: 10, nov: 11, novembre: 11, dec: 12, decembre: 12 };
+  function parseAnyDate(t) {
+    t = String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    var m = t.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]);
+    m = t.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (m) return (m[3].length === 2 ? '20' + m[3] : m[3]) + '-' + pad(+m[2]) + '-' + pad(+m[1]);
+    m = t.match(/(\d{1,2})\s*(?:er)?\s+([a-z]+)\.?\s+(\d{4})/);
+    if (m && MOIS[m[2]]) return m[3] + '-' + pad(MOIS[m[2]]) + '-' + pad(+m[1]);
+    return null;
+  }
+  var HIST_KEYS = { poids: 'weight', mg: 'fat', graisse: 'fat', muscle: 'musclePct', actives: 'kcalA', repos: 'kcalR', fcrepos: 'hrRest', vfc: 'hrv', sommeil: 'sleep' };
+  function parseHistory(txt) {
+    var rows = {}, n = 0;
+    String(txt || '').split(/\n+/).forEach(function (line) {
+      var p = line.split(';'); if (p.length < 3) return;
+      var k = HIST_KEYS[p[0].trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s_-]/g, '')]; if (!k) return;
+      var date = parseAnyDate(p[1]); if (!date) return;
+      var nv = p.slice(2).join(';').replace(/\s/g, '').replace(',', '.').match(/-?\d+(\.\d+)?/); if (!nv) return;
+      var r = rows[date] = rows[date] || {};
+      r[k] = (k === 'kcalA' || k === 'kcalR') ? (r[k] || 0) + parseFloat(nv[0]) : parseFloat(nv[0]);
+      n++;
+    });
+    return n ? rows : null;
+  }
+  function applyHistory(rows) {
+    var dates = Object.keys(rows).sort(), today = todayStr(), cnt = 0, ok = [];
+    dates.forEach(function (date) {
+      var h = rows[date], d = get(date), any = false;
+      if (h.weight != null && h.weight > 20) { d.weight = Math.round(h.weight * 10) / 10; any = true; }
+      if (h.fat != null) { d.fat = Math.round((h.fat <= 1 ? h.fat * 100 : h.fat) * 10) / 10; any = true; }
+      if (h.musclePct != null) { d.musclePct = Math.round((h.musclePct <= 1 ? h.musclePct * 100 : h.musclePct) * 10) / 10; any = true; }
+      if ((h.kcalA != null || h.kcalR != null) && date < today) { d.kcalOut = Math.round((h.kcalA || 0) + (h.kcalR || 0)); any = true; }
+      if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); any = true; }
+      if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); any = true; }
+      if (h.sleep != null && h.sleep > 0) { d.sleepMin = Math.round(h.sleep > 1440 ? h.sleep / 60 : h.sleep > 24 ? h.sleep : h.sleep * 60); any = true; }
+      if (any) { cnt++; ok.push(date); touch(date); }
+    });
+    return { days: cnt, from: ok[0], to: ok[ok.length - 1] };
+  }
   function doHealth(txt) {
+    var hist = parseHistory(txt);
+    if (hist) {
+      var res = applyHistory(hist);
+      healthMsg = res.days ? 'Historique importé : ' + plural(res.days, 'jour') + ' du ' + dm(res.from) + '/' + res.from.slice(2, 4) + ' au ' + dm(res.to) + '/' + res.to.slice(2, 4) + '.' : 'Aucune donnée d\'historique reconnue.';
+      healthPaste = !res.days; render(); refreshDay(); backupInfo();
+      return;
+    }
     var h = parseHealth(txt), done = applyHealth(h);
     healthMsg = done.length ? 'Importé pour le ' + dm(h.date || cur) + ' : ' + done.join(', ') + '.' : 'Aucune donnée reconnue. Texte reçu : « ' + esc(String(txt || '').slice(0, 120)) + ' »';
     healthPaste = !done.length; render(); refreshDay();

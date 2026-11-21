@@ -481,6 +481,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       sleep: Math.round(inRange(o.sleep, 240, 720, 450)),
       screen: Math.round(inRange(o.screen, 15, 900, 300)),
       coffee: Math.round(inRange(o.coffee, 0, 10, 3)),
+      health: o.health === true,
       shoes: Array.isArray(o.shoes) ? o.shoes.filter(function (x) { return x && x.name; }).map(function (x) { return { id: String(x.id || uid('sh')), name: String(x.name).slice(0, 40), start: num(x.start) || 0, limit: num(x.limit) || 700, retired: !!x.retired }; }) : []
     };
   }
@@ -1014,7 +1015,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     races.filter(function (r) { return r.date === cur; }).forEach(function (r) {
       html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Jour de course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(r.name) + '</h2><span class="goal">' + distLabel(r) + (r.goal ? ' · objectif ' + fmtChrono(r.goal) : '') + (r.result ? ' · réalisé ' + fmtChrono(r.result) : '') + '</span></div><button class="today-btn" data-action="goto-race">' + (r.result || cur < todayStr() ? 'Voir' : 'Saisir le chrono') + '</button></div></section>';
     });
-    html += healthCard();
+    if (settings.health) html += healthCard();
     html += '<section class="card score"><div><div class="score-num" id="score-num">0/5</div><div class="score-lbl">objectifs tenus aujourd\'hui</div></div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div></section>';
     html += metric('kcal', 'Calories', 'Objectif ' + fmtN(GOALS.kcal) + ' kcal',
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;width:100%"><div><span class="sub">Consommées</span><br><label class="field"><span class="sr">Calories consommées</span><input id="in-kcal" data-field="kcal" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(d.kcal) + '" style="width:3.4em"><span class="unit">kcal</span></label></div>' +
@@ -1452,12 +1453,12 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   }
   /* ---------- import Apple Santé (presse-papiers) ---------- */
   var healthPaste = false;
-  var HKEYS = { poids: 'weight', weight: 'weight', mg: 'fat', graisse: 'fat', fat: 'fat', actives: 'kcalA', active: 'kcalA', repos: 'kcalR', basal: 'kcalR', depensees: 'kcalOut', kcalout: 'kcalOut', mangees: 'kcal', consommees: 'kcal', kcal: 'kcal', sommeil: 'sleep', sleep: 'sleep', fcrepos: 'hrRest', fc: 'hrRest', hrrest: 'hrRest', vfc: 'hrv', hrv: 'hrv', eau: 'water', water: 'water', date: 'date', muscle: 'musclePct' };
+  var HKEYS = { poids: 'weight', weight: 'weight', mg: 'fat', graisse: 'fat', fat: 'fat', actives: 'kcalA', active: 'kcalA', activeshier: 'kcalAH', reposhier: 'kcalRH', depenseeshier: 'kcalOutH', repos: 'kcalR', basal: 'kcalR', depensees: 'kcalOut', kcalout: 'kcalOut', mangees: 'kcal', consommees: 'kcal', kcal: 'kcal', sommeil: 'sleep', sleep: 'sleep', fcrepos: 'hrRest', fc: 'hrRest', hrrest: 'hrRest', vfc: 'hrv', hrv: 'hrv', eau: 'water', water: 'water', date: 'date', muscle: 'musclePct' };
   function parseHealth(txt) {
     var out = {}, parts = String(txt || '').split(/[|\n;]+/);
     parts.forEach(function (p) {
-      var m = p.match(/^\s*([A-Za-zÀ-ÿ ]+?)\s*[=:]\s*(.+?)\s*$/); if (!m) return;
-      var k = HKEYS[m[1].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s/g, '')]; if (!k) return;
+      var m = p.match(/^\s*([A-Za-zÀ-ÿ _-]+?)\s*[=:]\s*(.+?)\s*$/); if (!m) return;
+      var k = HKEYS[m[1].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s_-]/g, '')]; if (!k) return;
       if (k === 'date') { var dd = m[2].match(/(\d{4})-(\d{2})-(\d{2})/) || m[2].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (dd) out.date = dd[0].indexOf('/') > 0 ? dd[3] + '-' + pad(+dd[2]) + '-' + pad(+dd[1]) : dd[0]; return; }
       var nv = m[2].replace(/\s/g, '').replace(',', '.').match(/-?\d+(\.\d+)?/); if (!nv) return;
       out[k] = parseFloat(nv[0]);
@@ -1472,6 +1473,11 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     if (h.kcalOut != null) { d.kcalOut = Math.round(h.kcalOut); done.push('calories dépensées'); }
     else if (h.kcalA != null || h.kcalR != null) { d.kcalOut = Math.round((h.kcalA || 0) + (h.kcalR || 0)); done.push('calories dépensées'); }
     if (h.kcal != null && h.kcal > 0) { d.kcal = Math.round(h.kcal); done.push('calories consommées'); }
+    if (h.kcalOutH != null || h.kcalAH != null || h.kcalRH != null) {
+      var yd = addDays(date, -1), dy = get(yd);
+      dy.kcalOut = Math.round(h.kcalOutH != null ? h.kcalOutH : (h.kcalAH || 0) + (h.kcalRH || 0));
+      touch(yd); done.push('calories dépensées de la veille (' + dm(yd) + ' : ' + fmtN(dy.kcalOut) + ' kcal)');
+    }
     if (h.sleep != null && h.sleep > 0) { d.sleepMin = Math.round(h.sleep > 1440 ? h.sleep / 60 : h.sleep > 24 ? h.sleep : h.sleep * 60); done.push('sommeil'); }
     if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); done.push('FC repos'); }
     if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); done.push('VFC'); }
@@ -2038,6 +2044,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         }, function () { settled = true; hm('Collage automatique refusé : appuie longuement dans le cadre puis « Coller ».'); });
       } catch (err) { settled = true; hm('Collage automatique indisponible : appuie longuement dans le cadre puis « Coller ».'); }
     }
+    else if (a === 'toggle-health') { settings.health = !settings.health; healthPaste = false; saveGoals(); renderSettings(); render(); }
     else if (a === 'health-go') { doHealth($('#health-txt').value); }
     else if (a === 'health-cancel') { healthPaste = false; healthMsg = ''; render(); }
     else if (a === 'shoe-add') {
@@ -2116,6 +2123,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       '<div class="sub">Repos entre séries</div><div class="chips">' + [60, 90, 120, 150, 180, 240].map(function (v) {
         return '<button class="chip sm" data-action="rest-dur" data-v="' + v + '" aria-pressed="' + (settings.rest === v) + '">' + fmtClock(v) + '</button>';
       }).join('') + '</div><p class="note" id="set-msg" role="status"></p>' +
+      '<div class="m-row" style="justify-content:space-between"><div><span class="sub">Import Apple Santé</span><span class="goal">Affiche le bouton en haut de l\'onglet Jour</span></div><button class="chip sm" data-action="toggle-health" aria-pressed="' + settings.health + '">' + (settings.health ? 'Affiché' : 'Masqué') + '</button></div>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
       '<div class="m-head"><div><h3>Chaussures</h3><span class="goal">Kilométrage suivi à partir des sorties où tu les choisis</span></div></div>' +
       settings.shoes.map(function (x) {

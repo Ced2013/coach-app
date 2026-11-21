@@ -21,7 +21,7 @@
   --bg: #EEF1F3; --surface: #FFFFFF; --surface-2: #E4E9ED; --ink: #12202B; --muted: #5B6B78; --line: #D3DAE0;
   --accent: #D9480F; --accent-text: #B93E0B; --accent-bg: #FDE6D8; --accent-ink: #FFFFFF;
   --good: #17794D; --good-bg: #DDF1E6; --bad: #B42346; --bad-bg: #F9DCE3;
-  --c-muscu: #6B4FD3; --c-run: #0E8A7B; --c-bike: #1B7FB8;
+  --c-muscu: #6B4FD3; --c-run: #0E8A7B; --c-bike: #1B7FB8; --c-race: #D92D2D;
   --font-display: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
@@ -29,7 +29,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0E151B; --surface: #161F27; --surface-2: #1F2B35; --ink: #E7EDF2; --muted: #93A4B2; --line: #2A3945;
     --accent: #FF8A3D; --accent-text: #FFA05E; --accent-bg: #3A2212; --accent-ink: #1A0F08; --good: #59D08F; --good-bg: #15382A; --bad: #FF6B7D; --bad-bg: #451B24;
-    --c-muscu: #A793FF; --c-run: #4FD1C0; --c-bike: #6CB8F0;
+    --c-muscu: #A793FF; --c-run: #4FD1C0; --c-bike: #6CB8F0; --c-race: #FF5A5A;
     color-scheme: dark;
   }
 }
@@ -57,7 +57,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .icon-btn.tiny { width: 30px; height: 30px; border-radius: 8px; font-size: 17px; line-height: 1; color: var(--muted); background: transparent; border-color: transparent; }
 .tabs { display: flex; align-items: center; gap: 8px; }
 .seg-tabs { display: flex; flex: 1; background: var(--surface-2); border-radius: 12px; padding: 3px; }
-.seg-tabs button { flex: 1; min-height: 40px; border: 0; background: transparent; border-radius: 9px; font-weight: 600; color: var(--muted); }
+.seg-tabs button { flex: 1; min-width: 0; padding: 0 4px; font-size: 14px; min-height: 40px; border: 0; background: transparent; border-radius: 9px; font-weight: 600; color: var(--muted); }
 .seg-tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
 .today-btn { min-height: 44px; padding: 0 14px; border: 1px solid var(--accent); color: var(--accent-text); background: var(--surface); border-radius: 12px; font-weight: 600; font-size: 13px; }
 
@@ -103,7 +103,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .dots i.on { opacity: 1; }
 
 /* sport */
-.muscu { --fam: var(--c-muscu); } .run { --fam: var(--c-run); } .bike { --fam: var(--c-bike); }
+.muscu { --fam: var(--c-muscu); } .run { --fam: var(--c-run); } .bike { --fam: var(--c-bike); } .race { --fam: var(--c-race); }
 .s-list { display: flex; flex-direction: column; gap: 10px; }
 .s-block { border: 1px solid var(--line); border-left: 4px solid var(--fam); border-radius: 12px; padding: 10px 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
 .s-head { display: flex; align-items: center; gap: 10px; }
@@ -210,8 +210,49 @@ tr.today td.day button { color: var(--accent-text); }
 .plan-row .ps.good { background: var(--good-bg); color: var(--good); }
 .plan-row .ps.bad { background: var(--bad-bg); color: var(--bad); }
 .plan-row.today .pd { color: var(--accent-text); }
-.race { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.race b { font: 700 30px/1 var(--font-display); color: var(--accent-text); font-variant-numeric: tabular-nums;  white-space: nowrap; }
+.pday { padding: 10px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.pday:first-child { border-top: 0; }
+.pday-head { display: flex; align-items: center; gap: 10px; }
+.pday-head .pd { border: 0; background: transparent; padding: 0; font-weight: 600; font-size: 14px; min-height: 32px; }
+.pday.today .pd { color: var(--accent-text); }
+.pday-head .pr { font-size: 13px; color: var(--muted); }
+.pe-add { margin-left: auto; min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1px dashed var(--muted); background: transparent; font-weight: 600; font-size: 12.5px; color: var(--accent-text); }
+.pi { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border: 1px solid var(--line); border-left: 4px solid var(--fam); border-radius: 10px; }
+.pi-main { flex: 1; min-width: 0; border: 0; background: transparent; padding: 2px 0; text-align: left; font-size: 13.5px; font-weight: 600; }
+.pi-main small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.pi .ps { flex: none; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.pi .ps.good { background: var(--good-bg); color: var(--good); }
+.pi .ps.bad { background: var(--bad-bg); color: var(--bad); }
+.plan-ed { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.plan-ed .chip { background: var(--surface); }
+.plan-ed .chip[aria-pressed="true"] { background: var(--accent); }
+.pe-note { flex: 1; min-width: 0; min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); padding: 0 12px; font: inherit; font-size: 14px; }
+.pe-save { min-height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 13.5px; }
+.pe-save:disabled { opacity: .4; }
+.pe-cancel { min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; font-size: 13px; }
+.rc { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; }
+.rc:first-of-type { border-top: 0; }
+.rc-date { width: 46px; flex: none; text-align: center; line-height: 1.1; }
+.rc-date b { display: block; font: 700 20px/1 var(--font-display); }
+.rc-date small { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+.rc-main { flex: 1; min-width: 0; }
+.rc-main b { display: block; font-size: 14.5px; }
+.rc-main small { display: block; color: var(--muted); font-size: 12.5px; }
+.rc-time { flex: none; text-align: right; font: 600 17px/1.2 var(--font-display); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.rc-time small { display: block; font: 600 11.5px var(--font-body); }
+.next-race { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.next-race .goal, .next-race .sub { color: var(--accent-ink); opacity: .85; }
+.next-race .big { font: 700 40px/1 var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.r-form { display: flex; flex-direction: column; gap: 12px; }
+.r-form label.blk { display: flex; flex-direction: column; gap: 4px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.r-form input.txt { min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); padding: 0 12px; font: 15px var(--font-body); text-transform: none; letter-spacing: 0; }
+.r-form .two { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+.r-form input.txt { width: 100%; min-width: 0; }
+.pb-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); }
+.pb-row:first-of-type { border-top: 0; }
+.pb-row b { font: 600 17px var(--font-display); color: var(--good); font-variant-numeric: tabular-nums; }
+.countdown { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.countdown b { font: 700 30px/1 var(--font-display); color: var(--accent-text); font-variant-numeric: tabular-nums;  white-space: nowrap; }
 .bilan { white-space: pre-wrap; font: 13px/1.55 var(--font-body); background: var(--surface-2); border-radius: 10px; padding: 12px; margin: 0; }
 .rest { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-left, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -6px 20px rgba(0,0,0,.18); }
 .rest .bar { height: 6px; margin-bottom: 10px; }
@@ -241,6 +282,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         <button role="tab" id="tab-day" data-action="tab" data-view="day">Jour</button>
         <button role="tab" id="tab-week" data-action="tab" data-view="week">Semaine</button>
         <button role="tab" id="tab-prog" data-action="tab" data-view="prog">Progrès</button>
+        <button role="tab" id="tab-race" data-action="tab" data-view="race">Courses</button>
       </div>
       <button class="today-btn" id="today-btn" data-action="today">Aujourd'hui</button>
     </div>
@@ -274,6 +316,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     { id: 'run-ef', label: 'Running EF', fam: 'run' },
     { id: 'run-q', label: 'Running séance qualité', fam: 'run' },
     { id: 'run-sl', label: 'Running sortie longue', fam: 'run' },
+    { id: 'course', label: 'Course', fam: 'race' },
     { id: 'velo-taf', label: 'Vélo taf', fam: 'bike' }
   ];
   /* Mouvements proposés selon la séance choisie (tous restent accessibles via « Autres »). */
@@ -332,7 +375,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   var openPicker = {};
   var db = null, migrated = false, needsRender = false, loadTimer = null;
 
-  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, waist: null, hrRest: null, hrv: null, coffee: null, meals: [], sports: [] }; }
+  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, waist: null, hrRest: null, hrv: null, coffee: null, meals: [], plan: [], sports: [] }; }
   function normSet(x) { return { w: num(x && x.w), r: num(x && x.r) }; }
   function normExo(e) {
     return { id: String(e.id || uid('e')), move: String(e.move || ''), rir: num(e.rir), sets: Array.isArray(e.sets) ? e.sets.map(normSet) : [] };
@@ -343,6 +386,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     e.blue = !!o.blue; e.blueMin = num(o.blueMin);
     e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.waist = num(o.waist);
     e.hrRest = num(o.hrRest); e.hrv = num(o.hrv); e.coffee = num(o.coffee);
+    if (Array.isArray(o.plan)) e.plan = o.plan.filter(function (x) { return x && x.type; }).map(function (x) { return { id: String(x.id || uid('p')), type: String(x.type), min: num(x.min), note: String(x.note || '').slice(0, 120) }; });
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
     if (Array.isArray(o.sports)) e.sports = o.sports.map(function (s) {
       return {
@@ -352,7 +396,8 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     });
     return e;
   }
-  function hasData(d) { return d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || d.sports.length > 0; }
+  function hasData(d) { return hasLog(d) || d.plan.length > 0; }
+  function hasLog(d) { return d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || d.sports.length > 0; }
   function hasBody(d) { return d.weight != null || d.fat != null || d.muscle != null || d.waist != null; }
   function get(date) { return days[date] || (days[date] = emptyDay(date)); }
   function sportDef(type) { return SPORTS.filter(function (x) { return x.id === type; })[0] || { label: type, fam: 'muscu' }; }
@@ -575,6 +620,11 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     var changed = false;
     snap.docs.forEach(function (d) {
       var date = d.id;
+      if (date === 'races') {
+        var rd = d.data(), nr = cleanRaces((rd && rd.list) || []);
+        if (JSON.stringify(nr) !== JSON.stringify(races)) { races = nr; try { localStorage.setItem(LS_RACES, JSON.stringify(races)); } catch (e) {} changed = true; }
+        return;
+      }
       if (date === 'goals') {
         var gd = d.data(), ng = cleanGoals((gd && gd.body) || {});
         if (JSON.stringify(ng) !== JSON.stringify(bodyGoals)) { bodyGoals = ng; try { localStorage.setItem(LS_GOALS, JSON.stringify(bodyGoals)); } catch (e) {} changed = true; }
@@ -598,6 +648,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         snap.docs.forEach(function (d) { ids[d.id] = true; });
         Object.keys(days).forEach(function (k) { if (!ids[k] && hasData(days[k])) touch(k); });
         if (!ids.goals) saveGoals();
+        if (!ids.races) saveRaces();
       }
       if (!Object.keys(timers).length) setSync('ok');
     }
@@ -606,7 +657,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
 
   /* ---------- évaluation des objectifs ---------- */
   function evalDay(d) {
-    var past = d.date < todayStr(), filled = hasData(d), e = {};
+    var past = d.date < todayStr(), filled = hasLog(d), e = {};
     if (d.kcal == null) e.kcal = { s: 'idle', t: 'À renseigner', p: 0 };
     else if (d.kcal <= GOALS.kcal) e.kcal = { s: 'good', t: 'Reste ' + fmtN(GOALS.kcal - d.kcal) + ' kcal', p: d.kcal / GOALS.kcal };
     else e.kcal = { s: 'bad', t: '+' + fmtN(d.kcal - GOALS.kcal) + ' kcal', p: 1 };
@@ -639,7 +690,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       d.sports.forEach(function (s) {
         n++; min += s.min || 0;
         var fam = sportDef(s.type).fam;
-        if (fam === 'run') km += s.km || 0;
+        if (fam === 'run' || fam === 'race') km += s.km || 0;
         var ss = sessionStats(s); ton += ss.ton; sets += ss.n;
         by[s.type] = by[s.type] || { n: 0, min: 0, km: 0 };
         by[s.type].n++; by[s.type].min += s.min || 0; by[s.type].km += s.km || 0;
@@ -712,32 +763,51 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     return out;
   }
   /* ---------- plan prépa semi de Madrid ---------- */
-  var RACE = { date: '2027-04-25', name: 'Semi-marathon de Madrid' };
-  var PREP_START = '2027-02-01';
-  function P(type, min, note) { return { type: type, min: min, note: note || '' }; }
-  function planWeek(monday) {
-    if (monday < '2026-11-30') return { name: 'Récupération post-marathon', days: [null, null, null, null, null, null, P('run-ef', 30, 'Footing test, sans pression')] };
-    if (monday < PREP_START) return { name: 'Bloc muscu', days: [P('muscu-haut', 60), P('run-ef', 40, 'Zone 2'), P('muscu-bas', 60), null, P('muscu-full', 60), P('run-ef', 45, 'Zone 2'), P('run-sl', 60, 'Allure facile')] };
-    var n = Math.round((parse(monday) - parse(PREP_START)) / (7 * 86400000)) + 1;
-    if (n > 12) return { name: 'Après Madrid', days: [null, null, null, null, null, null, null] };
-    var SL = [60, 70, 75, 65, 80, 85, 90, 70, 95, 100, 75, 0][n - 1];
-    var EF = [40, 40, 45, 40, 45, 50, 50, 40, 50, 55, 40, 35][n - 1];
-    var Q = n >= 9 ? 'Allure semi : blocs de 3 × 10 min' : n % 2 ? 'Seuil : blocs de 8 à 10 min' : 'VMA : répétitions de 3 à 4 min';
-    var light = n === 4 || n === 8 ? ' (semaine allégée)' : '';
-    if (n === 12) return { name: 'Prépa semi S12/12 · semaine de course', week: n, days: [P('run-ef', 35, 'Très facile'), P('run-q', 30, 'Rappels allure semi'), null, P('run-ef', 25, 'Activation + lignes droites'), null, null, P('run-q', 120, 'COURSE : ' + RACE.name)] };
-    return { name: 'Prépa semi S' + n + '/12' + light, week: n, days: [P('run-ef', EF, 'Zone 2'), P('run-q', 50, Q), n === 11 ? null : P('muscu-full', 50, 'Entretien force'), P('run-ef', EF, 'Zone 2'), n === 11 ? null : P('muscu-haut', 45), null, P('run-sl', SL, 'Allure facile' + (n >= 6 && n !== 8 ? ', fin à allure semi' : ''))] };
+  /* ---------- compétitions ---------- */
+  var LS_RACES = 'ced-routines-races';
+  var DISTS = [['5k', '5 km', 5], ['10k', '10 km', 10], ['20k', '20 km', 20], ['semi', 'Semi', 21.0975], ['marathon', 'Marathon', 42.195], ['autre', 'Autre', null]];
+  var races = null, raceEdit = null;
+  try { var r0 = JSON.parse(localStorage.getItem(LS_RACES) || 'null'); if (Array.isArray(r0)) races = cleanRaces(r0); } catch (e) {}
+  if (!races) races = [{ id: 'madrid', name: 'Semi-marathon de Madrid', date: '2027-04-25', dist: 'semi', km: 21.0975, goal: null, result: null, place: 'Madrid', rank: '', notes: '' }];
+  function cleanRaces(a) {
+    return a.filter(function (r) { return r && r.name && /^\d{4}-\d{2}-\d{2}$/.test(r.date); }).map(function (r) {
+      return { id: String(r.id || uid('r')), name: String(r.name).slice(0, 80), date: r.date, dist: String(r.dist || 'autre'), km: num(r.km), goal: num(r.goal), result: num(r.result), place: String(r.place || '').slice(0, 60), rank: String(r.rank || '').slice(0, 40), notes: String(r.notes || '').slice(0, 300) };
+    }).sort(function (x, y) { return x.date < y.date ? -1 : 1; });
   }
-  function plannedFor(date) { return planWeek(weekStart(date)).days[(parse(date).getDay() + 6) % 7]; }
-  function planStatus(date) {
-    var pl = plannedFor(date), d = days[date];
-    if (!pl) return { s: 'idle', t: 'Repos' };
-    var fam = sportDef(pl.type).fam;
+  function saveRaces() {
+    races = cleanRaces(races);
+    try { localStorage.setItem(LS_RACES, JSON.stringify(races)); } catch (e) {}
+    if (db) db.collection('days').doc('races').set({ list: races }).then(function () {}, function () { setSync('error'); });
+  }
+  function parseChrono(t) {
+    t = String(t || '').trim().replace(/[hH]/g, ':').replace(/['’]/g, ':').replace(/[^\d:]/g, '');
+    if (!t) return null;
+    var p = t.split(':').filter(function (x) { return x !== ''; }).map(Number);
+    if (p.some(isNaN)) return null;
+    var sec = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0] * 60;
+    return sec > 0 ? sec : null;
+  }
+  function fmtChrono(sec) {
+    if (sec == null) return '';
+    sec = Math.round(sec);
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
+    return h ? h + ':' + pad(m) + ':' + pad(x) : m + ':' + pad(x);
+  }
+  function distLabel(r) { var d = DISTS.filter(function (x) { return x[0] === r.dist; })[0]; return r.dist === 'autre' ? (r.km ? fmtD(r.km, 1) + ' km' : 'Autre') : d ? d[1] : ''; }
+  function raceKm(r) { var d = DISTS.filter(function (x) { return x[0] === r.dist; })[0]; return d && d[2] ? d[2] : r.km; }
+  function raceDays(r) { return Math.round((parse(r.date) - parse(todayStr())) / 86400000); }
+  function nextRace() { return races.filter(function (r) { return r.date >= todayStr(); })[0] || null; }
+  var RACE = { date: '9999-12-31', name: '' };
+  var planEdit = null;
+  function plannedFor(date) { var d = days[date]; return d ? d.plan : []; }
+  function planItemStatus(date, pl) {
+    var d = days[date], fam = sportDef(pl.type).fam;
     var done = d && d.sports.some(function (x) { return x.type === pl.type || sportDef(x.type).fam === fam; });
     if (done) return { s: 'good', t: 'Fait' };
     if (date < todayStr()) return { s: 'bad', t: 'Manqué' };
     return { s: 'idle', t: date === todayStr() ? "Aujourd'hui" : 'À venir' };
   }
-  function daysToRace() { return Math.round((parse(RACE.date) - parse(todayStr())) / 86400000); }
+  function daysToRace() { var r = nextRace(); if (!r) return -1; RACE = r; return raceDays(r); }
   /* ---------- rappel de sauvegarde ---------- */
   function exportAge() {
     var last = null;
@@ -794,7 +864,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   function sessSum(s) {
     var fam = sportDef(s.type).fam;
     if (fam === 'muscu') { var ss = sessionStats(s); return ss.n ? plural(ss.n, 'série') + ' · ' + fmtTon(ss.ton) : ''; }
-    if (fam === 'run') {
+    if (fam === 'run' || fam === 'race') {
       var parts = [], z = zoneOf(s.hr);
       if (s.km && s.min) parts.push(fmtD(s.km, 2) + ' km · ' + fmtPace(s.min / s.km));
       if (z) parts.push('Z' + z.z + ' (' + z.p + ' % FC max)');
@@ -809,10 +879,10 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       '<label class="field mini"><span class="sr">Durée en minutes, ' + def.label + '</span><input data-field="sportMin" data-sid="' + s.id + '" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(s.min) + '"><span class="unit">min</span></label>' +
       '<button class="icon-btn small" data-action="del-sport" data-id="' + s.id + '" aria-label="Retirer ' + def.label + '">×</button></div>';
     html += '<div class="s-meta">';
-    if (def.fam === 'run' || def.fam === 'bike') {
+    if (def.fam === 'run' || def.fam === 'race' || def.fam === 'bike') {
       html += '<label class="field mini"><span class="sr">Distance</span><input data-field="sportKm" data-sid="' + s.id + '" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0" value="' + val(s.km) + '"><span class="unit">km</span></label>';
     }
-    if (def.fam === 'run') {
+    if (def.fam === 'run' || def.fam === 'race') {
       html += '<label class="field mini"><span class="sr">FC moyenne</span><input data-field="sportHr" data-sid="' + s.id + '" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(s.hr) + '"><span class="unit">bpm moy.</span></label>';
     }
     html += '<span class="s-sum" id="ss-' + s.id + '">' + sessSum(s) + '</span></div>';
@@ -871,8 +941,10 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   function sportSection(d) {
     if (cur < SPORT_START) return '<section class="card"><div class="m-head"><h3>Sport</h3></div><p class="note">Le suivi du sport commence le lundi 16 novembre.</p></section>';
     var rows = d.sports.length ? d.sports.map(sportBlock).join('') : '<p class="s-empty">Aucune séance pour ce jour.</p>';
-    var pl = plannedFor(cur), pst = planStatus(cur);
-    if (pl && pst.s !== 'good') rows = '<div class="planned"><div class="p-txt"><b>Prévu : ' + sportDef(pl.type).label + ' · ' + fmtDur(pl.min) + '</b>' + esc(pl.note) + '</div><button data-action="plan-add" data-type="' + pl.type + '" data-min="' + pl.min + '">Ajouter</button></div>' + rows;
+    var pend = plannedFor(cur).filter(function (pl) { return planItemStatus(cur, pl).s !== 'good'; });
+    rows = pend.map(function (pl) {
+      return '<div class="planned"><div class="p-txt"><b>Prévu : ' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + '</b>' + esc(pl.note) + '</div><button data-action="plan-add" data-type="' + pl.type + '" data-min="' + val(pl.min) + '">Ajouter</button></div>';
+    }).join('') + rows;
     var chips = SPORTS.map(function (s) { return '<button class="chip ' + s.fam + '" data-action="add-sport" data-type="' + s.id + '"><i></i>' + s.label + '</button>'; }).join('');
     return '<section class="card"><div class="m-head"><h3>Sport du jour</h3><span class="sum" id="sport-day"></span></div>' +
       '<div class="s-list" id="sport-list">' + rows + '</div>' +
@@ -884,6 +956,9 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     var html = '';
     var age = exportAge(), anyData = Object.keys(days).some(function (k) { return hasData(days[k]); });
     if (anyData && (age == null || age > 7)) html += '<section class="card warn"><p>' + (age == null ? "Tu n'as encore jamais exporté de copie." : 'Dernière copie il y a ' + age + ' jours.') + '</p><button data-action="export">Exporter</button></section>';
+    races.filter(function (r) { return r.date === cur; }).forEach(function (r) {
+      html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Jour de course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(r.name) + '</h2><span class="goal">' + distLabel(r) + (r.goal ? ' · objectif ' + fmtChrono(r.goal) : '') + (r.result ? ' · réalisé ' + fmtChrono(r.result) : '') + '</span></div><button class="today-btn" data-action="goto-race">' + (r.result || cur < todayStr() ? 'Voir' : 'Saisir le chrono') + '</button></div></section>';
+    });
     html += '<section class="card score"><div><div class="score-num" id="score-num">0/5</div><div class="score-lbl">objectifs tenus aujourd\'hui</div></div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div></section>';
     html += metric('kcal', 'Calories', 'Objectif ' + fmtN(GOALS.kcal) + ' kcal',
       '<label class="field"><span class="sr">Calories consommées</span><input id="in-kcal" data-field="kcal" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(d.kcal) + '"><span class="unit">kcal</span></label>');
@@ -901,17 +976,38 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   }
 
   /* ---------- vue Semaine ---------- */
+  function planEditor(ds) {
+    var t = planEdit.type;
+    return '<div class="plan-ed">' +
+      '<div class="chips">' + SPORTS.map(function (x) { return '<button class="chip sm ' + x.fam + '" data-action="plan-type" data-type="' + x.id + '" aria-pressed="' + (t === x.id) + '"><i></i>' + x.label + '</button>'; }).join('') + '</div>' +
+      '<div class="m-row"><label class="field mini"><span class="sr">Durée prévue</span><input id="pe-min" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(planEdit.min) + '"><span class="unit">min</span></label>' +
+      '<input id="pe-note" class="pe-note" type="text" maxlength="120" placeholder="Détail (ex. 3 × 10 min seuil)" value="' + esc(planEdit.note || '') + '"></div>' +
+      '<div class="m-row"><button class="pe-save" data-action="plan-save"' + (t ? '' : ' disabled') + '>' + (planEdit.id ? 'Enregistrer' : 'Prévoir') + '</button><button class="pe-cancel" data-action="plan-cancel">Annuler</button></div></div>';
+  }
   function planCard() {
-    var ws = weekStart(cur), pw = planWeek(ws), dr = daysToRace(), done = 0, total = 0;
-    var rows = pw.days.map(function (pl, i) {
-      var ds = addDays(ws, i), st = planStatus(ds), dt = parse(ds);
-      if (pl) { total++; if (st.s === 'good') done++; }
-      return '<button class="plan-row' + (ds === todayStr() ? ' today' : '') + '" data-action="goto" data-date="' + ds + '"><span class="pd">' + cap(fmtWd.format(dt).replace('.', '')) + ' ' + dt.getDate() + '</span>' +
-        '<span class="pl">' + (pl ? sportDef(pl.type).label + ' · ' + fmtDur(pl.min) + (pl.note ? '<small>' + esc(pl.note) + '</small>' : '') : '<span style="color:var(--muted)">Repos</span>') + '</span>' +
-        (pl ? '<span class="ps ' + (st.s === 'idle' ? '' : st.s) + '">' + st.t + '</span>' : '') + '</button>';
+    var ws = weekStart(cur), dr = daysToRace(), done = 0, total = 0;
+    var rows = [0, 1, 2, 3, 4, 5, 6].map(function (i) {
+      var ds = addDays(ws, i), dt = parse(ds), items = plannedFor(ds);
+      var list = items.map(function (pl) {
+        var st = planItemStatus(ds, pl);
+        total++; if (st.s === 'good') done++;
+        return '<div class="pi ' + sportDef(pl.type).fam + '"><button class="pi-main" data-action="plan-edit" data-date="' + ds + '" data-pid="' + pl.id + '"><span>' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + '</span>' + (pl.note ? '<small>' + esc(pl.note) + '</small>' : '') + '</button>' +
+          '<span class="ps ' + (st.s === 'idle' ? '' : st.s) + '">' + st.t + '</span>' +
+          '<button class="icon-btn tiny" data-action="plan-del" data-date="' + ds + '" data-pid="' + pl.id + '" aria-label="Retirer la séance prévue">×</button></div>';
+      }).join('');
+      var editing = planEdit && planEdit.date === ds;
+      return '<div class="pday' + (ds === todayStr() ? ' today' : '') + '"><div class="pday-head"><button class="pd" data-action="goto" data-date="' + ds + '">' + cap(fmtWd.format(dt).replace('.', '')) + ' ' + dt.getDate() + '</button>' +
+        (items.length ? '' : '<span class="pr">Repos</span>') +
+        (editing ? '' : '<button class="pe-add" data-action="plan-new" data-date="' + ds + '">+ Prévoir</button>') + '</div>' + list + (editing ? planEditor(ds) : '') + '</div>';
     }).join('');
-    var head = dr >= 0 ? '<div class="race"><div><div class="sub">' + esc(RACE.name) + '</div><span class="goal">25 avril 2027 · prépa dès le 1er février</span></div><b>J-' + dr + '</b></div>' : '';
-    return '<section class="card">' + head + '<div class="m-head"' + (head ? ' style="border-top:1px solid var(--line);padding-top:12px"' : '') + '><div><h3>Plan · ' + esc(pw.name) + '</h3></div><span class="pill ' + (total && done === total ? 'good' : '') + '">' + done + '/' + total + '</span></div><div>' + rows + '</div></section>';
+    var prevHas = [0, 1, 2, 3, 4, 5, 6].some(function (i) { return plannedFor(addDays(ws, i - 7)).length; });
+    var hasAny = total > 0;
+    var tools = '<div class="m-row" style="border-top:1px solid var(--line);padding-top:12px">' +
+      (hasAny ? '<button class="pe-cancel" data-action="plan-copy" data-dir="1">Copier sur la semaine suivante</button>' : '') +
+      (!hasAny && prevHas ? '<button class="pe-cancel" data-action="plan-copy" data-dir="-1">Reprendre la semaine précédente</button>' : '') +
+      '</div><p class="note" id="plan-msg" role="status"></p>';
+    var head = dr >= 0 ? '<div class="countdown"><div><div class="sub">' + esc(RACE.name) + '</div><span class="goal">' + cap(fmtLong.format(parse(RACE.date))) + ' ' + RACE.date.slice(0, 4) + '</span></div><b>' + (dr === 0 ? 'Jour J' : 'J-' + dr) + '</b></div>' : '';
+    return '<section class="card">' + head + '<div class="m-head"' + (head ? ' style="border-top:1px solid var(--line);padding-top:12px"' : '') + '><div><h3>Mon plan de la semaine</h3><span class="goal">Touche « + Prévoir » pour programmer une séance</span></div>' + (total ? '<span class="pill ' + (done === total ? 'good' : '') + '">' + done + '/' + total + '</span>' : '') + '</div><div>' + rows + '</div>' + (hasAny || prevHas ? tools : '') + '</section>';
   }
   function weekRecords(ws) {
     var end = addDays(ws, 6), out = [];
@@ -927,14 +1023,14 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null;
   }
   function bilanText() {
-    var ws = weekStart(cur), we = addDays(ws, 6), st = weekStats(cur), pw = planWeek(ws), good = 0, filled = 0, pDone = 0, pTot = 0;
+    var ws = weekStart(cur), we = addDays(ws, 6), st = weekStats(cur), good = 0, filled = 0, pDone = 0, pTot = 0;
     weekDates(cur).forEach(function (ds, i) {
-      var d = days[ds]; if (d && hasData(d)) { filled++; good += dayScore(d); }
-      if (pw.days[i]) { pTot++; if (planStatus(ds).s === 'good') pDone++; }
+      var d = days[ds]; if (d && hasLog(d)) { filled++; good += dayScore(d); }
+      plannedFor(ds).forEach(function (pl) { pTot++; if (planItemStatus(ds, pl).s === 'good') pDone++; });
     });
     var L = ['Bilan de la semaine du ' + dm(ws) + ' au ' + dm(we), ''];
     L.push('Sport : ' + plural(st.n, 'séance') + (st.min ? ' · ' + fmtDur(st.min) : '') + (st.km ? ' · ' + fmtD(st.km, 1) + ' km de course' : '') + (st.ton ? ' · ' + fmtTon(st.ton) + ' soulevés (' + plural(st.sets, 'série') + ')' : ''));
-    if (pTot) L.push('Plan (' + pw.name + ') : ' + pDone + '/' + pTot + ' séances faites');
+    if (pTot) L.push('Plan : ' + pDone + '/' + pTot + ' séances prévues faites');
     if (filled) L.push('Objectifs du jour tenus : ' + good + '/' + filled * 5);
     var w = avgOver('weight', ws, we), wp = avgOver('weight', addDays(ws, -7), addDays(ws, -1));
     if (w != null) L.push('Poids moyen : ' + fmtD(w) + ' kg' + (wp != null ? ' (' + (w - wp > 0 ? '+' : '−') + fmtD(Math.abs(w - wp)) + ' kg vs semaine précédente)' : ''));
@@ -948,7 +1044,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   function weekView() {
     var dates = weekDates(cur), st = weekStats(cur), today = todayStr();
     var totalGood = 0, daysFilled = 0;
-    dates.forEach(function (ds) { var d = days[ds]; if (d && hasData(d)) { daysFilled++; totalGood += dayScore(d); } });
+    dates.forEach(function (ds) { var d = days[ds]; if (d && hasLog(d)) { daysFilled++; totalGood += dayScore(d); } });
     var html = '<div class="tiles">' +
       '<div class="tile"><b>' + st.n + '</b><span>' + (st.n > 1 ? 'séances' : 'séance') + ' de sport</span></div>' +
       '<div class="tile"><b>' + (st.min ? fmtDurC(st.min) : '0') + '</b><span>temps total</span></div>' +
@@ -1103,13 +1199,88 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     return html;
   }
 
+  /* ---------- vue Courses ---------- */
+  function chronoField(id, label, sec) {
+    var h = sec == null ? '' : Math.floor(sec / 3600), m = sec == null ? '' : Math.floor(sec % 3600 / 60), x = sec == null ? '' : Math.round(sec % 60);
+    function f(part, v, max, u) { return '<label class="field mini"><span class="sr">' + label + ' ' + u + '</span><input id="' + id + '-' + part + '" type="number" inputmode="numeric" min="0" max="' + max + '" step="1" placeholder="' + (part === 'h' ? '0' : '00') + '" value="' + v + '"><span class="unit">' + u + '</span></label>'; }
+    return '<div><div class="sub" style="margin-bottom:4px">' + label + '</div><div class="m-row">' + f('h', h, 23, 'h') + f('m', m === '' ? '' : pad(m), 59, 'min') + f('s', x === '' ? '' : pad(x), 59, 's') + '</div></div>';
+  }
+  function readChrono(id) {
+    var h = num($('#' + id + '-h').value), m = num($('#' + id + '-m').value), x = num($('#' + id + '-s').value);
+    if (h == null && m == null && x == null) return null;
+    var t = (h || 0) * 3600 + (m || 0) * 60 + (x || 0);
+    return t > 0 ? Math.round(t) : null;
+  }
+  function raceForm() {
+    var r = raceEdit, past = r.date && r.date < todayStr();
+    return '<section class="card"><div class="m-head"><h3>' + (r.id ? 'Modifier la course' : 'Nouvelle course') + '</h3></div><div class="r-form">' +
+      '<label class="blk">Nom<input class="txt" id="rf-name" type="text" maxlength="80" placeholder="Ex. 10 km de Tours" value="' + esc(r.name || '') + '"></label>' +
+      '<div class="two"><label class="blk">Date<input class="txt" id="rf-date" type="date" value="' + esc(r.date || '') + '"></label>' +
+      '<label class="blk">Lieu<input class="txt" id="rf-place" type="text" maxlength="60" placeholder="Ville" value="' + esc(r.place || '') + '"></label></div>' +
+      '<div class="sub">Distance</div><div class="chips">' + DISTS.map(function (d) { return '<button class="chip sm" data-action="rf-dist" data-d="' + d[0] + '" aria-pressed="' + (r.dist === d[0]) + '">' + d[1] + '</button>'; }).join('') + '</div>' +
+      (r.dist === 'autre' ? '<label class="blk">Distance (km)<input class="txt" id="rf-km" type="number" inputmode="decimal" step="0.1" min="0" value="' + val(r.km) + '"></label>' : '') +
+      chronoField('rf-goal', 'Objectif', r.goal) + chronoField('rf-result', 'Chrono réalisé', r.result) +
+      '<label class="blk">Classement<input class="txt" id="rf-rank" type="text" maxlength="40" placeholder="Ex. 3629e / 7051" value="' + esc(r.rank || '') + '"></label>' +
+      '<label class="blk">Notes<input class="txt" id="rf-notes" type="text" maxlength="300" placeholder="Ressenti, météo, ravitos…" value="' + esc(r.notes || '') + '"></label>' +
+      '<div class="m-row"><button class="pe-save" data-action="rf-save">Enregistrer</button><button class="pe-cancel" data-action="rf-cancel">Annuler</button>' +
+      (r.id ? '<button class="pe-cancel" style="margin-left:auto;color:var(--bad)" data-action="rf-del">Supprimer</button>' : '') + '</div>' +
+      '<p class="note" id="rf-msg" role="status"></p></div></section>';
+  }
+  function raceRow(r) {
+    var dt = parse(r.date), km = raceKm(r), sub = [distLabel(r)];
+    if (r.place) sub.push(r.place);
+    var right = '';
+    if (r.result) {
+      var diff = r.goal ? r.result - r.goal : null;
+      right = fmtChrono(r.result) + (km ? '<small style="color:var(--muted)">' + fmtPace(r.result / 60 / km) + '</small>' : '') +
+        (diff != null ? '<small style="color:var(--' + (diff <= 0 ? 'good' : 'bad') + ')">' + (diff <= 0 ? '−' : '+') + fmtChrono(Math.abs(diff)) + ' vs obj.</small>' : '');
+    } else if (r.date >= todayStr()) {
+      var dd = raceDays(r);
+      right = (dd === 0 ? 'Jour J' : 'J-' + dd) + (r.goal ? '<small style="color:var(--muted)">obj. ' + fmtChrono(r.goal) + '</small>' : '');
+    } else right = '<small style="color:var(--muted)">Chrono à saisir</small>';
+    if (r.rank) sub.push(r.rank);
+    return '<button class="rc" data-action="rf-edit" data-id="' + r.id + '"><span class="rc-date"><b>' + dt.getDate() + '</b><small>' + fmtMonthS.format(dt).replace('.', '') + ' ' + String(dt.getFullYear()).slice(2) + '</small></span>' +
+      '<span class="rc-main"><b>' + esc(r.name) + '</b><small>' + esc(sub.join(' · ')) + '</small></span><span class="rc-time">' + right + '</span></button>';
+  }
+  function raceView() {
+    var html = '';
+    if (raceEdit) return raceForm();
+    var nx = nextRace(), up = races.filter(function (r) { return r.date >= todayStr(); }), past = races.filter(function (r) { return r.date < todayStr(); }).reverse();
+    if (nx) {
+      var dd = raceDays(nx), km = raceKm(nx);
+      html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Prochaine course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(nx.name) + '</h2>' +
+        '<span class="goal">' + cap(fmtLong.format(parse(nx.date))) + ' ' + nx.date.slice(0, 4) + ' · ' + distLabel(nx) + '</span></div><div class="big">' + (dd === 0 ? 'J' : 'J-' + dd) + '</div></div>' +
+        (nx.goal ? '<div class="sub" style="opacity:1">Objectif ' + fmtChrono(nx.goal) + (km ? ' · allure ' + fmtPace(nx.goal / 60 / km) : '') + '</div>' : '') +
+        (dd > 0 ? '<span class="goal">' + plural(Math.floor(dd / 7), 'semaine') + (dd % 7 ? ' et ' + plural(dd % 7, 'jour') : '') + '</span>' : '<span class="goal">C\'est aujourd\'hui. Bonne course !</span>') + '</section>';
+    }
+    html += '<button class="today-btn" style="width:100%;min-height:48px" data-action="rf-new">+ Ajouter une course</button>';
+    html += '<section class="card"><div class="m-head"><h3>À venir</h3><span class="sum">' + up.length + '</span></div><div>' + (up.length ? up.map(raceRow).join('') : '<p class="note">Aucune course prévue.</p>') + '</div></section>';
+    html += '<section class="card"><div class="m-head"><h3>Résultats</h3><span class="sum">' + past.length + '</span></div><div>' + (past.length ? past.map(raceRow).join('') : '<p class="note">Ajoute tes courses passées avec leur chrono pour garder ton historique.</p>') + '</div></section>';
+    var pbs = {};
+    past.forEach(function (r) { if (!r.result || r.dist === 'autre') return; if (!pbs[r.dist] || r.result < pbs[r.dist].result) pbs[r.dist] = r; });
+    var pbk = DISTS.filter(function (d) { return pbs[d[0]]; });
+    if (pbk.length) html += '<section class="card"><div class="m-head"><h3>Records personnels</h3></div><div>' + pbk.map(function (d) {
+      var r = pbs[d[0]];
+      return '<div class="pb-row"><div><div style="font-weight:600">' + d[1] + '</div><span class="goal">' + esc(r.name) + ' · ' + dm(r.date) + '/' + r.date.slice(2, 4) + '</span></div><b>' + fmtChrono(r.result) + '</b></div>';
+    }).join('') + '</div></section>';
+    return html;
+  }
+  function readRaceForm() {
+    var e = raceEdit;
+    e.name = $('#rf-name').value.trim(); e.date = $('#rf-date').value; e.place = $('#rf-place').value.trim();
+    var km = $('#rf-km'); if (km) e.km = num(km.value);
+    e.goal = readChrono('rf-goal'); e.result = readChrono('rf-result');
+    e.rank = $('#rf-rank').value.trim(); e.notes = $('#rf-notes').value.trim();
+  }
+
   /* ---------- rendu ---------- */
   function updateHeader() {
     var today = todayStr();
     $('#tab-day').setAttribute('aria-selected', view === 'day');
     $('#tab-week').setAttribute('aria-selected', view === 'week');
     $('#tab-prog').setAttribute('aria-selected', view === 'prog');
-    var nav = view !== 'prog';
+    $('#tab-race').setAttribute('aria-selected', view === 'race');
+    var nav = view !== 'prog' && view !== 'race';
     $('#btn-prev').style.visibility = nav ? '' : 'hidden';
     $('#btn-next').style.visibility = nav ? '' : 'hidden';
     if (view === 'day') {
@@ -1124,6 +1295,10 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       $('#nav-title').textContent = label;
       $('#eyebrow').textContent = 'Semaine ' + isoWeek(m) + (isCur ? ' · en cours' : '');
       $('#today-btn').hidden = isCur;
+    } else if (view === 'race') {
+      $('#nav-title').textContent = 'Courses';
+      $('#eyebrow').textContent = 'Compétitions';
+      $('#today-btn').hidden = true;
     } else {
       $('#nav-title').textContent = 'Progression';
       $('#eyebrow').textContent = progTab === 'body' ? 'Composition corporelle' : 'Musculation';
@@ -1133,7 +1308,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   function render() {
     needsRender = false;
     updateHeader();
-    content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : progView();
+    content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : view === 'race' ? raceView() : progView();
     if (view === 'day') refreshDay();
   }
   function refreshDay() {
@@ -1225,6 +1400,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     var b = e.target.closest('[data-action]');
     if (!b) return;
     var a = b.dataset.action, d, s, ex;
+    if (a === 'prev' || a === 'next' || a === 'tab' || a === 'goto' || a === 'today') { planEdit = null; raceEdit = null; }
     if (a === 'prev' || a === 'next') {
       var step = (view === 'week' ? 7 : 1) * (a === 'next' ? 1 : -1);
       cur = addDays(cur, step); render(); window.scrollTo(0, 0);
@@ -1287,6 +1463,60 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       d.meals.sort(); touch(cur); render();
     }
     else if (a === 'coffee') { d = get(cur); d.coffee = Math.max(0, (d.coffee || 0) + +b.dataset.d); touch(cur); render(); }
+    else if (a === 'rf-new') { raceEdit = { name: '', date: '', dist: 'semi', km: null, goal: null, result: null, place: '', rank: '', notes: '' }; render(); window.scrollTo(0, 0); focusSel('#rf-name'); }
+    else if (a === 'rf-edit') { var re0 = races.filter(function (x) { return x.id === b.dataset.id; })[0]; if (re0) { raceEdit = JSON.parse(JSON.stringify(re0)); render(); window.scrollTo(0, 0); } }
+    else if (a === 'rf-dist') { readRaceForm(); raceEdit.dist = b.dataset.d; render(); }
+    else if (a === 'rf-cancel') { raceEdit = null; render(); }
+    else if (a === 'rf-del') { races = races.filter(function (x) { return x.id !== raceEdit.id; }); raceEdit = null; saveRaces(); render(); }
+    else if (a === 'rf-save') {
+      readRaceForm();
+      if (!raceEdit.name || !raceEdit.date) { $('#rf-msg').textContent = 'Il faut au moins un nom et une date.'; return; }
+      if (raceEdit.dist === 'autre' && !raceEdit.km) { $('#rf-msg').textContent = 'Indique la distance en km.'; return; }
+      if (!raceEdit.id) { raceEdit.id = uid('r'); races.push(raceEdit); }
+      else races = races.map(function (x) { return x.id === raceEdit.id ? raceEdit : x; });
+      raceEdit = null; saveRaces(); render();
+    }
+    else if (a === 'goto-race') {
+      view = 'race'; var rr = races.filter(function (x) { return x.date === cur; })[0];
+      raceEdit = rr ? JSON.parse(JSON.stringify(rr)) : null; render(); window.scrollTo(0, 0);
+      if (rr && !rr.result) focusSel('#rf-result-h');
+    }
+    else if (a === 'plan-new') { planEdit = { date: b.dataset.date, type: null, min: null, note: '' }; render(); }
+    else if (a === 'plan-edit') {
+      var pe = plannedFor(b.dataset.date).filter(function (x) { return x.id === b.dataset.pid; })[0];
+      if (pe) { planEdit = { date: b.dataset.date, id: pe.id, type: pe.type, min: pe.min, note: pe.note }; render(); }
+    }
+    else if (a === 'plan-type') {
+      planEdit.type = b.dataset.type; planEdit.min = num($('#pe-min').value); planEdit.note = $('#pe-note').value; render();
+      focusSel('#pe-min');
+    }
+    else if (a === 'plan-cancel') { planEdit = null; render(); }
+    else if (a === 'plan-save') {
+      if (!planEdit || !planEdit.type) return;
+      var pdd = get(planEdit.date), item = { id: planEdit.id || uid('p'), type: planEdit.type, min: num($('#pe-min').value), note: $('#pe-note').value.trim().slice(0, 120) };
+      var ix = pdd.plan.map(function (x) { return x.id; }).indexOf(item.id);
+      if (ix >= 0) pdd.plan[ix] = item; else pdd.plan.push(item);
+      touch(planEdit.date); planEdit = null; render();
+    }
+    else if (a === 'plan-del') {
+      var pd = get(b.dataset.date);
+      pd.plan = pd.plan.filter(function (x) { return x.id !== b.dataset.pid; });
+      touch(b.dataset.date); render();
+    }
+    else if (a === 'plan-copy') {
+      var dir = +b.dataset.dir, ws0 = weekStart(cur), n = 0;
+      for (var di = 0; di < 7; di++) {
+        var from = dir > 0 ? addDays(ws0, di) : addDays(ws0, di - 7), to = dir > 0 ? addDays(ws0, di + 7) : addDays(ws0, di);
+        var src = plannedFor(from);
+        if (!src.length) continue;
+        var dst = get(to);
+        src.forEach(function (x) { dst.plan.push({ id: uid('p'), type: x.type, min: x.min, note: x.note }); n++; });
+        touch(to);
+      }
+      if (dir > 0) { cur = addDays(cur, 7); }
+      render();
+      var pm = $('#plan-msg'); if (pm) pm.textContent = plural(n, 'séance') + ' ' + (n > 1 ? 'copiées' : 'copiée') + (dir > 0 ? ' sur cette semaine.' : '.');
+    }
     else if (a === 'plan-add') {
       d = get(cur);
       var pid = uid('s');
@@ -1412,7 +1642,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   $('#btn-export').addEventListener('click', function () {
     var out = snapshot();
     var name = 'routines-' + todayStr() + '.json';
-    var text = JSON.stringify({ app: 'routines', version: 2, exported: new Date().toISOString(), moves: customMoves, goals: bodyGoals, settings: settings, days: out }, null, 2);
+    var text = JSON.stringify({ app: 'routines', version: 2, exported: new Date().toISOString(), moves: customMoves, goals: bodyGoals, settings: settings, races: races, days: out }, null, 2);
     var file = null;
     try { file = new File([text], name, { type: 'application/json' }); } catch (e) {}
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1445,6 +1675,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       try {
         var o = JSON.parse(r.result), src = o && o.days ? o.days : o, n = 0;
         if (o && Array.isArray(o.moves)) { o.moves.forEach(function (m) { if (typeof m === 'string' && customMoves.indexOf(m) < 0) customMoves.push(m); }); saveCustomMoves(); }
+        if (o && Array.isArray(o.races)) { races = cleanRaces(o.races); saveRaces(); }
         if (o && o.settings && typeof o.settings === 'object') { settings = cleanSettings(o.settings); applyGoals(); }
         if (o && o.goals && typeof o.goals === 'object') { bodyGoals = cleanGoals(o.goals); }
         saveGoals(); renderSettings();

@@ -483,7 +483,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   function normalize(o, date) {
     var e = emptyDay(date);
-    e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); e.screenMin = num(o.screenMin);
+    e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); if (e.sleepMin != null && e.sleepMin > 1200) e.sleepMin = null; e.screenMin = num(o.screenMin);
     e.blue = !!o.blue; e.blueMin = num(o.blueMin);
     e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.musclePct = num(o.musclePct); e.waist = num(o.waist); e.kcalOut = num(o.kcalOut);
     e.hrRest = num(o.hrRest); e.hrv = num(o.hrv); e.coffee = num(o.coffee);
@@ -1575,9 +1575,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   /* ---------- import Apple Santé (presse-papiers) ---------- */
   var healthPaste = false;
   var HKEYS = { poids: 'weight', weight: 'weight', mg: 'fat', graisse: 'fat', fat: 'fat', actives: 'kcalA', active: 'kcalA', activeshier: 'kcalAH', reposhier: 'kcalRH', depenseeshier: 'kcalOutH', mangeeshier: 'kcalH', consommeeshier: 'kcalH', mangehier: 'kcalH', energiealimentairehier: 'kcalH', alimentairehier: 'kcalH', energiealimentaire: 'kcal', alimentaire: 'kcal', mange: 'kcal', repos: 'kcalR', basal: 'kcalR', depensees: 'kcalOut', kcalout: 'kcalOut', mangees: 'kcal', consommees: 'kcal', kcal: 'kcal', sommeil: 'sleep', sleep: 'sleep', fcrepos: 'hrRest', fc: 'hrRest', hrrest: 'hrRest', vfc: 'hrv', hrv: 'hrv', eau: 'water', water: 'water', date: 'date', muscle: 'musclePct' };
-  function durToMin(t) {
+  function durToMin(t, seg) {
     t = String(t || '').toLowerCase().replace(/[\u00a0\u202f]/g, ' ').replace(/(\d)\s+(?=\d{3}\b)/g, '$1').replace(/,/g, '.');
-    var c = t.match(/(\d+):(\d{1,2})(?::(\d{1,2}))?/); if (c) return +c[1] * 60 + +c[2] + (c[3] ? +c[3] / 60 : 0);
+    var c = t.match(/(\d+):(\d{1,2})(?::(\d{1,2}))?/); if (c) return c[3] ? +c[1] * 60 + +c[2] + +c[3] / 60 : seg ? +c[1] + +c[2] / 60 : +c[1] * 60 + +c[2];
     var h = t.match(/(\d+(?:\.\d+)?)\s*(?:h|heure)/), mi = t.match(/(\d+(?:\.\d+)?)\s*(?:min|mn|m\b)/), se = t.match(/(\d+(?:\.\d+)?)\s*(?:s\b|sec|seconde)/);
     if (h || mi) return (h ? +h[1] * 60 : 0) + (mi ? +mi[1] : 0) + (se ? +se[1] / 60 : 0);
     if (se) return +se[1] / 60;
@@ -1612,7 +1612,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       dy.kcalOut = Math.round(h.kcalOutH != null ? h.kcalOutH : (h.kcalAH || 0) + (h.kcalRH || 0));
       touch(yd); done.push('calories dépensées de la veille (' + dm(yd) + ' : ' + fmtN(dy.kcalOut) + ' kcal)');
     }
-    if (h.sleepMinX != null && h.sleepMinX > 0) { d.sleepMin = Math.round(h.sleepMinX); done.push('sommeil (' + fmtDur(d.sleepMin) + ')'); }
+    if (h.sleepMinX != null && h.sleepMinX > 0 && h.sleepMinX <= 1200) { d.sleepMin = Math.round(h.sleepMinX); done.push('sommeil (' + fmtDur(d.sleepMin) + ')'); }
     else if (h.sleep != null && h.sleep > 0) { d.sleepMin = Math.round(h.sleep > 1440 ? h.sleep / 60 : h.sleep > 24 ? h.sleep : h.sleep * 60); done.push('sommeil'); }
     if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); done.push('FC repos'); }
     if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); done.push('VFC'); }
@@ -1643,17 +1643,24 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   var HIST_KEYS = { mangees: 'kcalIn', energiealimentaire: 'kcalIn', alimentaire: 'kcalIn', consommees: 'kcalIn', poids: 'weight', mg: 'fat', graisse: 'fat', muscle: 'musclePct', actives: 'kcalA', repos: 'kcalR', fcrepos: 'hrRest', vfc: 'hrv', sommeil: 'sleep' };
   function parseHistory(txt) {
-    var rows = {}, n = 0;
+    var rows = {}, n = 0, sFins = null, sDurs = null;
+    function addSleep(dateTxt, valTxt) {
+      var date = parseAnyDate(dateTxt); if (!date) return;
+      var mins = durToMin(valTxt, true);
+      if (mins == null) { var sv = String(valTxt).replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/); if (!sv) return; mins = parseFloat(sv[0]) / 60; }
+      var tm = String(dateTxt).match(/(\d{1,2})[:h](\d{2})/); if (tm && +tm[1] >= 18) date = addDays(date, 1);
+      var rs = rows[date] = rows[date] || {}; rs.sleepSum = (rs.sleepSum || 0) + mins; n++;
+    }
     String(txt || '').split(/\n+/).forEach(function (line) {
+      /* Sommeil sans boucle : deux lignes « sommeilfins;d1|d2|… » et « sommeildurees;x1|x2|… » appariées dans l'ordre. */
+      var sp = line.match(/^\s*sommeil[\s_-]*(fins?|durees?|durées?)\s*[;=:]\s*(.*)$/i);
+      if (sp) { var arr = sp[2].split('|').map(function (x) { return x.trim(); }); if (/^fin/i.test(sp[1])) sFins = arr; else sDurs = arr; return; }
       var p = line.split(';'); if (p.length < 3) return;
       var k = HIST_KEYS[p[0].trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s_-]/g, '')]; if (!k) return;
       var date = parseAnyDate(p[1]); if (!date) return;
       if (k === 'sleep') {
         /* Sommeil : une ligne par morceau de nuit, additionnés sur le jour du réveil (fin après 18 h = nuit suivante). */
-        var raw = p.slice(2).join(';'), mins = durToMin(raw);
-        if (mins == null) { var sv = raw.replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/); if (!sv) return; mins = parseFloat(sv[0]) / 60; }
-        var tm = p[1].match(/(\d{1,2})[:h](\d{2})/); if (tm && +tm[1] >= 18) date = addDays(date, 1);
-        var rs = rows[date] = rows[date] || {}; rs.sleepSum = (rs.sleepSum || 0) + mins; n++;
+        addSleep(p[1], p.slice(2).join(';'));
         return;
       }
       var nv = p.slice(2).join(';').replace(/\s/g, '').replace(',', '.').match(/-?\d+(\.\d+)?/); if (!nv) return;
@@ -1661,6 +1668,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       r[k] = (k === 'kcalA' || k === 'kcalR' || k === 'kcalIn') ? (r[k] || 0) + parseFloat(nv[0]) : parseFloat(nv[0]);
       n++;
     });
+    if (sFins && sDurs) sFins.forEach(function (f, i) { if (sDurs[i] != null && sDurs[i] !== '') addSleep(f, sDurs[i]); });
     return n ? rows : null;
   }
   function applyHistory(rows) {
@@ -1685,7 +1693,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       if (h.kcalIn != null && h.kcalIn > 0 && date < today) { d.kcal = Math.round(h.kcalIn); any = true; }
       if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); any = true; }
       if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); any = true; }
-      if (h.sleepSum != null && h.sleepSum > 0) { d.sleepMin = Math.round(h.sleepSum); any = true; }
+      if (h.sleepSum != null && h.sleepSum > 0 && h.sleepSum <= 1200) { d.sleepMin = Math.round(h.sleepSum); any = true; }
       if (any) { cnt++; ok.push(date); touch(date); }
     });
     return { days: cnt, from: ok[0], to: ok[ok.length - 1] };
@@ -1946,6 +1954,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
   }
   /* Ancienne masse musculaire saisie en kg : convertie en % avec le poids le plus proche (l'original est conservé). */
+  function fixSleep() { Object.keys(days).forEach(function (k) { var d = days[k]; if (d && d.sleepMin != null && d.sleepMin > 1200) { d.sleepMin = null; touch(k); } }); }
   function migrateMuscle() {
     var keys = Object.keys(days).sort(), wk = keys.filter(function (k) { return days[k].weight != null; });
     keys.forEach(function (k) {
@@ -1957,7 +1966,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     });
   }
   function render() {
-    migrateMuscle();
+    migrateMuscle(); fixSleep();
     if (!isTyping() || !document.activeElement.closest('#settings')) renderSettings();
     needsRender = false;
     updateHeader();

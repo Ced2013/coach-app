@@ -144,6 +144,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
 .tile b { display: block; color: var(--accent-text); font: 700 24px/1.1 var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile b.g { color: var(--good); }
+.tiles[style*="--tb"] .tile b { font-size: var(--tb); }
 .tile span { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -383,7 +384,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   var openPicker = {};
   var db = null, migrated = false, needsRender = false, loadTimer = null;
 
-  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, waist: null, hrRest: null, hrv: null, coffee: null, meals: [], plan: [], sports: [] }; }
+  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, musclePct: null, waist: null, kcalOut: null, hrRest: null, hrv: null, coffee: null, meals: [], plan: [], sports: [] }; }
   function normSet(x) { return { w: num(x && x.w), r: num(x && x.r) }; }
   function normExo(e) {
     var o = { id: String(e.id || uid('e')), move: String(e.move || ''), rir: num(e.rir), sets: Array.isArray(e.sets) ? e.sets.map(normSet) : [] };
@@ -421,7 +422,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     var e = emptyDay(date);
     e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); e.screenMin = num(o.screenMin);
     e.blue = !!o.blue; e.blueMin = num(o.blueMin);
-    e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.waist = num(o.waist);
+    e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.musclePct = num(o.musclePct); e.waist = num(o.waist); e.kcalOut = num(o.kcalOut);
     e.hrRest = num(o.hrRest); e.hrv = num(o.hrv); e.coffee = num(o.coffee);
     if (Array.isArray(o.plan)) e.plan = o.plan.filter(function (x) { return x && x.type; }).map(normPlanItem);
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
@@ -435,8 +436,8 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     return e;
   }
   function hasData(d) { return hasLog(d) || d.plan.length > 0; }
-  function hasLog(d) { return d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || d.sports.length > 0; }
-  function hasBody(d) { return d.weight != null || d.fat != null || d.muscle != null || d.waist != null; }
+  function hasLog(d) { return d.kcalOut != null || d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || d.sports.length > 0; }
+  function hasBody(d) { return d.weight != null || d.fat != null || d.muscle != null || d.musclePct != null || d.waist != null; }
   function get(date) { return days[date] || (days[date] = emptyDay(date)); }
   function sportDef(type) { return SPORTS.filter(function (x) { return x.id === type; })[0] || { label: type, fam: 'muscu' }; }
   function findSport(d, sid) { return d.sports.filter(function (x) { return x.id === sid; })[0]; }
@@ -458,7 +459,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   var BODY = [
     { k: 'weight', label: 'Poids', unit: 'kg', step: 0.1, dec: 1, down: true },
     { k: 'fat', label: 'Masse grasse', unit: '%', step: 0.1, dec: 1, down: true },
-    { k: 'muscle', label: 'Masse musculaire', unit: 'kg', step: 0.1, dec: 1, down: false },
+    { k: 'musclePct', label: 'Masse musculaire', unit: '%', step: 0.1, dec: 1, down: false },
     { k: 'waist', label: 'Tour de taille', unit: 'cm', step: 0.5, dec: 1, down: true }
   ];
   var LS_GOALS = 'ced-routines-body-goals';
@@ -977,7 +978,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     if (d[b.k] == null) return 'Dernière : ' + fmtD(last.v) + ' ' + b.unit + ' (' + dm(last.date) + ')';
     return deltaTxt(d[b.k] - last.v, b) + ' depuis le ' + dm(last.date);
   }
-  function fatKgTxt(d) { var f = fatKg(d); return f == null ? '' : fmtD(f) + ' kg de gras'; }
+  function fatKgTxt(d) { var f = fatKg(d), m = d.weight != null && d.musclePct != null ? d.weight * d.musclePct / 100 : null, p = []; if (f != null) p.push(fmtD(f) + ' kg de gras'); if (m != null) p.push(fmtD(m) + ' kg de muscle'); return p.join(' · '); }
   function refreshBody(d) {
     BODY.forEach(function (b) { var el = document.getElementById('bd-' + b.k); if (el) el.innerHTML = bodyDelta(d, b); });
     var fk = document.getElementById('bd-fatkg'); if (fk) fk.textContent = fatKgTxt(d);
@@ -1006,7 +1007,9 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     });
     html += '<section class="card score"><div><div class="score-num" id="score-num">0/5</div><div class="score-lbl">objectifs tenus aujourd\'hui</div></div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div></section>';
     html += metric('kcal', 'Calories', 'Objectif ' + fmtN(GOALS.kcal) + ' kcal',
-      '<label class="field"><span class="sr">Calories consommées</span><input id="in-kcal" data-field="kcal" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(d.kcal) + '"><span class="unit">kcal</span></label>');
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;width:100%"><div><span class="sub">Consommées</span><br><label class="field"><span class="sr">Calories consommées</span><input id="in-kcal" data-field="kcal" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(d.kcal) + '" style="width:3.4em"><span class="unit">kcal</span></label></div>' +
+      '<div><span class="sub">Dépensées</span><br><label class="field"><span class="sr">Calories dépensées</span><input id="in-kcalOut" data-field="kcalOut" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(d.kcalOut) + '" style="width:3.4em"><span class="unit">kcal</span></label></div></div>',
+      '<p class="note" id="kbal">' + balTxt(d) + '</p><p class="note" style="font-size:12px;margin-top:-6px">Dépensées = total Apple Watch : calories actives + au repos (app Forme, anneau Bouger).</p>');
     html += metric('water', 'Hydratation', 'Objectif ' + fmtL(GOALS.water),
       '<label class="field"><span class="sr">Eau bue, en litres</span><input id="in-water" data-field="water" type="number" inputmode="decimal" min="0" step="0.05" placeholder="0" value="' + val(d.water) + '"><span class="unit">L</span></label>',
       '<div class="quick"><button data-action="water" data-delta="-0.25">−0,25 L</button><button data-action="water" data-delta="0.25">+0,25 L</button><button data-action="water" data-delta="0.5">+0,5 L</button></div>');
@@ -1130,9 +1133,11 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     L.push('Sport : ' + plural(st.n, 'séance') + (st.min ? ' · ' + fmtDur(st.min) : '') + (st.km ? ' · ' + fmtD(st.km, 1) + ' km de course' : '') + (st.ton ? ' · ' + fmtTon(st.ton) + ' soulevés (' + plural(st.sets, 'série') + ')' : ''));
     if (pTot) L.push('Plan : ' + pDone + '/' + pTot + ' séances prévues faites');
     if (filled) L.push('Objectifs du jour tenus : ' + good + '/' + filled * 5);
+    var en2 = energyRange(ws, we); if (en2.n) L.push('Énergie : ' + (en2.avg >= 0 ? 'déficit' : 'surplus') + ' moyen de ' + fmtN(Math.abs(en2.avg)) + ' kcal/j (' + plural(en2.n, 'jour') + ')');
     var w = avgOver('weight', ws, we), wp = avgOver('weight', addDays(ws, -7), addDays(ws, -1));
     if (w != null) L.push('Poids moyen : ' + fmtD(w) + ' kg' + (wp != null ? ' (' + (w - wp > 0 ? '+' : '−') + fmtD(Math.abs(w - wp)) + ' kg vs semaine précédente)' : ''));
     var f = avgOver('fat', ws, we); if (f != null) L.push('Masse grasse moyenne : ' + fmtD(f) + ' %');
+    var mu = avgOver('musclePct', ws, we); if (mu != null) L.push('Masse musculaire moyenne : ' + fmtD(mu) + ' %');
     var hr = avgOver('hrRest', ws, we); if (hr != null) L.push('FC repos moyenne : ' + fmtN(hr) + ' bpm');
     var cof = avgOver('coffee', ws, we); if (cof != null) L.push('Cafés : ' + fmtD(cof) + ' par jour en moyenne');
     var rec = weekRecords(ws); if (rec.length) L.push('Records : ' + rec.join(', '));
@@ -1150,6 +1155,10 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       '<div class="tile"><b>' + (st.km ? fmtD(st.km, 1) : '0') + '</b><span>km de course</span></div>' +
       '<div class="tile"><b>' + (st.ton ? fmtTon(st.ton) : '0') + '</b><span>tonnage muscu</span></div>' +
       '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div></div>';
+    var en = energyRange(dates[0], dates[6]);
+    if (en.n) html += '<section class="card"><div class="m-head"><div><h3>Énergie de la semaine</h3><span class="goal">' + plural(en.n, 'jour') + ' avec consommées et dépensées</span></div><span class="pill ' + (en.avg >= 0 ? 'good' : 'bad') + '">' + (en.avg >= 0 ? '−' : '+') + fmtN(Math.abs(en.avg)) + ' kcal/j</span></div>' +
+      '<div class="tiles" style="--tb:19px"><div class="tile"><b>' + fmtN(en.inAvg) + '</b><span>consommées / j</span></div><div class="tile"><b>' + fmtN(en.outAvg) + '</b><span>dépensées / j</span></div><div class="tile"><b' + (en.total >= 0 ? ' class="g"' : '') + '>' + (en.total >= 0 ? '−' : '+') + fmtN(Math.abs(en.total)) + '</b><span>' + (en.total >= 0 ? 'déficit' : 'surplus') + ' total</span></div></div>' +
+      '<p class="note">Équivalent théorique : ' + (en.total >= 0 ? '−' : '+') + fmtD(Math.abs(en.total) / KCAL_PER_KG, 2) + ' kg sur ces ' + plural(en.n, 'jour') + '.</p></section>';
 
     var rows = SPORTS.filter(function (s) { return st.by[s.id]; });
     var maxMin = Math.max.apply(null, rows.map(function (s) { return st.by[s.id].min; }).concat([1]));
@@ -1219,8 +1228,79 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       return { x: p.x, y: p.y, y2: win.reduce(function (a, q) { return a + q.y; }, 0) / win.length };
     });
   }
+  /* ---------- bilan énergétique ---------- */
+  var KCAL_PER_KG = 7700;
+  function balance(d) { return d && d.kcal != null && d.kcalOut != null ? d.kcalOut - d.kcal : null; }
+  function balTxt(d) {
+    var b = balance(d);
+    if (b == null) return d.kcal != null || d.kcalOut != null ? 'Saisis les deux valeurs pour voir ton déficit du jour.' : '';
+    return Math.abs(b) < 50 ? '<b>Équilibre</b> sur la journée' : (b > 0 ? '<b style="color:var(--good)">Déficit de ' + fmtN(b) + ' kcal</b>' : '<b style="color:var(--bad)">Surplus de ' + fmtN(-b) + ' kcal</b>') + ' sur la journée';
+  }
+  function energyRange(from, to) {
+    var n = 0, sum = 0, inS = 0, outS = 0;
+    Object.keys(days).forEach(function (k) { if (k < from || k > to) return; var b = balance(days[k]); if (b == null) return; n++; sum += b; inS += days[k].kcal; outS += days[k].kcalOut; });
+    return { n: n, avg: n ? sum / n : null, total: sum, inAvg: n ? inS / n : null, outAvg: n ? outS / n : null };
+  }
+  /* Pente de poids (kg/semaine) par régression sur la période. */
+  function weightSlope(from, to) {
+    var pts = Object.keys(days).filter(function (k) { return k >= from && k <= to && days[k].weight != null; }).map(function (k) { return { x: (parse(k) - parse(from)) / 86400000, y: days[k].weight }; });
+    if (pts.length < 4 || pts[pts.length - 1].x - pts[0].x < 7) return null;
+    var mx = 0, my = 0; pts.forEach(function (p) { mx += p.x; my += p.y; }); mx /= pts.length; my /= pts.length;
+    var num0 = 0, den = 0; pts.forEach(function (p) { num0 += (p.x - mx) * (p.y - my); den += (p.x - mx) * (p.x - mx); });
+    return den ? { perWeek: num0 / den * 7, n: pts.length, avgW: my } : null;
+  }
+  function seriesSlope(k, from, to) {
+    var pts = Object.keys(days).filter(function (d) { return d >= from && d <= to && days[d][k] != null; }).map(function (d) { return { x: (parse(d) - parse(from)) / 86400000, y: days[d][k] }; });
+    if (pts.length < 3 || pts[pts.length - 1].x - pts[0].x < 10) return null;
+    var mx = 0, my = 0; pts.forEach(function (p) { mx += p.x; my += p.y; }); mx /= pts.length; my /= pts.length;
+    var a = 0, c = 0; pts.forEach(function (p) { a += (p.x - mx) * (p.y - my); c += (p.x - mx) * (p.x - mx); });
+    return c ? a / c * 7 : null;
+  }
+  function energyAdvice() {
+    var to = todayStr(), from = addDays(to, -20), e = energyRange(from, to), ws = weightSlope(from, to), tips = [], facts = [];
+    if (e.n) facts.push('Déficit moyen saisi : <b>' + (e.avg >= 0 ? fmtN(e.avg) + ' kcal/j' : 'surplus de ' + fmtN(-e.avg) + ' kcal/j') + '</b> (' + plural(e.n, 'jour') + ' complets sur 3 semaines)');
+    if (ws) {
+      var pct = ws.perWeek / ws.avgW * 100;
+      facts.push('Tendance du poids : <b>' + (ws.perWeek > 0 ? '+' : '−') + fmtD(Math.abs(ws.perWeek), 2) + ' kg/semaine</b> (' + (pct > 0 ? '+' : '−') + fmtD(Math.abs(pct), 2) + ' % du poids)');
+      var realDef = -ws.perWeek * KCAL_PER_KG / 7;
+      facts.push('Déficit réel déduit de la balance : <b>' + (realDef >= 0 ? '≈ ' + fmtN(realDef) + ' kcal/j' : 'surplus ≈ ' + fmtN(-realDef) + ' kcal/j') + '</b>');
+      if (e.n >= 7) {
+        var gap = e.avg - realDef;
+        if (Math.abs(gap) >= 200) facts.push('Écart entre tes saisies et la balance : <b>' + fmtN(Math.abs(gap)) + ' kcal/j</b>. ' + (gap > 0 ? 'La montre surestime sans doute ta dépense, ou une partie de ce que tu manges n\'est pas comptée.' : 'Ta dépense réelle semble plus haute que celle de la montre.'));
+        else facts.push('Tes saisies et la balance concordent : tes chiffres sont fiables.');
+      }
+      var goalW = bodyGoals.weight, lastW = (lastBody('weight', addDays(to, 1)) || {}).v;
+      var cutting = goalW != null && lastW != null && lastW > goalW + 0.3;
+      if (pct < -1) tips.push('Tu perds plus de 1 % de ton poids par semaine : c\'est rapide, le risque de perdre du muscle et de mal récupérer augmente. Réduis le déficit d\'environ 200 à 300 kcal par jour, en priorité les jours de séance.');
+      else if (pct <= -0.25) tips.push('Rythme de perte entre 0,25 et 1 % par semaine : c\'est la bonne zone pour sécher en gardant le muscle. Ne change rien.' + (cutting ? ' À ce rythme, il te faut environ ' + Math.ceil((lastW - goalW) / Math.abs(ws.perWeek)) + ' semaines pour atteindre ' + fmtD(goalW) + ' kg.' : ''));
+      else if (pct < 0.25) tips.push(cutting ? 'Ton poids est stable alors que ton objectif est ' + fmtD(goalW) + ' kg : ton déficit réel est proche de zéro. Pour avancer, vise environ 300 kcal de moins par jour, ou plus de pas au quotidien.' : 'Poids stable : tu es à l\'équilibre, c\'est parfait pour une phase de maintien.');
+      else tips.push(cutting ? 'Ton poids monte alors que ton objectif est plus bas : vérifie les saisies des repas, surtout le soir et le week-end.' : 'Ton poids monte d\'environ ' + fmtD(ws.perWeek, 2) + ' kg par semaine. En prise de masse, 0,1 à 0,25 kg par semaine limite la prise de gras.');
+    } else facts.push('Tendance du poids : il faut au moins 4 pesées sur 7 jours ou plus.');
+    var fs = seriesSlope('fat', addDays(to, -27), to), ms = seriesSlope('musclePct', addDays(to, -27), to);
+    if (ms != null && ms < -0.15 && (fs == null || fs >= -0.05)) tips.push('Ta masse musculaire baisse sans que la masse grasse recule : vise au moins 1,8 à 2 g de protéines par kg, garde des charges lourdes en muscu, et réduis un peu le déficit.');
+    else if (fs != null && fs < -0.1 && (ms == null || ms >= -0.05)) tips.push('La masse grasse baisse et le muscle tient : ta recomposition fonctionne.');
+    // jours d'entraînement
+    var hard = [], easy = [];
+    Object.keys(days).forEach(function (k) {
+      if (k < from || k > to) return; var b = balance(days[k]); if (b == null) return;
+      var big = days[k].sports.some(function (x) { return x.type === 'run-sl' || x.type === 'run-q' || x.type === 'course' || (x.min || 0) >= 75; });
+      (big ? hard : easy).push(b);
+    });
+    function avgA(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
+    if (hard.length >= 2 && avgA(hard) > 800) tips.push('Les jours de grosse séance (sortie longue, qualité, course), ton déficit moyen dépasse ' + fmtN(avgA(hard)) + ' kcal : mange davantage ces jours-là, surtout des glucides autour de l\'effort, pour mieux récupérer et préserver la performance.');
+    if (hard.length >= 2 && easy.length >= 2 && avgA(easy) - avgA(hard) > 300) tips.push('Ton déficit est plus fort les jours de repos que les jours de séance : c\'est une bonne répartition.');
+    if (!e.n) tips.push('Saisis tes calories consommées et dépensées quelques jours de suite pour que l\'analyse se fasse.');
+    return { facts: facts, tips: tips };
+  }
+  function energyCard() {
+    var a = energyAdvice();
+    return '<section class="card"><div class="m-head"><div><h3>Bilan énergétique</h3><span class="goal">3 dernières semaines · calories, poids et composition</span></div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;font-size:13.5px">' + a.facts.map(function (f) { return '<p>' + f + '</p>'; }).join('') + '</div>' +
+      (a.tips.length ? '<div class="sub">Pistes</div>' + a.tips.map(function (t) { return '<p class="tip" style="font-size:13.5px">' + t + '</p>'; }).join('') : '') +
+      '<p class="note" style="font-size:12px">Repères généraux, à valider avec ton diététicien. La dépense de la montre est une estimation : c\'est la tendance du poids sur plusieurs semaines qui fait foi.</p></section>';
+  }
   function bodyView() {
-    var html = progSeg();
+    var html = progSeg() + energyCard();
     var any = BODY.some(function (b) { return bodySeries(b.k).length; });
     if (!any) return html + '<section class="card"><p class="note">Aucune mesure pour l\'instant. Saisis ton poids, ta masse grasse et ta masse musculaire dans la carte « Composition corporelle » de l\'onglet Jour.</p></section>';
     html += '<div class="tiles" style="grid-template-columns:repeat(2,1fr)">' + BODY.map(function (b) {
@@ -1237,7 +1317,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     var def = bodyDef(bodyMetric), sr = bodySeries(bodyMetric);
     if (!sr.length) { def = BODY.filter(function (b) { return bodySeries(b.k).length; })[0]; bodyMetric = def.k; sr = bodySeries(def.k); }
     var pts = movingAvg(sr);
-    var cols = { weight: 'var(--accent)', fat: 'var(--bad)', muscle: 'var(--c-muscu)', waist: 'var(--c-run)' };
+    var cols = { weight: 'var(--accent)', fat: 'var(--bad)', musclePct: 'var(--c-muscu)', waist: 'var(--c-run)' };
     var mn = Math.min.apply(null, sr.map(function (p) { return p.y; })), mx = Math.max.apply(null, sr.map(function (p) { return p.y; }));
     var last7 = sr.filter(function (p) { return p.x > addDays(todayStr(), -7); }), prev7 = sr.filter(function (p) { return p.x > addDays(todayStr(), -14) && p.x <= addDays(todayStr(), -7); });
     function avg(a) { return a.reduce(function (s, p) { return s + p.y; }, 0) / a.length; }
@@ -1256,7 +1336,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         var d = days[k], prev = rows[i + 1] ? days[rows[i + 1]] : null;
         var parts = [];
         if (d.fat != null) parts.push(fmtD(d.fat) + ' % MG');
-        if (d.muscle != null) parts.push(fmtD(d.muscle) + ' kg muscle');
+        if (d.musclePct != null) parts.push(fmtD(d.musclePct) + ' % muscle');
         if (d.waist != null) parts.push(fmtD(d.waist) + ' cm');
         var dl = prev && d.weight != null && prev.weight != null ? ' ' + deltaTxt(d.weight - prev.weight, BODY[0]) : '';
         return '<div class="h-row"><div><div class="h-date">' + cap(fmtLong.format(parse(k))) + dl + '</div><div class="h-sets">' + (parts.join(' · ') || '–') + '</div></div>' +
@@ -1403,7 +1483,19 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       $('#today-btn').hidden = true;
     }
   }
+  /* Ancienne masse musculaire saisie en kg : convertie en % avec le poids le plus proche (l'original est conservé). */
+  function migrateMuscle() {
+    var keys = Object.keys(days).sort(), wk = keys.filter(function (k) { return days[k].weight != null; });
+    keys.forEach(function (k) {
+      var d = days[k];
+      if (d.muscle == null || d.musclePct != null) return;
+      var w = d.weight;
+      if (w == null && wk.length) { var best = wk[0]; wk.forEach(function (x) { if (Math.abs(parse(x) - parse(k)) < Math.abs(parse(best) - parse(k))) best = x; }); w = days[best].weight; }
+      if (w) d.musclePct = Math.round(d.muscle / w * 1000) / 10;
+    });
+  }
   function render() {
+    migrateMuscle();
     needsRender = false;
     updateHeader();
     content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : view === 'race' ? raceView() : progView();
@@ -1454,7 +1546,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     var el = e.target, f = el.dataset.field;
     if (!f || f === 'goal') return;
     var d = get(cur), s = el.dataset.sid ? findSport(d, el.dataset.sid) : null, ex = findExo(s, el.dataset.eid);
-    if (f === 'kcal') d.kcal = num(el.value);
+    if (f === 'kcal' || f === 'kcalOut') { d[f] = num(el.value); var kb = $('#kbal'); if (kb) kb.innerHTML = balTxt(d); }
     else if (f === 'water') d.water = num(el.value);
     else if (f === 'blueMin') { d.blueMin = num(el.value); if (d.blueMin > 0) d.blue = true; }
     else if (f === 'sleepH' || f === 'sleepM') d.sleepMin = combine($('#in-sleepH').value, $('#in-sleepM').value);

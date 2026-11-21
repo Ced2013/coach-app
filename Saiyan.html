@@ -1484,11 +1484,13 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     if (!healthPaste) return '<section class="card" style="flex-direction:row;align-items:center;padding:10px 14px"><p class="note" style="flex:1">' + (healthMsg || 'Données Apple Santé du jour') + '</p><button class="today-btn" data-action="health">Importer Santé</button></section>';
     return '<section class="card"><div class="m-head"><div><h3>Importer depuis Santé</h3><span class="goal">Colle ici le texte copié par ton raccourci</span></div></div>' +
       '<textarea id="health-txt" rows="4" style="width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:10px;font:14px var(--font-body)" placeholder="poids=73,4|mg=14,9|actives=650|repos=1820|sommeil=7,2|fcrepos=52|vfc=81"></textarea>' +
-      '<div class="m-row"><button class="pe-save" data-action="health-go">Importer</button><button class="pe-cancel" data-action="health-cancel">Annuler</button></div>' + (healthMsg ? '<p class="note">' + healthMsg + '</p>' : '') + '</section>';
+      '<div class="m-row"><button class="pe-cancel" data-action="health-clip">Coller automatiquement</button><button class="pe-save" data-action="health-go">Importer</button><button class="pe-cancel" data-action="health-cancel">Annuler</button></div>' +
+      '<p class="note" id="health-msg" role="status">' + (healthMsg || 'Appuie longuement dans le cadre puis « Coller », ou utilise « Coller automatiquement ».') + '</p>' +
+      '<p class="note" style="font-size:12px">Pour tester sans raccourci, colle : poids=73,4|mg=14,9|actives=600|repos=1800|fcrepos=52</p></section>';
   }
   function doHealth(txt) {
     var h = parseHealth(txt), done = applyHealth(h);
-    healthMsg = done.length ? 'Importé : ' + done.join(', ') + '.' : 'Aucune donnée reconnue dans le texte copié.';
+    healthMsg = done.length ? 'Importé pour le ' + dm(h.date || cur) + ' : ' + done.join(', ') + '.' : 'Aucune donnée reconnue. Texte reçu : « ' + esc(String(txt || '').slice(0, 120)) + ' »';
     healthPaste = !done.length; render(); refreshDay();
   }
   /* ---------- volume sur 12 semaines ---------- */
@@ -2022,12 +2024,19 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = '?'; setTimeout(function () { if (b.isConnected) { b.dataset.confirm = ''; b.textContent = '🗑'; } }, 2500); return; }
       photoDel(b.dataset.id).then(photoLoad).then(function () { photoSel = photoSel.filter(function (x) { return x !== b.dataset.id; }); render(); });
     }
-    else if (a === 'health') {
-      var fallback = function () { healthPaste = true; healthMsg = ''; render(); focusSel('#health-txt'); };
+    else if (a === 'health') { healthPaste = true; healthMsg = ''; render(); focusSel('#health-txt'); }
+    else if (a === 'health-clip') {
+      var hm = function (t) { healthMsg = t; var el = $('#health-msg'); if (el) el.textContent = t; };
+      var settled = false;
+      setTimeout(function () { if (!settled) hm('Le collage automatique ne répond pas : appuie longuement dans le cadre puis « Coller ».'); }, 2500);
       try {
-        if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(function (t) { if (t && /=/.test(t)) doHealth(t); else fallback(); }, fallback);
-        else fallback();
-      } catch (err) { fallback(); }
+        navigator.clipboard.readText().then(function (t) {
+          settled = true;
+          if (!t) { hm('Le presse-papiers est vide : lance d\'abord le raccourci.'); return; }
+          $('#health-txt').value = t;
+          if (/=/.test(t)) doHealth(t); else hm('Le texte copié ne vient pas du raccourci (aucun « = » trouvé).');
+        }, function () { settled = true; hm('Collage automatique refusé : appuie longuement dans le cadre puis « Coller ».'); });
+      } catch (err) { settled = true; hm('Collage automatique indisponible : appuie longuement dans le cadre puis « Coller ».'); }
     }
     else if (a === 'health-go') { doHealth($('#health-txt').value); }
     else if (a === 'health-cancel') { healthPaste = false; healthMsg = ''; render(); }

@@ -354,7 +354,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         <button role="tab" id="tab-day" data-action="tab" data-view="day"><svg class="tab-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Jour</button>
         <button role="tab" id="tab-week" data-action="tab" data-view="week"><svg class="tab-ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Semaine</button>
         <button role="tab" id="tab-prog" data-action="tab" data-view="prog"><svg class="tab-ic" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Progrès</button>
-        <button role="tab" id="tab-race" data-action="tab" data-view="race"><svg class="tab-ic" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>Courses</button>
+        <button role="tab" id="tab-race" data-action="tab" data-view="race"><svg class="tab-ic" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>Objectifs</button>
       </div>
       <button class="today-btn" id="today-btn" data-action="today" aria-label="Revenir à aujourd'hui">Auj.</button>
     </div>
@@ -545,6 +545,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       coffee: Math.round(inRange(o.coffee, 0, 10, 3)),
       health: o.health === true,
       style: o.style === 'saiyan' ? 'saiyan' : 'classic',
+      objectives: Array.isArray(o.objectives) ? o.objectives.filter(function (x) { return x && x.name && /^\d{4}-\d{2}-\d{2}$/.test(x.start); }).map(function (x) { return { id: String(x.id || uid('ob')), name: String(x.name).slice(0, 60), start: x.start, end: /^\d{4}-\d{2}-\d{2}$/.test(x.end || '') ? x.end : '', main: x.main === true, notes: String(x.notes || '').slice(0, 200) }; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; }) : [],
       shoes: Array.isArray(o.shoes) ? o.shoes.filter(function (x) { return x && x.name; }).map(function (x) { return { id: String(x.id || uid('sh')), name: String(x.name).slice(0, 40), start: num(x.start) || 0, limit: num(x.limit) || 700, retired: !!x.retired }; }) : []
     };
   }
@@ -882,7 +883,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   if (!races) races = [{ id: 'madrid', name: 'Semi-marathon de Madrid', date: '2027-04-25', dist: 'semi', km: 21.0975, goal: null, result: null, place: 'Madrid', rank: '', notes: '' }];
   function cleanRaces(a) {
     return a.filter(function (r) { return r && r.name && /^\d{4}-\d{2}-\d{2}$/.test(r.date); }).map(function (r) {
-      return { id: String(r.id || uid('r')), name: String(r.name).slice(0, 80), date: r.date, dist: String(r.dist || 'autre'), km: num(r.km), goal: num(r.goal), result: num(r.result), place: String(r.place || '').slice(0, 60), rank: String(r.rank || '').slice(0, 40), notes: String(r.notes || '').slice(0, 300) };
+      return { id: String(r.id || uid('r')), name: String(r.name).slice(0, 80), date: r.date, dist: String(r.dist || 'autre'), km: num(r.km), goal: num(r.goal), result: num(r.result), place: String(r.place || '').slice(0, 60), rank: String(r.rank || '').slice(0, 40), notes: String(r.notes || '').slice(0, 300), main: r.main === true };
     }).sort(function (x, y) { return x.date < y.date ? -1 : 1; });
   }
   function saveRaces() {
@@ -908,6 +909,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function raceKm(r) { var d = DISTS.filter(function (x) { return x[0] === r.dist; })[0]; return d && d[2] ? d[2] : r.km; }
   function raceDays(r) { return Math.round((parse(r.date) - parse(todayStr())) / 86400000); }
   function nextRace() { return races.filter(function (r) { return r.date >= todayStr(); })[0] || null; }
+  function mainRace() { return races.filter(function (r) { return r.main && r.date >= todayStr(); })[0] || nextRace(); }
   var RACE = { date: '9999-12-31', name: '' };
   var planEdit = null;
   function plannedFor(date) { var d = days[date]; return d ? d.plan : []; }
@@ -918,7 +920,30 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (date < todayStr()) return { s: 'bad', t: 'Manqué' };
     return { s: 'idle', t: date === todayStr() ? "Aujourd'hui" : 'À venir' };
   }
-  function daysToRace() { var r = nextRace(); if (!r) return -1; RACE = r; return raceDays(r); }
+  function daysToRace() { var r = mainRace(); if (!r) return -1; RACE = r; return raceDays(r); }
+  function mainObjective() { var t = todayStr(); return settings.objectives.filter(function (o) { return o.main && (!o.end || o.end >= t); })[0] || null; }
+  function dBetween(a, b) { return Math.round((parse(b) - parse(a)) / 86400000); }
+  function dLong(ds) { return cap(fmtLong.format(parse(ds))) + ' ' + ds.slice(0, 4); }
+  function objStatus(o) {
+    var t = todayStr();
+    if (o.start > t) { var n = dBetween(t, o.start); return { big: 'J-' + n, when: 'Commence ' + (n === 1 ? 'demain' : 'le ' + dLong(o.start)) + (o.end ? ' · fin le ' + dLong(o.end) : ''), txt: 'commence dans ' + plural(n, 'jour') }; }
+    var wk = Math.floor(dBetween(o.start, t) / 7) + 1;
+    if (o.end) { var r = dBetween(t, o.end); return { big: r === 0 ? 'Dernier jour' : 'J-' + r, when: 'Semaine ' + wk + ' · fin le ' + dLong(o.end), txt: 'semaine ' + wk + ', fin dans ' + plural(r, 'jour') }; }
+    return { big: 'Sem. ' + wk, when: 'Depuis le ' + dLong(o.start), txt: 'semaine ' + wk };
+  }
+  function mainGoal() {
+    var o = mainObjective(); if (o) { var st = objStatus(o); return { kind: 'obj', o: o, name: o.name, big: st.big, when: st.when, txt: st.txt }; }
+    var r = mainRace(); if (!r) return null; var dd = raceDays(r);
+    return { kind: 'race', r: r, name: r.name, big: dd === 0 ? 'Jour J' : 'J-' + dd, when: dLong(r.date), txt: 'dans ' + plural(dd, 'jour') };
+  }
+  function clearMain(keepId) {
+    var ch = false;
+    races.forEach(function (x) { if (x.main && x.id !== keepId) { x.main = false; ch = true; } });
+    if (ch) saveRaces();
+    var co = false;
+    settings.objectives.forEach(function (x) { if (x.main && x.id !== keepId) { x.main = false; co = true; } });
+    if (co) saveGoals();
+  }
   /* ---------- rappel de sauvegarde ---------- */
   function exportAge() {
     var last = null;
@@ -1190,7 +1215,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       (hasAny ? '<button class="pe-cancel" data-action="plan-copy" data-dir="1">Copier sur la semaine suivante</button>' : '') +
       (!hasAny && prevHas ? '<button class="pe-cancel" data-action="plan-copy" data-dir="-1">Reprendre la semaine précédente</button>' : '') +
       '</div><p class="note" id="plan-msg" role="status"></p>';
-    var head = dr >= 0 ? '<div class="countdown"><div><div class="sub">' + esc(RACE.name) + '</div><span class="goal">' + cap(fmtLong.format(parse(RACE.date))) + ' ' + RACE.date.slice(0, 4) + '</span></div><b>' + (dr === 0 ? 'Jour J' : 'J-' + dr) + '</b></div>' : '';
+    var mg = mainGoal(), head = mg ? '<div class="countdown"><div><div class="sub">' + esc(mg.name) + '</div><span class="goal">' + esc(mg.when) + '</span></div><b>' + esc(mg.big) + '</b></div>' : '';
     return '<section class="card">' + head + '<div class="m-head"' + (head ? ' style="border-top:1px solid var(--line);padding-top:12px"' : '') + '><div><h3>Mon plan de la semaine</h3><span class="goal">Touche « + Prévoir » pour programmer une séance</span></div>' + (total ? '<span class="pill ' + (done === total ? 'good' : '') + '">' + done + '/' + total + '</span>' : '') + '</div><div>' + rows + '</div>' + (hasAny || prevHas ? tools : '') + '</section>';
   }
   function weekRecords(ws) {
@@ -1225,7 +1250,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var hr = avgOver('hrRest', ws, we); if (hr != null) L.push('FC repos moyenne : ' + fmtN(hr) + ' bpm');
     var cof = avgOver('coffee', ws, we); if (cof != null) L.push('Cafés : ' + fmtD(cof) + ' par jour en moyenne');
     var rec = weekRecords(ws); if (rec.length) L.push('Records : ' + rec.join(', '));
-    if (daysToRace() >= 0) L.push('', RACE.name + ' dans ' + daysToRace() + ' jours');
+    var mg = mainGoal(); if (mg) L.push('', mg.name + ' : ' + mg.txt);
     return L.join('\n');
   }
   function weekView() {
@@ -1780,6 +1805,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<label class="blk">Nom<input class="txt" id="rf-name" type="text" maxlength="80" placeholder="Ex. 10 km de Tours" value="' + esc(r.name || '') + '"></label>' +
       '<div class="two"><label class="blk">Date<input class="txt" id="rf-date" type="date" value="' + esc(r.date || '') + '"></label>' +
       '<label class="blk">Lieu<input class="txt" id="rf-place" type="text" maxlength="60" placeholder="Ville" value="' + esc(r.place || '') + '"></label></div>' +
+      '<div class="sub">Type d\'objectif</div><div class="seg" role="group" aria-label="Type d\'objectif"><button data-action="rf-main" data-v="1" aria-pressed="' + !!r.main + '">★ Principal</button><button data-action="rf-main" data-v="0" aria-pressed="' + !r.main + '">Secondaire</button></div>' +
+      '<span class="goal" style="margin-top:-6px">Le compte à rebours affiché est celui de l\'objectif principal.</span>' +
       '<div class="sub">Distance</div><div class="chips">' + DISTS.map(function (d) { return '<button class="chip sm" data-action="rf-dist" data-d="' + d[0] + '" aria-pressed="' + (r.dist === d[0]) + '">' + d[1] + '</button>'; }).join('') + '</div>' +
       (r.dist === 'autre' ? '<label class="blk">Distance (km)<input class="txt" id="rf-km" type="number" inputmode="decimal" step="0.1" min="0" value="' + val(r.km) + '"></label>' : '') +
       chronoField('rf-goal', 'Objectif', r.goal) + chronoField('rf-result', 'Chrono réalisé', r.result) +
@@ -1803,22 +1830,53 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     } else right = '<small style="color:var(--muted)">Chrono à saisir</small>';
     if (r.rank) sub.push(r.rank);
     return '<button class="rc" data-action="rf-edit" data-id="' + r.id + '"><span class="rc-date"><b>' + dt.getDate() + '</b><small>' + fmtMonthS.format(dt).replace('.', '') + ' ' + String(dt.getFullYear()).slice(2) + '</small></span>' +
-      '<span class="rc-main"><b>' + esc(r.name) + '</b><small>' + esc(sub.join(' · ')) + '</small></span><span class="rc-time">' + right + '</span></button>';
+      '<span class="rc-main"><b>' + (r.main ? '<span style="color:var(--accent-text)">★ </span>' : '') + esc(r.name) + '</b><small>' + esc(sub.join(' · ')) + '</small></span><span class="rc-time">' + right + '</span></button>';
+  }
+  var objEdit = null;
+  function objForm() {
+    var o = objEdit;
+    return '<section class="card"><div class="m-head"><h3>' + (o.id ? 'Modifier l\'objectif' : 'Nouvel objectif') + '</h3></div><div class="r-form">' +
+      '<label class="blk">Nom<input class="txt" id="of-name" type="text" maxlength="60" placeholder="Ex. Recomposition" value="' + esc(o.name || '') + '"></label>' +
+      '<div class="two"><label class="blk">Début<input class="txt" id="of-start" type="date" value="' + esc(o.start || '') + '"></label>' +
+      '<label class="blk">Fin (optionnel)<input class="txt" id="of-end" type="date" value="' + esc(o.end || '') + '"></label></div>' +
+      '<label class="blk">Notes<input class="txt" id="of-notes" type="text" maxlength="200" placeholder="Ce que tu vises" value="' + esc(o.notes || '') + '"></label>' +
+      '<div class="sub">Type d\'objectif</div><div class="seg" role="group" aria-label="Type d\'objectif"><button data-action="of-main" data-v="1" aria-pressed="' + !!o.main + '">★ Principal</button><button data-action="of-main" data-v="0" aria-pressed="' + !o.main + '">Secondaire</button></div>' +
+      '<div class="m-row"><button class="pe-save" data-action="of-save">Enregistrer</button><button class="pe-cancel" data-action="of-cancel">Annuler</button>' +
+      (o.id ? '<button class="pe-cancel" style="margin-left:auto;color:var(--bad)" data-action="of-del">Supprimer</button>' : '') + '</div>' +
+      '<p class="note" id="of-msg" role="status"></p></div></section>';
+  }
+  function readObjForm() { objEdit.name = $('#of-name').value.trim(); objEdit.start = $('#of-start').value; objEdit.end = $('#of-end').value; objEdit.notes = $('#of-notes').value.trim(); }
+  function objCard() {
+    var t = todayStr(), list = settings.objectives;
+    var rows = list.map(function (o) {
+      var st = objStatus(o), over = o.end && o.end < t;
+      return '<button class="rc" data-action="of-edit" data-id="' + o.id + '"><span class="rc-main"><b>' + (o.main ? '<span style="color:var(--accent-text)">★ </span>' : '') + esc(o.name) + '</b><small>' + (over ? 'Terminé le ' + dLong(o.end) : esc(st.when)) + (o.notes ? ' · ' + esc(o.notes) : '') + '</small></span><span class="rc-time">' + (over ? '<small style="color:var(--muted)">Terminé</small>' : esc(st.big)) + '</span></button>';
+    }).join('');
+    return '<section class="card"><div class="m-head"><div><h3>Objectifs</h3><span class="goal">Recompo, sèche, prise de force… avec une date de début</span></div><span class="sum">' + list.length + '</span></div><div>' + (rows || '<p class="note">Aucun objectif hors course pour l\'instant.</p>') + '</div>' +
+      '<button class="today-btn" style="width:100%;min-height:44px" data-action="of-new">+ Ajouter un objectif</button></section>';
   }
   function raceView() {
     var html = '';
     if (raceEdit) return raceForm();
-    var nx = nextRace(), up = races.filter(function (r) { return r.date >= todayStr(); }), past = races.filter(function (r) { return r.date < todayStr(); }).reverse();
+    if (objEdit) return objForm();
+    var mo = mainObjective();
+    if (mo) {
+      var ms = objStatus(mo);
+      html += '<section class="card next-race"><div class="m-head"><div><div class="sub">★ Objectif principal</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(mo.name) + '</h2><span class="goal">' + esc(ms.when) + '</span>' + (mo.notes ? '<span class="goal">' + esc(mo.notes) + '</span>' : '') + '</div><div class="big">' + esc(ms.big) + '</div></div></section>';
+    }
+    html += objCard();
+    var nx = mo ? null : mainRace(), isMain = nx && nx.main, up = races.filter(function (r) { return r.date >= todayStr(); }), past = races.filter(function (r) { return r.date < todayStr(); }).reverse();
     if (nx) {
       var dd = raceDays(nx), km = raceKm(nx);
-      html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Prochaine course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(nx.name) + '</h2>' +
+      html += '<section class="card next-race"><div class="m-head"><div><div class="sub">' + (isMain ? '★ Objectif principal' : 'Prochaine course') + '</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(nx.name) + '</h2>' +
         '<span class="goal">' + cap(fmtLong.format(parse(nx.date))) + ' ' + nx.date.slice(0, 4) + ' · ' + distLabel(nx) + '</span></div><div class="big">' + (dd === 0 ? 'J' : 'J-' + dd) + '</div></div>' +
         (nx.goal ? '<div class="sub" style="opacity:1">Objectif ' + fmtChrono(nx.goal) + (km ? ' · allure ' + fmtPace(nx.goal / 60 / km) : '') + '</div>' : '') +
         (function () { var pr = predictFor(nx); if (!pr) return ''; return '<div class="sub" style="opacity:1">Prédiction ' + fmtChrono(pr.t) + (km ? ' · ' + fmtPace(pr.t / 60 / km) : '') + (nx.goal ? (pr.t <= nx.goal ? ' · objectif à ta portée' : ' · ' + fmtChrono(pr.t - nx.goal) + ' au-dessus de l\'objectif') : '') + '</div><span class="goal">D\'après ' + esc(pr.src.name) + ' (' + fmtChrono(pr.src.result) + '), formule de Riegel</span>'; })() +
         (dd > 0 ? '<span class="goal">' + plural(Math.floor(dd / 7), 'semaine') + (dd % 7 ? ' et ' + plural(dd % 7, 'jour') : '') + '</span>' : '<span class="goal">C\'est aujourd\'hui. Bonne course !</span>') + '</section>';
     }
+    if (nx && !isMain) html += '<p class="note">Aucun objectif principal choisi : le compte à rebours suit la prochaine course. Touche une course ou un objectif puis « ★ Principal » pour le choisir.</p>';
     html += '<button class="today-btn" style="width:100%;min-height:48px" data-action="rf-new">+ Ajouter une course</button>';
-    html += '<section class="card"><div class="m-head"><h3>À venir</h3><span class="sum">' + up.length + '</span></div><div>' + (up.length ? up.map(raceRow).join('') : '<p class="note">Aucune course prévue.</p>') + '</div></section>';
+    html += '<section class="card"><div class="m-head"><h3>Courses à venir</h3><span class="sum">' + up.length + '</span></div><div>' + (up.length ? up.map(raceRow).join('') : '<p class="note">Aucune course prévue.</p>') + '</div></section>';
     html += '<section class="card"><div class="m-head"><h3>Résultats</h3><span class="sum">' + past.length + '</span></div><div>' + (past.length ? past.map(raceRow).join('') : '<p class="note">Ajoute tes courses passées avec leur chrono pour garder ton historique.</p>') + '</div></section>';
     var pbs = {};
     past.forEach(function (r) { if (!r.result || r.dist === 'autre') return; if (!pbs[r.dist] || r.result < pbs[r.dist].result) pbs[r.dist] = r; });
@@ -1860,8 +1918,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       $('#eyebrow').textContent = 'Semaine ' + isoWeek(m) + (isCur ? ' · en cours' : '');
       $('#today-btn').hidden = isCur;
     } else if (view === 'race') {
-      $('#nav-title').textContent = 'Courses';
-      $('#eyebrow').textContent = 'Compétitions';
+      $('#nav-title').textContent = 'Objectifs';
+      $('#eyebrow').textContent = 'Objectifs & courses';
       $('#today-btn').hidden = true;
     } else {
       $('#nav-title').textContent = 'Progression';
@@ -2007,7 +2065,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (!b) return;
     if (b.dataset.action === 'ring') { var tg = $('#m-' + b.dataset.k); if (tg) { if (tg.classList.contains('shut')) { openCards[cur + b.dataset.k] = 'open'; tg.classList.remove('shut'); } tg.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
     var a = b.dataset.action, d, s, ex;
-    if (a === 'prev' || a === 'next' || a === 'tab' || a === 'goto' || a === 'today') { planEdit = null; raceEdit = null; }
+    if (a === 'prev' || a === 'next' || a === 'tab' || a === 'goto' || a === 'today') { planEdit = null; raceEdit = null; objEdit = null; }
     if (a === 'prev' || a === 'next') {
       var step = (view === 'week' ? 7 : 1) * (a === 'next' ? 1 : -1);
       cur = addDays(cur, step); render(); window.scrollTo(0, 0);
@@ -2074,12 +2132,29 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     else if (a === 'rf-new') { raceEdit = { name: '', date: '', dist: 'semi', km: null, goal: null, result: null, place: '', rank: '', notes: '' }; render(); window.scrollTo(0, 0); focusSel('#rf-name'); }
     else if (a === 'rf-edit') { var re0 = races.filter(function (x) { return x.id === b.dataset.id; })[0]; if (re0) { raceEdit = JSON.parse(JSON.stringify(re0)); render(); window.scrollTo(0, 0); } }
     else if (a === 'rf-dist') { readRaceForm(); raceEdit.dist = b.dataset.d; render(); }
+    else if (a === 'of-new') { objEdit = { name: '', start: todayStr(), end: '', main: false, notes: '' }; render(); window.scrollTo(0, 0); focusSel('#of-name'); }
+    else if (a === 'of-edit') { var oe0 = settings.objectives.filter(function (x) { return x.id === b.dataset.id; })[0]; if (oe0) { objEdit = JSON.parse(JSON.stringify(oe0)); render(); window.scrollTo(0, 0); } }
+    else if (a === 'of-main') { readObjForm(); objEdit.main = b.dataset.v === '1'; render(); }
+    else if (a === 'of-cancel') { objEdit = null; render(); }
+    else if (a === 'of-del') { settings.objectives = settings.objectives.filter(function (x) { return x.id !== objEdit.id; }); objEdit = null; saveGoals(); render(); }
+    else if (a === 'of-save') {
+      readObjForm();
+      if (!objEdit.name || !objEdit.start) { $('#of-msg').textContent = 'Il faut au moins un nom et une date de début.'; return; }
+      if (objEdit.end && objEdit.end < objEdit.start) { $('#of-msg').textContent = 'La fin doit être après le début.'; return; }
+      if (!objEdit.id) objEdit.id = uid('ob');
+      var oid = objEdit.id, oe = objEdit;
+      if (oe.main) clearMain(oid);
+      settings.objectives = settings.objectives.filter(function (x) { return x.id !== oid; }).concat([oe]);
+      settings = cleanSettings(settings); objEdit = null; saveGoals(); render();
+    }
+    else if (a === 'rf-main') { readRaceForm(); raceEdit.main = b.dataset.v === '1'; render(); }
     else if (a === 'rf-cancel') { raceEdit = null; render(); }
     else if (a === 'rf-del') { races = races.filter(function (x) { return x.id !== raceEdit.id; }); raceEdit = null; saveRaces(); render(); }
     else if (a === 'rf-save') {
       readRaceForm();
       if (!raceEdit.name || !raceEdit.date) { $('#rf-msg').textContent = 'Il faut au moins un nom et une date.'; return; }
       if (raceEdit.dist === 'autre' && !raceEdit.km) { $('#rf-msg').textContent = 'Indique la distance en km.'; return; }
+      if (raceEdit.main) { races.forEach(function (x) { if (x.id !== raceEdit.id) x.main = false; }); clearMain(raceEdit.id || '-'); }
       if (!raceEdit.id) { raceEdit.id = uid('r'); races.push(raceEdit); }
       else races = races.map(function (x) { return x.id === raceEdit.id ? raceEdit : x; });
       raceEdit = null; saveRaces(); render();

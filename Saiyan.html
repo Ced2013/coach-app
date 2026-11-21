@@ -1709,6 +1709,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var hist = parseHistory(txt);
     var hq = parseHealth(txt), hasEq = Object.keys(hq).some(function (k) { return k !== 'date'; });
     if (hist && hasEq) {
+      /* Import du matin : on ne garde que la nuit la plus récente (le raccourci peut en renvoyer deux). */
+      var sk = Object.keys(hist).filter(function (k) { return hist[k].sleepSum; }).sort();
+      if (sk.length > 1) { var lastN = sk[sk.length - 1]; sk.slice(0, -1).forEach(function (k) { delete hist[k].sleepSum; if (!Object.keys(hist[k]).length) delete hist[k]; }); }
       var res0 = applyHistory(hist), done0 = applyHealth(hq);
       if (res0.days) done0.push('sommeil (' + Object.keys(hist).sort().filter(function (k) { return hist[k].sleepSum; }).map(function (k) { return dm(k) + ' : ' + fmtDur(Math.round(hist[k].sleepSum)); }).join(', ') + ')');
       healthMsg = done0.length ? 'Importé : ' + done0.join(', ') + '.' : 'Aucune donnée reconnue.';

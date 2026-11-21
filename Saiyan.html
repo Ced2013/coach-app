@@ -235,6 +235,7 @@ tr.today td.day button { color: var(--accent-text); }
 .pe-row .field.mini input { font-size: 18px; }
 .blk-warm { border-left-color: #E3A008; } .blk-work { border-left-color: var(--bad); } .blk-rec { border-left-color: var(--c-run); } .blk-cool { border-left-color: var(--c-bike); }
 .chip.blk-warm, .chip.blk-work, .chip.blk-rec, .chip.blk-cool { border-left-width: 4px; }
+.shoe-sel { min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 13px var(--font-body); padding: 0 6px; max-width: 150px; }
 .pe-note { flex: 1; min-width: 0; min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); padding: 0 12px; font: inherit; font-size: 14px; }
 .pe-save { min-height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 13.5px; }
 .pe-save:disabled { opacity: .4; }
@@ -428,7 +429,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
     if (Array.isArray(o.sports)) e.sports = o.sports.map(function (s) {
       return {
-        id: String(s.id), type: String(s.type), min: num(s.min), km: num(s.km), hr: num(s.hr),
+        id: String(s.id), type: String(s.type), min: num(s.min), km: num(s.km), hr: num(s.hr), rpe: num(s.rpe), shoe: s.shoe ? String(s.shoe) : null,
         exos: Array.isArray(s.exos) ? s.exos.map(normExo) : [],
         blocks: Array.isArray(s.blocks) ? s.blocks.filter(Boolean).map(normBlock) : []
       };
@@ -479,7 +480,8 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       water: inRange(o.water, 0.5, 8, 3),
       sleep: Math.round(inRange(o.sleep, 240, 720, 450)),
       screen: Math.round(inRange(o.screen, 15, 900, 300)),
-      coffee: Math.round(inRange(o.coffee, 0, 10, 3))
+      coffee: Math.round(inRange(o.coffee, 0, 10, 3)),
+      shoes: Array.isArray(o.shoes) ? o.shoes.filter(function (x) { return x && x.name; }).map(function (x) { return { id: String(x.id || uid('sh')), name: String(x.name).slice(0, 40), start: num(x.start) || 0, limit: num(x.limit) || 700, retired: !!x.retired }; }) : []
     };
   }
   function applyGoals() { ['kcal', 'water', 'sleep', 'screen', 'coffee'].forEach(function (k) { GOALS[k] = settings[k]; }); }
@@ -923,10 +925,17 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     if (def.fam === 'run' || def.fam === 'race' || def.fam === 'bike') {
       html += '<label class="field mini"><span class="sr">Distance</span><input data-field="sportKm" data-sid="' + s.id + '" type="number" inputmode="decimal" min="0" step="0.1" placeholder="' + (s.blocks && s.blocks.length && blocksTotal(s.blocks).km ? fmtD(blocksTotal(s.blocks).km, 1) : '0') + '" value="' + val(s.km) + '"><span class="unit">km</span></label>';
     }
+    html += '<label class="field mini"><span class="sr">Effort ressenti sur 10</span><input data-field="sportRpe" data-sid="' + s.id + '" type="number" inputmode="numeric" min="1" max="10" step="1" placeholder="–" value="' + val(s.rpe) + '" style="width:1.6em"><span class="unit">RPE /10</span></label>';
     if (def.fam === 'run' || def.fam === 'race') {
+      var act = settings.shoes.filter(function (x) { return !x.retired || x.id === s.shoe; });
+      if (act.length) html += '<select class="shoe-sel" data-field="sportShoe" data-sid="' + s.id + '" aria-label="Chaussures"><option value="">Chaussures…</option>' + act.map(function (x) { return '<option value="' + x.id + '"' + (s.shoe === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>';
       html += '<label class="field mini"><span class="sr">FC moyenne</span><input data-field="sportHr" data-sid="' + s.id + '" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(s.hr) + '"><span class="unit">bpm moy.</span></label>';
     }
     html += '<span class="s-sum" id="ss-' + s.id + '">' + sessSum(s) + '</span></div>';
+    if (s.shoe) {
+      var sh = shoeById(s.shoe);
+      if (sh) { var skm = shoeKm(sh); if (skm >= sh.limit * 0.9) html += '<p class="tip" style="color:var(--bad)">' + esc(sh.name) + ' : ' + fmtN(skm) + ' km sur ' + fmtN(sh.limit) + '. Pense à les remplacer.</p>'; }
+    }
     if (s.blocks && s.blocks.length) {
       var bt = blocksTotal(s.blocks);
       html += '<div class="tip"><b style="color:var(--fam)">Séance prévue</b> · ' + fmtSecDur(bt.sec) + (bt.km ? ' · ≈ ' + fmtD(bt.km, 1) + ' km' : '') + s.blocks.map(function (b) { return '<span style="display:block">• ' + esc(blockText(b)) + '</span>'; }).join('') + '</div>';
@@ -1005,6 +1014,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     races.filter(function (r) { return r.date === cur; }).forEach(function (r) {
       html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Jour de course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(r.name) + '</h2><span class="goal">' + distLabel(r) + (r.goal ? ' · objectif ' + fmtChrono(r.goal) : '') + (r.result ? ' · réalisé ' + fmtChrono(r.result) : '') + '</span></div><button class="today-btn" data-action="goto-race">' + (r.result || cur < todayStr() ? 'Voir' : 'Saisir le chrono') + '</button></div></section>';
     });
+    html += healthCard();
     html += '<section class="card score"><div><div class="score-num" id="score-num">0/5</div><div class="score-lbl">objectifs tenus aujourd\'hui</div></div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div></section>';
     html += metric('kcal', 'Calories', 'Objectif ' + fmtN(GOALS.kcal) + ' kcal',
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;width:100%"><div><span class="sub">Consommées</span><br><label class="field"><span class="sr">Calories consommées</span><input id="in-kcal" data-field="kcal" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + val(d.kcal) + '" style="width:3.4em"><span class="unit">kcal</span></label></div>' +
@@ -1133,6 +1143,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     L.push('Sport : ' + plural(st.n, 'séance') + (st.min ? ' · ' + fmtDur(st.min) : '') + (st.km ? ' · ' + fmtD(st.km, 1) + ' km de course' : '') + (st.ton ? ' · ' + fmtTon(st.ton) + ' soulevés (' + plural(st.sets, 'série') + ')' : ''));
     if (pTot) L.push('Plan : ' + pDone + '/' + pTot + ' séances prévues faites');
     if (filled) L.push('Objectifs du jour tenus : ' + good + '/' + filled * 5);
+    var lr = loadRange(ws, we); if (lr.load) L.push('Charge d\'entraînement : ' + fmtN(lr.load) + (acwr(we < todayStr() ? we : todayStr()).ratio != null ? ' (ratio ' + fmtD(acwr(we < todayStr() ? we : todayStr()).ratio, 2) + ')' : ''));
     var en2 = energyRange(ws, we); if (en2.n) L.push('Énergie : ' + (en2.avg >= 0 ? 'déficit' : 'surplus') + ' moyen de ' + fmtN(Math.abs(en2.avg)) + ' kcal/j (' + plural(en2.n, 'jour') + ')');
     var w = avgOver('weight', ws, we), wp = avgOver('weight', addDays(ws, -7), addDays(ws, -1));
     if (w != null) L.push('Poids moyen : ' + fmtD(w) + ' kg' + (wp != null ? ' (' + (w - wp > 0 ? '+' : '−') + fmtD(Math.abs(w - wp)) + ' kg vs semaine précédente)' : ''));
@@ -1155,6 +1166,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       '<div class="tile"><b>' + (st.km ? fmtD(st.km, 1) : '0') + '</b><span>km de course</span></div>' +
       '<div class="tile"><b>' + (st.ton ? fmtTon(st.ton) : '0') + '</b><span>tonnage muscu</span></div>' +
       '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div></div>';
+    html += loadCard();
     var en = energyRange(dates[0], dates[6]);
     if (en.n) html += '<section class="card"><div class="m-head"><div><h3>Énergie de la semaine</h3><span class="goal">' + plural(en.n, 'jour') + ' avec consommées et dépensées</span></div><span class="pill ' + (en.avg >= 0 ? 'good' : 'bad') + '">' + (en.avg >= 0 ? '−' : '+') + fmtN(Math.abs(en.avg)) + ' kcal/j</span></div>' +
       '<div class="tiles" style="--tb:19px"><div class="tile"><b>' + fmtN(en.inAvg) + '</b><span>consommées / j</span></div><div class="tile"><b>' + fmtN(en.outAvg) + '</b><span>dépensées / j</span></div><div class="tile"><b' + (en.total >= 0 ? ' class="g"' : '') + '>' + (en.total >= 0 ? '−' : '+') + fmtN(Math.abs(en.total)) + '</b><span>' + (en.total >= 0 ? 'déficit' : 'surplus') + ' total</span></div></div>' +
@@ -1220,7 +1232,9 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     return s + '</svg>';
   }
   function progSeg() {
-    return '<div class="seg" role="group" aria-label="Type de suivi" style="width:100%"><button style="flex:1" data-action="prog-tab" data-tab="body" aria-pressed="' + (progTab === 'body') + '">Corps</button><button style="flex:1" data-action="prog-tab" data-tab="muscu" aria-pressed="' + (progTab === 'muscu') + '">Musculation</button></div>';
+    return '<div class="seg" role="group" aria-label="Type de suivi" style="width:100%">' + [['body', 'Corps'], ['muscu', 'Muscu'], ['volume', 'Volume'], ['photos', 'Photos']].map(function (t) {
+      return '<button style="flex:1;padding:0 6px" data-action="prog-tab" data-tab="' + t[0] + '" aria-pressed="' + (progTab === t[0]) + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
   }
   function movingAvg(pts) {
     return pts.map(function (p) {
@@ -1346,6 +1360,8 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   }
   function progView() {
     if (progTab === 'body') return bodyView();
+    if (progTab === 'volume') return volumeView();
+    if (progTab === 'photos') return photosView();
     return progSeg() + muscuView();
   }
   function muscuView() {
@@ -1374,6 +1390,207 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         return '<div class="h-row"><div><div class="h-date">' + cap(fmtLong.format(parse(h.date))) + '</div><div class="h-sets">' + sets + (h.exo.rir != null ? ' · RIR ' + h.exo.rir : '') + ' · ' + fmtTon(h.st.ton) + '</div></div>' +
           '<button class="h-top" style="border:0;background:transparent;padding:0" data-action="goto" data-date="' + h.date + '">' + fmtD(h.st.top.w) + ' kg</button></div>';
       }).join('') + '</div></section>';
+    return html;
+  }
+
+  /* ---------- charge d'entraînement ---------- */
+  function sessLoad(s) { return s.min && s.rpe ? s.min * s.rpe : 0; }
+  function loadRange(from, to) {
+    var t = 0, n = 0, miss = 0;
+    Object.keys(days).forEach(function (k) { if (k < from || k > to) return; days[k].sports.forEach(function (s) { var l = sessLoad(s); if (l) { t += l; n++; } else miss++; }); });
+    return { load: t, n: n, miss: miss };
+  }
+  function acwr(end) {
+    var a = loadRange(addDays(end, -6), end), c = loadRange(addDays(end, -27), end);
+    var prior = loadRange(addDays(end, -27), addDays(end, -7));
+    if (!c.load || prior.n < 3) return { acute: a.load, ratio: null, miss: a.miss };
+    return { acute: a.load, chronic: c.load / 4, ratio: a.load / (c.load / 4), miss: a.miss };
+  }
+  function acwrStatus(r) {
+    if (r == null) return { s: 'idle', t: 'Données insuffisantes' };
+    if (r < 0.8) return { s: 'idle', t: 'Sous-charge' };
+    if (r <= 1.3) return { s: 'good', t: 'Zone idéale' };
+    if (r <= 1.5) return { s: 'bad', t: 'Attention' };
+    return { s: 'bad', t: 'Risque de blessure' };
+  }
+  function loadCard() {
+    var ws = weekStart(cur), we = addDays(ws, 6), end = we < todayStr() ? we : todayStr(), r = acwr(end), st = acwrStatus(r.ratio), wl = loadRange(ws, we);
+    var msg = r.ratio == null ? 'Note le RPE de chaque séance : le ratio s\'affiche après environ 3 semaines.' :
+      r.ratio > 1.5 ? 'Ta charge des 7 derniers jours est ' + fmtD(r.ratio, 2) + ' fois ta moyenne des 4 semaines : allège les prochains jours.' :
+      r.ratio > 1.3 ? 'Tu montes vite : garde la progression sous 10 à 15 % par semaine.' :
+      r.ratio < 0.8 ? 'Charge plus basse que d\'habitude : normal en récup ou en semaine allégée.' : 'Progression maîtrisée.';
+    return '<section class="card"><div class="m-head"><div><h3>Charge d\'entraînement</h3><span class="goal">Durée × RPE · 7 jours vs moyenne 4 semaines</span></div><span class="pill ' + st.s + '">' + st.t + '</span></div>' +
+      '<div class="tiles" style="--tb:20px"><div class="tile"><b>' + fmtN(wl.load) + '</b><span>charge semaine</span></div><div class="tile"><b>' + (r.ratio == null ? '–' : fmtD(r.ratio, 2)) + '</b><span>ratio aigu / chronique</span></div><div class="tile"><b>' + wl.miss + '</b><span>séance' + (wl.miss > 1 ? 's' : '') + ' sans RPE</span></div></div>' +
+      '<p class="note">' + msg + '</p></section>';
+  }
+  /* ---------- chaussures ---------- */
+  function shoeById(id) { return settings.shoes.filter(function (x) { return x.id === id; })[0]; }
+  function shoeKm(sh) {
+    var km = sh.start || 0;
+    Object.keys(days).forEach(function (k) { days[k].sports.forEach(function (s) { if (s.shoe === sh.id) km += s.km || 0; }); });
+    return km;
+  }
+  function defaultShoe(type) {
+    var fam = sportDef(type).fam;
+    if (fam !== 'run' && fam !== 'race') return null;
+    var keys = Object.keys(days).sort().reverse();
+    for (var i = 0; i < keys.length; i++) { var ss = days[keys[i]].sports; for (var j = 0; j < ss.length; j++) if (ss[j].shoe && shoeById(ss[j].shoe) && !shoeById(ss[j].shoe).retired) return ss[j].shoe; }
+    var act = settings.shoes.filter(function (x) { return !x.retired; });
+    return act.length === 1 ? act[0].id : null;
+  }
+  /* ---------- prédiction de chrono (formule de Riegel) ---------- */
+  function predictFor(r) {
+    var D2 = raceKm(r); if (!D2) return null;
+    var best = null;
+    races.forEach(function (x) {
+      if (!x.result || x.id === r.id || x.date >= todayStr() || x.date < addDays(todayStr(), -365)) return;
+      var D1 = raceKm(x); if (!D1 || D1 < 5) return;
+      var t = x.result * Math.pow(D2 / D1, 1.06), score = Math.abs(Math.log(D2 / D1));
+      if (!best || score < best.score - 0.05 || (Math.abs(score - best.score) <= 0.05 && x.date > best.src.date)) best = { t: t, src: x, score: score };
+    });
+    return best;
+  }
+  /* ---------- import Apple Santé (presse-papiers) ---------- */
+  var healthPaste = false;
+  var HKEYS = { poids: 'weight', weight: 'weight', mg: 'fat', graisse: 'fat', fat: 'fat', actives: 'kcalA', active: 'kcalA', repos: 'kcalR', basal: 'kcalR', depensees: 'kcalOut', kcalout: 'kcalOut', mangees: 'kcal', consommees: 'kcal', kcal: 'kcal', sommeil: 'sleep', sleep: 'sleep', fcrepos: 'hrRest', fc: 'hrRest', hrrest: 'hrRest', vfc: 'hrv', hrv: 'hrv', eau: 'water', water: 'water', date: 'date', muscle: 'musclePct' };
+  function parseHealth(txt) {
+    var out = {}, parts = String(txt || '').split(/[|\n;]+/);
+    parts.forEach(function (p) {
+      var m = p.match(/^\s*([A-Za-zÀ-ÿ ]+?)\s*[=:]\s*(.+?)\s*$/); if (!m) return;
+      var k = HKEYS[m[1].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s/g, '')]; if (!k) return;
+      if (k === 'date') { var dd = m[2].match(/(\d{4})-(\d{2})-(\d{2})/) || m[2].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (dd) out.date = dd[0].indexOf('/') > 0 ? dd[3] + '-' + pad(+dd[2]) + '-' + pad(+dd[1]) : dd[0]; return; }
+      var nv = m[2].replace(/\s/g, '').replace(',', '.').match(/-?\d+(\.\d+)?/); if (!nv) return;
+      out[k] = parseFloat(nv[0]);
+    });
+    return out;
+  }
+  function applyHealth(h) {
+    var date = h.date || cur, d = get(date), done = [];
+    if (h.weight != null && h.weight > 20) { d.weight = Math.round(h.weight * 10) / 10; done.push('poids'); }
+    if (h.fat != null) { d.fat = Math.round((h.fat <= 1 ? h.fat * 100 : h.fat) * 10) / 10; done.push('masse grasse'); }
+    if (h.musclePct != null) { d.musclePct = Math.round((h.musclePct <= 1 ? h.musclePct * 100 : h.musclePct) * 10) / 10; done.push('masse musculaire'); }
+    if (h.kcalOut != null) { d.kcalOut = Math.round(h.kcalOut); done.push('calories dépensées'); }
+    else if (h.kcalA != null || h.kcalR != null) { d.kcalOut = Math.round((h.kcalA || 0) + (h.kcalR || 0)); done.push('calories dépensées'); }
+    if (h.kcal != null && h.kcal > 0) { d.kcal = Math.round(h.kcal); done.push('calories consommées'); }
+    if (h.sleep != null && h.sleep > 0) { d.sleepMin = Math.round(h.sleep > 1440 ? h.sleep / 60 : h.sleep > 24 ? h.sleep : h.sleep * 60); done.push('sommeil'); }
+    if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); done.push('FC repos'); }
+    if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); done.push('VFC'); }
+    if (h.water != null && h.water > 0) { d.water = Math.round((h.water > 20 ? h.water / 1000 : h.water) * 100) / 100; done.push('eau'); }
+    if (done.length) { touch(date); cur = date; }
+    return done;
+  }
+  var healthMsg = '';
+  function healthCard() {
+    if (!healthPaste) return '<section class="card" style="flex-direction:row;align-items:center;padding:10px 14px"><p class="note" style="flex:1">' + (healthMsg || 'Données Apple Santé du jour') + '</p><button class="today-btn" data-action="health">Importer Santé</button></section>';
+    return '<section class="card"><div class="m-head"><div><h3>Importer depuis Santé</h3><span class="goal">Colle ici le texte copié par ton raccourci</span></div></div>' +
+      '<textarea id="health-txt" rows="4" style="width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:10px;font:14px var(--font-body)" placeholder="poids=73,4|mg=14,9|actives=650|repos=1820|sommeil=7,2|fcrepos=52|vfc=81"></textarea>' +
+      '<div class="m-row"><button class="pe-save" data-action="health-go">Importer</button><button class="pe-cancel" data-action="health-cancel">Annuler</button></div>' + (healthMsg ? '<p class="note">' + healthMsg + '</p>' : '') + '</section>';
+  }
+  function doHealth(txt) {
+    var h = parseHealth(txt), done = applyHealth(h);
+    healthMsg = done.length ? 'Importé : ' + done.join(', ') + '.' : 'Aucune donnée reconnue dans le texte copié.';
+    healthPaste = !done.length; render(); refreshDay();
+  }
+  /* ---------- volume sur 12 semaines ---------- */
+  function bars(vals, labels, color, fmt, neg) {
+    var W = 320, H = 150, pl = 6, pr = 6, pt = 18, pb = 22, n = vals.length, bw = (W - pl - pr) / n;
+    var mx = Math.max.apply(null, vals.map(function (v) { return Math.abs(v || 0); }).concat([1]));
+    var mxi = vals.map(function (v) { return Math.abs(v || 0); }).indexOf(mx);
+    var zero = neg ? pt + (H - pt - pb) / 2 : H - pb, hh = neg ? (H - pt - pb) / 2 : H - pt - pb;
+    var svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+    if (neg) svg += '<line class="grid" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + zero + '" y2="' + zero + '"/>';
+    vals.forEach(function (v, i) {
+      var x = pl + i * bw + bw * 0.15, w = bw * 0.7;
+      if (v != null && v !== 0) {
+        var h = Math.abs(v) / mx * hh, y = v >= 0 ? zero - h : zero;
+        var col = neg ? (v >= 0 ? 'var(--good)' : 'var(--bad)') : color;
+        svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + Math.max(1, h) + '" rx="3" style="fill:' + col + (i === n - 1 ? '' : ';opacity:.75') + '"><title>' + labels[i] + ' : ' + fmt(v) + '</title></rect>';
+        if (i === n - 1 || i === mxi) svg += '<text class="ax" x="' + (x + w / 2) + '" y="' + (v >= 0 ? y - 4 : y + h + 11) + '" text-anchor="middle">' + fmt(v) + '</text>';
+      }
+      if (i % 3 === 2 || i === n - 1) svg += '<text class="ax" x="' + (x + w / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + labels[i] + '</text>';
+    });
+    return svg + '</svg>';
+  }
+  function volumeView() {
+    var ws = weekStart(todayStr()), weeks = [];
+    for (var i = 11; i >= 0; i--) weeks.push(addDays(ws, -7 * i));
+    var lab = weeks.map(function (w) { return dm(w); });
+    var km = [], ton = [], ld = [], def = [], wt = [];
+    weeks.forEach(function (w) {
+      var st = weekStats(w); km.push(st.km); ton.push(st.ton); ld.push(loadRange(w, addDays(w, 6)).load);
+      var en = energyRange(w, addDays(w, 6)); def.push(en.n ? Math.round(en.avg) : null);
+      wt.push(avgOver('weight', w, addDays(w, 6)));
+    });
+    function card(t, sub, chart) { return '<section class="card"><div class="m-head"><div><h3>' + t + '</h3><span class="goal">' + sub + '</span></div></div>' + chart + '</section>'; }
+    var html = progSeg();
+    html += card('Kilomètres de course', '12 dernières semaines · semaine du lundi', bars(km, lab, 'var(--c-run)', function (v) { return fmtD(v, 0); }));
+    html += card('Tonnage muscu', 'Charge × reps cumulés par semaine', bars(ton, lab, 'var(--c-muscu)', fmtTon));
+    html += card('Charge d\'entraînement', 'Durée × RPE par semaine', bars(ld, lab, 'var(--accent)', fmtN));
+    html += card('Déficit moyen par jour', 'Vert : déficit · rouge : surplus', bars(def, lab, null, function (v) { return (v > 0 ? '−' : '+') + fmtN(Math.abs(v)); }, true));
+    var wpts = weeks.map(function (w, i) { return wt[i] != null ? { x: w, y: Math.round(wt[i] * 10) / 10 } : null; }).filter(Boolean);
+    if (wpts.length) html += card('Poids moyen par semaine', 'kg', chart(wpts, { color: 'var(--accent)', unit: 'kg', target: bodyGoals.weight != null ? bodyGoals.weight : null }));
+    return html;
+  }
+  /* ---------- photos de progression (sur cet appareil) ---------- */
+  var photos = [], photoSel = [], photoPose = 'face', photoDate = null, photoMsg = '';
+  var POSES = [['face', 'Face'], ['profil', 'Profil'], ['dos', 'Dos']];
+  var pdbReady = null;
+  function pdb() {
+    if (pdbReady) return pdbReady;
+    pdbReady = new Promise(function (res) {
+      try { var rq = indexedDB.open('ced-photos', 1); rq.onupgradeneeded = function () { rq.result.createObjectStore('p', { keyPath: 'id' }); }; rq.onsuccess = function () { res(rq.result); }; rq.onerror = rq.onblocked = function () { res(null); }; }
+      catch (e) { res(null); }
+    });
+    return pdbReady;
+  }
+  function photoLoad() {
+    return pdb().then(function (dbp) {
+      if (!dbp) return;
+      return new Promise(function (res) {
+        try { var r = dbp.transaction('p', 'readonly').objectStore('p').getAll(); r.onsuccess = function () { photos = (r.result || []).sort(function (a, b) { return a.date < b.date ? 1 : -1; }); res(); }; r.onerror = function () { res(); }; }
+        catch (e) { res(); }
+      });
+    });
+  }
+  function photoPut(o) { return pdb().then(function (dbp) { if (!dbp) return false; return new Promise(function (res) { var tx = dbp.transaction('p', 'readwrite'); tx.objectStore('p').put(o); tx.oncomplete = function () { res(true); }; tx.onerror = function () { res(false); }; }); }); }
+  function photoDel(id) { return pdb().then(function (dbp) { if (!dbp) return; return new Promise(function (res) { var tx = dbp.transaction('p', 'readwrite'); tx.objectStore('p').delete(id); tx.oncomplete = tx.onerror = function () { res(); }; }); }); }
+  function resizeImage(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1200, sc = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(); };
+      img.src = url;
+    });
+  }
+  function photosView() {
+    var html = progSeg();
+    html += '<section class="card"><div class="m-head"><div><h3>Ajouter une photo</h3><span class="goal">Gardées sur ce téléphone uniquement, hors sauvegarde</span></div></div>' +
+      '<div class="m-row"><input type="date" id="ph-date" class="pe-note" style="flex:0 1 auto" value="' + (photoDate || todayStr()) + '"></div>' +
+      '<div class="chips">' + POSES.map(function (p) { return '<button class="chip sm" data-action="ph-pose" data-p="' + p[0] + '" aria-pressed="' + (photoPose === p[0]) + '">' + p[1] + '</button>'; }).join('') + '</div>' +
+      '<label class="pe-save" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer;align-self:flex-start">Choisir ou prendre une photo<input type="file" id="ph-file" accept="image/*" hidden></label>' +
+      (photoMsg ? '<p class="note">' + photoMsg + '</p>' : '') + '</section>';
+    if (photoSel.length) {
+      var sel = photoSel.map(function (id) { return photos.filter(function (x) { return x.id === id; })[0]; }).filter(Boolean).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      html += '<section class="card"><div class="m-head"><div><h3>Comparaison</h3><span class="goal">' + (sel.length < 2 ? 'Touche une 2e photo pour comparer' : 'Avant / après') + '</span></div><button class="pe-cancel" data-action="ph-clear">Fermer</button></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(' + sel.length + ',1fr);gap:8px">' + sel.map(function (x) {
+          return '<figure style="margin:0;display:flex;flex-direction:column;gap:4px"><img src="' + x.data + '" alt="Photo ' + x.pose + ' du ' + dm(x.date) + '" style="width:100%;border-radius:10px;display:block"><figcaption class="sum" style="display:flex;justify-content:space-between;align-items:center">' + dm(x.date) + '/' + x.date.slice(2, 4) + ' · ' + x.pose +
+            '<button class="icon-btn tiny" data-action="ph-del" data-id="' + x.id + '" aria-label="Supprimer la photo">🗑</button></figcaption></figure>';
+        }).join('') + '</div></section>';
+    }
+    if (!photos.length) return html + '<section class="card"><p class="note">Aucune photo. Prends-les dans les mêmes conditions (lumière, heure, distance) pour bien comparer.</p></section>';
+    var byDate = {};
+    photos.forEach(function (x) { (byDate[x.date] = byDate[x.date] || []).push(x); });
+    html += '<section class="card"><div class="m-head"><h3>Galerie</h3><span class="sum">' + plural(photos.length, 'photo') + '</span></div>' + Object.keys(byDate).sort().reverse().map(function (dt) {
+      return '<div><div class="sub" style="margin:6px 0">' + cap(fmtLong.format(parse(dt))) + ' ' + dt.slice(0, 4) + '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">' + byDate[dt].map(function (x) {
+        var on = photoSel.indexOf(x.id) >= 0;
+        return '<button data-action="ph-pick" data-id="' + x.id + '" style="padding:0;border:2px solid ' + (on ? 'var(--accent)' : 'transparent') + ';border-radius:10px;background:none;position:relative"><img src="' + x.data + '" alt="' + x.pose + '" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;display:block"><span class="pill" style="position:absolute;left:4px;bottom:4px;font-size:10.5px;padding:2px 6px">' + x.pose + '</span></button>';
+      }).join('') + '</div></div>';
+    }).join('') + '</section>';
     return html;
   }
 
@@ -1429,6 +1646,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Prochaine course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(nx.name) + '</h2>' +
         '<span class="goal">' + cap(fmtLong.format(parse(nx.date))) + ' ' + nx.date.slice(0, 4) + ' · ' + distLabel(nx) + '</span></div><div class="big">' + (dd === 0 ? 'J' : 'J-' + dd) + '</div></div>' +
         (nx.goal ? '<div class="sub" style="opacity:1">Objectif ' + fmtChrono(nx.goal) + (km ? ' · allure ' + fmtPace(nx.goal / 60 / km) : '') + '</div>' : '') +
+        (function () { var pr = predictFor(nx); if (!pr) return ''; return '<div class="sub" style="opacity:1">Prédiction ' + fmtChrono(pr.t) + (km ? ' · ' + fmtPace(pr.t / 60 / km) : '') + (nx.goal ? (pr.t <= nx.goal ? ' · objectif à ta portée' : ' · ' + fmtChrono(pr.t - nx.goal) + ' au-dessus de l\'objectif') : '') + '</div><span class="goal">D\'après ' + esc(pr.src.name) + ' (' + fmtChrono(pr.src.result) + '), formule de Riegel</span>'; })() +
         (dd > 0 ? '<span class="goal">' + plural(Math.floor(dd / 7), 'semaine') + (dd % 7 ? ' et ' + plural(dd % 7, 'jour') : '') + '</span>' : '<span class="goal">C\'est aujourd\'hui. Bonne course !</span>') + '</section>';
     }
     html += '<button class="today-btn" style="width:100%;min-height:48px" data-action="rf-new">+ Ajouter une course</button>';
@@ -1479,7 +1697,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       $('#today-btn').hidden = true;
     } else {
       $('#nav-title').textContent = 'Progression';
-      $('#eyebrow').textContent = progTab === 'body' ? 'Composition corporelle' : 'Musculation';
+      $('#eyebrow').textContent = { body: 'Composition corporelle', muscu: 'Musculation', volume: 'Volume', photos: 'Photos' }[progTab];
       $('#today-btn').hidden = true;
     }
   }
@@ -1496,6 +1714,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   }
   function render() {
     migrateMuscle();
+    if (!isTyping() || !document.activeElement.closest('#settings')) renderSettings();
     needsRender = false;
     updateHeader();
     content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : view === 'race' ? raceView() : progView();
@@ -1556,6 +1775,8 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     else if (f === 'sportMin' && s) s.min = num(el.value);
     else if (f === 'sportKm' && s) s.km = num(el.value);
     else if (f === 'sportHr' && s) s.hr = num(el.value);
+    else if (f === 'sportRpe' && s) { var rv = num(el.value); s.rpe = rv == null ? null : Math.max(1, Math.min(10, Math.round(rv))); }
+    else if (f === 'sportShoe' && s) s.shoe = el.value || null;
     else if (f === 'fcmax') return;
     else if (f === 'setW' && ex) ex.sets[+el.dataset.i].w = num(el.value);
     else if (f === 'setR' && ex) ex.sets[+el.dataset.i].r = num(el.value);
@@ -1566,6 +1787,16 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   });
   content.addEventListener('change', function (e) {
     var el = e.target;
+    if (el.id === 'ph-file') {
+      var f0 = el.files && el.files[0]; if (!f0) return;
+      photoDate = $('#ph-date').value || todayStr();
+      photoMsg = 'Enregistrement…'; 
+      resizeImage(f0).then(function (data) { return photoPut({ id: uid('ph'), date: photoDate, pose: photoPose, data: data }); })
+        .then(function (ok) { photoMsg = ok ? 'Photo ajoutée.' : 'Enregistrement impossible sur cet appareil.'; return photoLoad(); }, function () { photoMsg = 'Image illisible.'; })
+        .then(function () { render(); });
+      return;
+    }
+    if (el.id === 'ph-date') { photoDate = el.value; return; }
     if (el.tagName === 'SELECT' && el.dataset.pe) { readPlanEditor(); render(); return; }
     if (el.dataset.field === 'setR' && num(el.value) > 0) startRest();
     if (el.dataset.field !== 'goal') return;
@@ -1613,7 +1844,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     } else if (a === 'add-sport') {
       d = get(cur);
       var id = uid('s');
-      d.sports.push({ id: id, type: b.dataset.type, min: null, km: null, hr: null, exos: [] });
+      d.sports.push({ id: id, type: b.dataset.type, min: null, km: null, hr: null, rpe: null, shoe: defaultShoe(b.dataset.type), exos: [] });
       touch(cur); render();
       focusSel('input[data-field="sportMin"][data-sid="' + id + '"]');
     } else if (a === 'del-sport') {
@@ -1745,7 +1976,7 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       d = get(cur);
       var pid = uid('s');
       var src0 = plannedFor(cur).filter(function (x) { return x.id === b.dataset.pid; })[0];
-      var nsp = { id: pid, type: b.dataset.type, min: num(b.dataset.min), km: null, hr: null, exos: [], blocks: [] };
+      var nsp = { id: pid, type: b.dataset.type, min: num(b.dataset.min), km: null, hr: null, rpe: null, shoe: defaultShoe(b.dataset.type), exos: [], blocks: [] };
       if (src0) {
         nsp.blocks = JSON.parse(JSON.stringify(src0.blocks || []));
         (src0.exos || []).forEach(function (x) {
@@ -1779,7 +2010,37 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
         navigator.clipboard.writeText(txt).then(function () { msg.textContent = 'Bilan copié.'; }, function () { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; });
       } catch (err) { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; }
     }
-    else if (a === 'prog-tab') { progTab = b.dataset.tab; render(); }
+    else if (a === 'prog-tab') { progTab = b.dataset.tab; if (progTab === 'photos') photoLoad().then(function () { if (view === 'prog') render(); }); render(); }
+    else if (a === 'ph-pose') { photoDate = $('#ph-date').value || null; photoPose = b.dataset.p; render(); }
+    else if (a === 'ph-pick') {
+      var pi0 = photoSel.indexOf(b.dataset.id);
+      if (pi0 >= 0) photoSel.splice(pi0, 1); else { photoSel.push(b.dataset.id); if (photoSel.length > 2) photoSel.shift(); }
+      render(); window.scrollTo(0, 0);
+    }
+    else if (a === 'ph-clear') { photoSel = []; render(); }
+    else if (a === 'ph-del') {
+      if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = '?'; setTimeout(function () { if (b.isConnected) { b.dataset.confirm = ''; b.textContent = '🗑'; } }, 2500); return; }
+      photoDel(b.dataset.id).then(photoLoad).then(function () { photoSel = photoSel.filter(function (x) { return x !== b.dataset.id; }); render(); });
+    }
+    else if (a === 'health') {
+      var fallback = function () { healthPaste = true; healthMsg = ''; render(); focusSel('#health-txt'); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(function (t) { if (t && /=/.test(t)) doHealth(t); else fallback(); }, fallback);
+        else fallback();
+      } catch (err) { fallback(); }
+    }
+    else if (a === 'health-go') { doHealth($('#health-txt').value); }
+    else if (a === 'health-cancel') { healthPaste = false; healthMsg = ''; render(); }
+    else if (a === 'shoe-add') {
+      var nm = ($('#sh-name').value || '').trim(); if (!nm) return;
+      settings.shoes.push({ id: uid('sh'), name: nm, start: num($('#sh-start').value) || 0, limit: num($('#sh-limit').value) || 700, retired: false });
+      saveGoals(); renderSettings(); render();
+    }
+    else if (a === 'shoe-retire') { var sh0 = shoeById(b.dataset.id); if (sh0) { sh0.retired = !sh0.retired; saveGoals(); renderSettings(); render(); } }
+    else if (a === 'shoe-del') {
+      if (b.dataset.confirm !== '1') { b.dataset.confirm = '1'; b.textContent = 'Sûr ?'; return; }
+      settings.shoes = settings.shoes.filter(function (x) { return x.id !== b.dataset.id; }); saveGoals(); renderSettings(); render();
+    }
     else if (a === 'body-metric') { bodyMetric = b.dataset.k; render(); }
   });
 
@@ -1845,7 +2106,18 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
       '<div class="m-row"><span class="sub" style="flex:1">FC max</span><label class="field mini"><span class="sr">FC max</span><input data-field="fcmax" type="number" inputmode="numeric" min="140" max="230" step="1" value="' + settings.fcmax + '"><span class="unit">bpm</span></label></div>' +
       '<div class="sub">Repos entre séries</div><div class="chips">' + [60, 90, 120, 150, 180, 240].map(function (v) {
         return '<button class="chip sm" data-action="rest-dur" data-v="' + v + '" aria-pressed="' + (settings.rest === v) + '">' + fmtClock(v) + '</button>';
-      }).join('') + '</div><p class="note" id="set-msg" role="status"></p>';
+      }).join('') + '</div><p class="note" id="set-msg" role="status"></p>' +
+      '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
+      '<div class="m-head"><div><h3>Chaussures</h3><span class="goal">Kilométrage suivi à partir des sorties où tu les choisis</span></div></div>' +
+      settings.shoes.map(function (x) {
+        var k = shoeKm(x), pc = Math.min(100, Math.round(k / x.limit * 100)), cls = pc >= 100 ? 'bad' : pc >= 90 ? '' : 'good';
+        return '<div style="display:flex;flex-direction:column;gap:4px;opacity:' + (x.retired ? .55 : 1) + '"><div class="m-row" style="justify-content:space-between"><b style="font-size:14px">' + esc(x.name) + (x.retired ? ' (retirées)' : '') + '</b><span class="sum">' + fmtN(k) + ' / ' + fmtN(x.limit) + ' km</span></div>' +
+          '<div class="bar ' + cls + '"><i style="width:' + pc + '%"></i></div><div class="m-row"><button class="chip sm" data-action="shoe-retire" data-id="' + x.id + '">' + (x.retired ? 'Réactiver' : 'Retirer') + '</button><button class="chip sm" data-action="shoe-del" data-id="' + x.id + '">Supprimer</button></div></div>';
+      }).join('') +
+      '<div class="r-form" style="gap:8px"><input class="pe-note" id="sh-name" type="text" maxlength="40" placeholder="Nom (ex. Rebel 5)"><div class="m-row">' +
+      '<label class="field mini"><span class="sr">Km déjà faits</span><input id="sh-start" type="number" inputmode="numeric" min="0" placeholder="0"><span class="unit">km déjà faits</span></label>' +
+      '<label class="field mini"><span class="sr">Limite</span><input id="sh-limit" type="number" inputmode="numeric" min="100" placeholder="700"><span class="unit">km max</span></label></div>' +
+      '<button class="pe-save" style="align-self:flex-start" data-action="shoe-add">Ajouter la paire</button></div>';
   }
   $('#settings').addEventListener('change', function (e) {
     var gk = e.target.dataset.goal;

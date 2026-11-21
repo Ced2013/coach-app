@@ -1643,7 +1643,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   var HIST_KEYS = { mangees: 'kcalIn', energiealimentaire: 'kcalIn', alimentaire: 'kcalIn', consommees: 'kcalIn', poids: 'weight', mg: 'fat', graisse: 'fat', muscle: 'musclePct', actives: 'kcalA', repos: 'kcalR', fcrepos: 'hrRest', vfc: 'hrv', sommeil: 'sleep' };
   function parseHistory(txt) {
-    var rows = {}, n = 0, sFins = null, sDurs = null;
+    var rows = {}, n = 0, sFins = null, sDurs = null, sVals = null;
     function addSleep(dateTxt, valTxt) {
       var date = parseAnyDate(dateTxt); if (!date) return;
       var mins = durToMin(valTxt, true);
@@ -1653,14 +1653,16 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     String(txt || '').split(/\n+/).forEach(function (line) {
       /* Sommeil sans boucle : deux lignes « sommeilfins;d1|d2|… » et « sommeildurees;x1|x2|… » appariées dans l'ordre. */
-      var sp = line.match(/^\s*sommeil[\s_-]*(fins?|durees?|durées?)\s*[;=:]\s*(.*)$/i);
-      if (sp) { var arr = sp[2].split('|').map(function (x) { return x.trim(); }); if (/^fin/i.test(sp[1])) sFins = arr; else sDurs = arr; return; }
+      var sp = line.match(/^\s*sommeil[\s_-]*(fins?|durees?|durées?|valeurs?)\s*[;=:]\s*(.*)$/i);
+      if (sp) { var arr = sp[2].split('|').map(function (x) { return x.trim(); }); if (/^fin/i.test(sp[1])) sFins = arr; else if (/^val/i.test(sp[1])) sVals = arr; else sDurs = arr; return; }
       var p = line.split(';'); if (p.length < 3) return;
       var k = HIST_KEYS[p[0].trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s_-]/g, '')]; if (!k) return;
       var date = parseAnyDate(p[1]); if (!date) return;
       if (k === 'sleep') {
         /* Sommeil : une ligne par morceau de nuit, additionnés sur le jour du réveil (fin après 18 h = nuit suivante). */
-        addSleep(p[1], p.slice(2).join(';'));
+        var rawS = p.slice(2).join(';');
+        if (/veil|awake|au\s*lit|in\s*bed/i.test(rawS.normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) return;
+        addSleep(p[1], p.slice(2)[0]);
         return;
       }
       var nv = p.slice(2).join(';').replace(/\s/g, '').replace(',', '.').match(/-?\d+(\.\d+)?/); if (!nv) return;
@@ -1668,7 +1670,12 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       r[k] = (k === 'kcalA' || k === 'kcalR' || k === 'kcalIn') ? (r[k] || 0) + parseFloat(nv[0]) : parseFloat(nv[0]);
       n++;
     });
-    if (sFins && sDurs) sFins.forEach(function (f, i) { if (sDurs[i] != null && sDurs[i] !== '') addSleep(f, sDurs[i]); });
+    /* Les morceaux « Éveillé » et « Au lit » ne comptent pas comme du sommeil. */
+    if (sFins && sDurs) sFins.forEach(function (f, i) {
+      if (sDurs[i] == null || sDurs[i] === '') return;
+      if (sVals && sVals[i] && /veil|awake|au\s*lit|in\s*bed/i.test(sVals[i].normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) return;
+      addSleep(f, sDurs[i]);
+    });
     return n ? rows : null;
   }
   function applyHistory(rows) {
@@ -1700,6 +1707,14 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   function doHealth(txt) {
     var hist = parseHistory(txt);
+    var hq = parseHealth(txt), hasEq = Object.keys(hq).some(function (k) { return k !== 'date'; });
+    if (hist && hasEq) {
+      var res0 = applyHistory(hist), done0 = applyHealth(hq);
+      if (res0.days) done0.push('sommeil (' + Object.keys(hist).sort().filter(function (k) { return hist[k].sleepSum; }).map(function (k) { return dm(k) + ' : ' + fmtDur(Math.round(hist[k].sleepSum)); }).join(', ') + ')');
+      healthMsg = done0.length ? 'Importé : ' + done0.join(', ') + '.' : 'Aucune donnée reconnue.';
+      healthPaste = !done0.length; render(); refreshDay(); backupInfo();
+      return;
+    }
     if (hist) {
       var res = applyHistory(hist);
       healthMsg = res.days ? 'Historique importé : ' + plural(res.days, 'jour') + ' du ' + dm(res.from) + '/' + res.from.slice(2, 4) + ' au ' + dm(res.to) + '/' + res.to.slice(2, 4) + '.' : 'Aucune donnée d\'historique reconnue.';

@@ -501,7 +501,12 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     if (reached) return '<span style="color:var(--good);font-weight:600">Objectif atteint</span>';
     return 'Reste ' + fmtD(Math.abs(diff)) + ' ' + def.unit;
   }
-  function bodyDef(k) { return BODY.filter(function (b) { return b.k === k; })[0]; }
+  var RECO_M = [
+    { k: 'hrRest', label: 'FC repos', unit: 'bpm', step: 1, dec: 0, down: true },
+    { k: 'hrv', label: 'VFC', unit: 'ms', step: 1, dec: 0, down: false }
+  ];
+  var ALL_M = BODY.concat(RECO_M);
+  function bodyDef(k) { return ALL_M.filter(function (b) { return b.k === k; })[0]; }
   function bodySeries(k) {
     return Object.keys(days).sort().filter(function (d) { return days[d][k] != null; }).map(function (d) { return { x: d, y: days[d][k] }; });
   }
@@ -1318,9 +1323,9 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
   }
   function bodyView() {
     var html = progSeg() + energyCard();
-    var any = BODY.some(function (b) { return bodySeries(b.k).length; });
+    var any = ALL_M.some(function (b) { return bodySeries(b.k).length; });
     if (!any) return html + '<section class="card"><p class="note">Aucune mesure pour l\'instant. Saisis ton poids, ta masse grasse et ta masse musculaire dans la carte « Composition corporelle » de l\'onglet Jour.</p></section>';
-    html += '<div class="tiles" style="grid-template-columns:repeat(2,1fr)">' + BODY.map(function (b) {
+    html += '<div class="tiles" style="grid-template-columns:repeat(2,1fr)">' + ALL_M.map(function (b) {
       var sr = bodySeries(b.k);
       if (!sr.length) return '<button class="tile" style="text-align:left;font:inherit;color:inherit" data-action="body-metric" data-k="' + b.k + '"><b>–</b><span>' + b.label + '</span></button>';
       var last = sr[sr.length - 1], first = sr[0];
@@ -1332,9 +1337,9 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     }).join('') + '</div>';
 
     var def = bodyDef(bodyMetric), sr = bodySeries(bodyMetric);
-    if (!sr.length) { def = BODY.filter(function (b) { return bodySeries(b.k).length; })[0]; bodyMetric = def.k; sr = bodySeries(def.k); }
+    if (!sr.length) { def = ALL_M.filter(function (b) { return bodySeries(b.k).length; })[0]; bodyMetric = def.k; sr = bodySeries(def.k); }
     var pts = movingAvg(sr);
-    var cols = { weight: 'var(--accent)', fat: 'var(--bad)', musclePct: 'var(--c-muscu)', waist: 'var(--c-run)' };
+    var cols = { weight: 'var(--accent)', fat: 'var(--bad)', musclePct: 'var(--c-muscu)', waist: 'var(--c-run)', hrRest: 'var(--c-race)', hrv: 'var(--c-bike)' };
     var mn = Math.min.apply(null, sr.map(function (p) { return p.y; })), mx = Math.max.apply(null, sr.map(function (p) { return p.y; }));
     var last7 = sr.filter(function (p) { return p.x > addDays(todayStr(), -7); }), prev7 = sr.filter(function (p) { return p.x > addDays(todayStr(), -14) && p.x <= addDays(todayStr(), -7); });
     function avg(a) { return a.reduce(function (s, p) { return s + p.y; }, 0) / a.length; }
@@ -1342,10 +1347,10 @@ body.has-rest { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); 
     html += '<section class="card"><div class="m-head"><div><h3>' + def.label + '</h3><span class="goal">Min ' + fmtD(mn) + ' · max ' + fmtD(mx) + ' ' + def.unit + ' · ' + plural(sr.length, 'mesure') + '</span></div></div>' +
       chart(pts, { color: cols[def.k], avgColor: 'var(--muted)', unit: def.unit, target: bodyGoals[def.k] != null ? bodyGoals[def.k] : null }) +
       '<div class="legend"><span><i style="background:' + cols[def.k] + '"></i>Mesure</span><span><i style="background:var(--muted)"></i>Moyenne 7 jours</span>' + (bodyGoals[def.k] != null ? '<span><i style="background:var(--good)"></i>Objectif</span>' : '') + '</div>' +
-      '<p class="note">' + trend + '</p>' +
+      '<p class="note">' + trend + '</p>' + (RECO_M.indexOf(def) >= 0 ? '</section>' : '' ) + (RECO_M.indexOf(def) >= 0 ? '' :
       '<div class="m-row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:12px"><div><div class="sub">Objectif ' + def.label.toLowerCase() + '</div><span class="goal">Laisse vide pour ne pas en avoir</span></div>' +
       '<label class="field mini"><span class="sr">Objectif ' + def.label + '</span><input data-field="goal" data-k="' + def.k + '" type="number" inputmode="decimal" min="0" step="' + def.step + '" placeholder="–" value="' + val(bodyGoals[def.k]) + '"><span class="unit">' + def.unit + '</span></label></div>' +
-      '<p class="note" style="margin-top:-4px">' + (bodyGoals[def.k] != null ? remainTxt(def.k, sr[sr.length - 1].y) : '') + '</p></section>';
+      '<p class="note" style="margin-top:-4px">' + (bodyGoals[def.k] != null ? remainTxt(def.k, sr[sr.length - 1].y) : '') + '</p></section>');
 
     var rows = Object.keys(days).filter(function (k) { return hasBody(days[k]); }).sort().reverse();
     html += '<section class="card"><div class="m-head"><h3>Historique</h3><span class="sum">' + plural(rows.length, 'jour') + '</span></div><div>' +

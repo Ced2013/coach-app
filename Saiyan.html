@@ -580,6 +580,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
 .wgrid .c.bad { background: #8A2E3E; color: #FFE9ED; }
 .wgrid .c.sp { background: #3A2212; color: var(--accent-text); }
 .wgrid .c.fut { background: transparent; border: 1px dashed var(--line); }
+.wgrid .c.rp { color: var(--muted); font-weight: 500; }
 @media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
 </style>
 </head>
@@ -1639,6 +1640,10 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (filled) { var pg0 = weekGreens(addDays(ws, -7)); L.push('Objectifs du jour tenus : ' + good + '/' + filled * 5 + (pg0.f ? ' (semaine précédente : ' + pg0.g + ')' : '')); }
     var wm = weekMeals(ws); if (wm.pct != null) L.push('Écarts : ' + wm.tot + '/7 sur 35 repas → ' + wm.pct + ' % / ' + (100 - wm.pct) + ' %' + (wm.tot <= 7 ? ' (80/20 tenu)' : ' (au-delà des 20 %)'));
     var lr = loadRange(ws, we); if (lr.load) L.push('Charge d\'entraînement : ' + fmtN(lr.load) + (acwr(we < todayStr() ? we : todayStr()).ratio != null ? ' (ratio ' + fmtD(acwr(we < todayStr() ? we : todayStr()).ratio, 2) + ')' : ''));
+    var ki = avgOver('kcal', ws, we), ko = avgOver('kcalOut', ws, we);
+    if (ki != null || ko != null) L.push('Calories moyennes : ' + (ki != null ? fmtN(ki) + ' mangées' : '') + (ki != null && ko != null ? ' / ' : '') + (ko != null ? fmtN(ko) + ' dépensées' : '') + ' par jour');
+    var sl = avgOver('sleepMin', ws, we), slp = avgOver('sleepMin', addDays(ws, -7), addDays(ws, -1));
+    if (sl != null) L.push('Sommeil moyen : ' + fmtDur(Math.round(sl)) + ' par nuit' + (slp != null ? ' (' + (sl >= slp ? '+' : '−') + fmtDur(Math.round(Math.abs(sl - slp))) + ' vs semaine précédente)' : ''));
     var en2 = energyRange(ws, we); if (en2.n) L.push('Énergie : ' + (en2.avg >= 0 ? 'déficit' : 'surplus') + ' moyen de ' + fmtN(Math.abs(en2.avg)) + ' kcal/j (' + plural(en2.n, 'jour') + ')');
     var w = avgOver('weight', ws, we), wp = avgOver('weight', addDays(ws, -7), addDays(ws, -1));
     if (w != null) L.push('Poids moyen : ' + fmtD(w) + ' kg' + (wp != null ? ' (' + (w - wp > 0 ? '+' : '−') + fmtD(Math.abs(w - wp)) + ' kg vs semaine précédente)' : ''));
@@ -1692,7 +1697,10 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<div class="tile"><b>' + (daysFilled ? totalGood + '/' + daysFilled * 5 : '–') + '</b><span>objectifs tenus</span></div>' +
       '<div class="tile"><b>' + (st.km ? fmtD(st.km, 1) : '0') + '</b><span>km de course</span></div>' +
       '<div class="tile"><b>' + (st.ton ? fmtTon(st.ton) : '0') + '</b><span>tonnage muscu</span></div>' +
-      '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div></div></section>';
+      '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div>' +
+      (function () { var ws1 = weekStart(cur), we1 = addDays(ws1, 6), ki1 = avgOver('kcal', ws1, we1), ko1 = avgOver('kcalOut', ws1, we1), sl1 = avgOver('sleepMin', ws1, we1);
+        return '<div class="tile"><b>' + (ki1 != null ? fmtN(ki1) : '–') + '</b><span>kcal mangées / j</span></div><div class="tile"><b>' + (ko1 != null ? fmtN(ko1) : '–') + '</b><span>kcal dépensées / j</span></div><div class="tile"><b>' + (sl1 != null ? fmtDurC(Math.round(sl1)) : '–') + '</b><span>sommeil moyen</span></div>'; })() +
+      '</div></section>';
     if (shown('load')) html += fold('load', loadCard());
     var en = energyRange(dates[0], dates[6]);
     if (en.n && shown('energy')) html += '<section id="fd-energy" class="card sec' + (foldState.energy ? ' shut' : '') + '"><div class="m-head fh"><div><h3>Énergie de la semaine</h3><span class="goal">' + plural(en.n, 'jour') + ' avec consommées et dépensées</span></div><span class="pill ' + (en.avg >= 0 ? 'good' : 'bad') + '">' + (en.avg >= 0 ? '−' : '+') + fmtN(Math.abs(en.avg)) + ' kcal/j</span></div>' +
@@ -1731,6 +1739,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return html;
   }
 
+  function famLetter(t) { var f = sportDef(t).fam; return f === 'muscu' ? 'M' : f === 'run' || f === 'race' ? 'R' : f === 'wod' ? 'C' : f === 'bike' ? 'V' : f === 'mob' ? 'Rc' : '?'; }
+  function uniqL(a) { var o = []; a.forEach(function (x) { if (o.indexOf(x) < 0) o.push(x); }); return o.join(''); }
   function weekGrid(dates) {
     var today = todayStr(), rows = [['kcal', 'Kcal'], ['water', 'Eau'], ['sleep', 'Sommeil'], ['screen', 'Écran'], ['blue', 'Blue']];
     var ev = dates.map(function (ds) { var d = days[ds] || emptyDay(ds); return { d: d, e: evalDay(d), t: sportTotals(d) }; });
@@ -1749,10 +1759,20 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       }).join('');
     });
     h += '<div class="lbl">Sport</div>' + ev.map(function (x, i) {
-      var p = (x.d.plan || []).length, cls = x.t.n ? 'sp' : dates[i] > today ? 'fut' : '';
-      return '<button class="c ' + cls + '" data-action="goto" data-date="' + dates[i] + '">' + (x.t.n ? fmtDurC(x.t.min) : p ? '·' + p : '') + '</button>';
+      /* Séance faite = orange · séance prévue ratée = rouge · repos (rien de prévu) = gris « R » · à venir = pointillés. */
+      /* Lettres : M muscu · R running · C CrossFit · V vélo · Rc récup (mobilité) · Rp repos. Vert = fait, rouge = prévu non fait. */
+      var pl0 = plannedFor(dates[i]), past = dates[i] < today;
+      var doneL = (x.d.sports || []).map(function (q) { return famLetter(q.type); });
+      var missL = pl0.filter(function (q) { return planItemStatus(dates[i], q).s !== 'good'; }).map(function (q) { return famLetter(q.type); });
+      var cls, txt0;
+      if (doneL.length && !(past && missL.length)) { cls = 'good'; txt0 = uniqL(doneL); }
+      else if (past && missL.length) { cls = 'bad'; txt0 = uniqL(missL.concat(doneL)); }
+      else if (missL.length) { cls = 'fut'; txt0 = uniqL(missL); }
+      else if (dates[i] <= today) { cls = 'rp'; txt0 = 'Rp'; }
+      else { cls = 'fut'; txt0 = ''; }
+      return '<button class="c ' + cls + '" data-action="goto" data-date="' + dates[i] + '" aria-label="Sport ' + dates[i] + '">' + txt0 + '</button>';
     }).join('');
-    return '<section class="card"><div class="m-head"><div><h3>Ta semaine en un coup d\'œil</h3><span class="goal">Vert tenu · rouge raté · touche une case pour ouvrir le jour</span></div></div><div class="wgrid">' + h + '</div></section>';
+    return '<section class="card"><div class="m-head"><div><h3>Ta semaine en un coup d\'œil</h3><span class="goal">Vert tenu · rouge raté · touche une case pour ouvrir le jour</span><span class="goal">Sport : M muscu · R running · C CrossFit · V vélo · Rc récup · Rp repos</span></div></div><div class="wgrid">' + h + '</div></section>';
   }
 
   /* ---------- vue Progrès ---------- */

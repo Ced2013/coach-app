@@ -1179,6 +1179,20 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return { w: w, r: r, why: 'RIR 0, on consolide' };
   }
   /* ---------- modèles de séance ---------- */
+  function lastExosSource(type) {
+    var keys = Object.keys(days).sort().reverse(), fam = sportDef(type).fam;
+    function scan(ok) {
+      for (var i = 0; i < keys.length; i++) {
+        var d = days[keys[i]];
+        var ss = (d.sports || []).filter(function (x) { return ok(x) && x.exos.some(function (e) { return e.sets.some(setDone); }); })[0];
+        if (ss) return { date: keys[i], kind: 'sess', s: ss, moves: ss.exos.map(function (e) { return e.move; }) };
+        var pp = (d.plan || []).filter(function (x) { return ok(x) && x.exos && x.exos.length && !(planEdit && x.id === planEdit.id); })[0];
+        if (pp) return { date: keys[i], kind: 'plan', p: pp, moves: pp.exos.map(function (e) { return e.move; }) };
+      }
+      return null;
+    }
+    return scan(function (x) { return x.type === type; }) || scan(function (x) { return sportDef(x.type).fam === fam; });
+  }
   function lastBlocksOfType(type) {
     var keys = Object.keys(days).sort().reverse();
     for (var i = 0; i < keys.length; i++) {
@@ -1563,8 +1577,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<input id="pe-note" class="pe-note" type="text" maxlength="120" placeholder="Note (optionnel)" value="' + esc(planEdit.note || '') + '"></div>';
 
     if ((fam === 'muscu' || fam === 'mob') && !planEdit.exos.length) {
-      var lt = lastSessionOfType(t, '9999');
-      if (lt) html += '<button class="tpl" data-action="pe-copy-last">↻ Copier ma dernière séance (' + dm(lt.date) + ')<small>' + lt.s.exos.map(function (e) { return esc(e.move); }).join(' · ') + '</small></button>';
+      var lt = lastExosSource(t);
+      html += lt ? '<button class="tpl" data-action="pe-copy-last">↻ Copier ma dernière séance (' + dm(lt.date) + ')<small>' + lt.moves.map(esc).join(' · ') + '</small></button>' : '<p class="note" style="margin:0">Aucune séance de ce type à copier pour l\'instant.</p>';
     }
     if ((fam === 'run' || fam === 'race') && !planEdit.blocks.length) {
       var lb = lastBlocksOfType(t);
@@ -2887,8 +2901,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       readPlanEditor(); var pf = sportDef(planEdit.type).fam;
       if (pf === 'run' || pf === 'race') { var lb2 = lastBlocksOfType(planEdit.type); if (lb2) planEdit.blocks = JSON.parse(JSON.stringify(lb2.blocks)); }
       else {
-        var lt2 = lastSessionOfType(planEdit.type, '9999');
-        if (lt2) { planEdit.exos = lt2.s.exos.map(function (x) {
+        var lt2 = lastExosSource(planEdit.type);
+        if (lt2 && lt2.kind === 'plan') { planEdit.exos = JSON.parse(JSON.stringify(lt2.p.exos)); if (!planEdit.min && lt2.p.min) planEdit.min = lt2.p.min; }
+        else if (lt2) { planEdit.exos = lt2.s.exos.map(function (x) {
           var dn = x.sets.filter(setDone), top = dn.reduce(function (m, q) { return !m || (q.w || 0) > (m.w || 0) ? q : m; }, null);
           var o = { move: x.move, sets: dn.length || x.sets.length || null, reps: top && top.r ? top.r : null, w: top && top.w != null ? top.w : null };
           if (x.mode === 'time') { o.timed = true; o.reps = null; o.sec = Math.max.apply(null, [0].concat(dn.map(function (q) { return q.t || 0; }))) || null; }

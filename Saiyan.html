@@ -115,12 +115,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .card.sec > .fh { flex-wrap: wrap; row-gap: 4px; }
 .card.sec > .fh > .sum { order: 3; flex-basis: 100%; font-size: 14px; line-height: 1.35; }
 .card.sec > .fh > .sum:empty { display: none; }
+.card > .m-head > .sum.cnt { order: 0; flex: none; flex-basis: auto; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; line-height: 1.2; }
 .card.sec.shut > .fh { align-items: center; }
 .card.sec > .fh::after { content: ''; width: 8px; height: 8px; border-left: 2px solid var(--muted); border-top: 2px solid var(--muted); transform: rotate(45deg); margin: 8px 2px 0 6px; flex: none; }
 .card.sec.shut > :not(.fh) { display: none !important; }
 .card.sec.shut > .fh { border-top: 0 !important; padding-top: 0 !important; }
 .card.sec.shut > .fh::after { transform: rotate(-135deg); margin-top: -2px; }
 .card.sec.shut .fh .goal { display: none; }
+/* ----- Système d'en-têtes uniforme ----- */
+.card > .m-head ~ .m-head h3 { font: 700 12px/1.3 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.card > .m-head ~ .m-head { border-top: 1px solid var(--line); padding-top: 12px; }
+.card > .m-head:not(.fh) > .sum { flex: none; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.card > .m-head .pill { align-self: flex-start; }
+.card.sec.shut > .fh .pill { align-self: center; }
 .tmode { min-height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); font: 600 12px var(--font-body); }
 .tmode[aria-pressed="true"] { color: var(--c-muscu); border-color: var(--c-muscu); }
 .s-list { display: flex; flex-direction: column; gap: 10px; }
@@ -388,8 +395,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   </header>
   <main id="content" style="display:flex;flex-direction:column;gap:14px"></main>
   <section class="card" id="settings"></section>
-  <section class="card" id="backup">
-    <div class="m-head"><div><h3>Sauvegarde</h3><span class="goal">Tes données sont enregistrées sur ce téléphone.</span></div></div>
+  <section class="card sec" id="backup" data-fk="backup">
+    <div class="m-head fh"><div><h3>Sauvegarde</h3><span class="goal">Tes données sont enregistrées sur ce téléphone.</span></div></div>
     <div class="quick"><button type="button" id="btn-export">Exporter une copie</button><button type="button" id="btn-import">Importer une copie</button></div>
     <input type="file" id="file-import" accept=".json,application/json" hidden>
     <p class="note" id="backup-msg" role="status"></p>
@@ -1205,7 +1212,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function nutriCard(d) {
     var c = d.coffee || 0, st = c === 0 && d.coffee == null ? 'idle' : c <= GOALS.coffee ? 'good' : 'bad';
     return '<section class="card"><div class="m-head"><div><h2>Nutrition</h2><span class="goal">Plan en 5 prises · ' + plural(GOALS.coffee, 'café') + ' maximum</span></div><span class="pill ' + ((d.cheats || []).length ? 'bad' : d.meals.length === 5 ? 'good' : 'idle') + '">' + d.meals.length + '/5 repas' + ((d.cheats || []).length ? ' · ' + plural(d.cheats.length, 'écart') : '') + '</span></div>' +
-      '<p class="note" style="font-size:12.5px;margin:0">1 touche : respecté ✓ · 2 touches : écart ✗ · 3 touches : vide</p>' +
+      '<p class="note" style="font-size:12.5px;margin:0">Touche pour passer de ✓ respecté à ✗ écart, puis à vide</p>' +
       '<div class="meals">' + MEALS.map(function (m, i) {
         var on = d.meals.indexOf(i) >= 0, ch = (d.cheats || []).indexOf(i) >= 0;
         return '<button class="meal' + (ch ? ' cheat' : '') + '" data-action="meal" data-i="' + i + '" aria-pressed="' + on + '" aria-label="' + m[0] + (on ? ' : respecté' : ch ? ' : écart' : '') + '"><span class="box">' + (on ? '✓' : ch ? '✗' : '') + '</span>' + m[0] + '<small>' + m[1] + '</small></button>';
@@ -1265,7 +1272,6 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     races.filter(function (r) { return r.date === cur; }).forEach(function (r) {
       html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Jour de course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(r.name) + '</h2><span class="goal">' + distLabel(r) + (r.goal ? ' · objectif ' + fmtChrono(r.goal) : '') + (r.result ? ' · réalisé ' + fmtChrono(r.result) : '') + '</span></div><button class="today-btn" data-action="goto-race">' + (r.result || cur < todayStr() ? 'Voir' : 'Saisir le chrono') + '</button></div></section>';
     });
-    if (settings.health) html += healthCard();
     html += '<section class="card score"><div><div class="score-num" id="score-num">0/5</div><div class="score-lbl">objectifs tenus aujourd\'hui</div></div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div>' +
       '<div class="rings">' + [['kcal', 'Calories'], ['water', 'Eau'], ['sleep', 'Sommeil'], ['screen', 'Écran'], ['blue', 'Blue']].map(function (r) {
         return '<button class="ring" id="ring-' + r[0] + '" data-action="ring" data-k="' + r[0] + '" aria-label="' + r[1] + '"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="21"/><circle class="fg" cx="26" cy="26" r="21" stroke-dasharray="131.95" stroke-dashoffset="131.95"/></svg><span>' + r[1] + '</span></button>';
@@ -1284,6 +1290,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<label class="field mini"><span class="sr">Durée de la sortie en minutes</span><input id="in-blueMin" data-field="blueMin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(d.blueMin) + '"><span class="unit">min</span></label>');
     html += (shown('reco') ? fold('reco', recoCard(d)) : '') + (shown('nutri') ? fold('nutri', nutriCard(d)) : '') + (shown('body') ? fold('body', bodyCard(d)) : '');
     if (shown('sport')) html += fold('sport', sportSection(d));
+    if (settings.health) html += healthCard();
     return html;
   }
 
@@ -1465,13 +1472,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var dates = weekDates(cur), st = weekStats(cur), today = todayStr();
     var totalGood = 0, daysFilled = 0;
     dates.forEach(function (ds) { var d = days[ds]; if (d && hasLog(d)) { daysFilled++; totalGood += dayScore(d); } });
-    var html = !shown('tiles') ? '' : '<div class="tiles">' +
+    var html = !shown('tiles') ? '' : '<section id="fd-tiles" class="card sec' + (foldState.tiles ? ' shut' : '') + '"><div class="m-head fh"><div><h3>Chiffres de la semaine</h3></div><span class="sum">' + plural(st.n, 'séance') + (st.min ? ' · ' + fmtDurC(st.min) : '') + '</span></div><div class="tiles">' +
       '<div class="tile"><b>' + st.n + '</b><span>' + (st.n > 1 ? 'séances' : 'séance') + ' de sport</span></div>' +
       '<div class="tile"><b>' + (st.min ? fmtDurC(st.min) : '0') + '</b><span>temps total</span></div>' +
       '<div class="tile"><b>' + (daysFilled ? totalGood + '/' + daysFilled * 5 : '–') + '</b><span>objectifs tenus</span></div>' +
       '<div class="tile"><b>' + (st.km ? fmtD(st.km, 1) : '0') + '</b><span>km de course</span></div>' +
       '<div class="tile"><b>' + (st.ton ? fmtTon(st.ton) : '0') + '</b><span>tonnage muscu</span></div>' +
-      '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div></div>';
+      '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div></div></section>';
     if (shown('load')) html += fold('load', loadCard());
     var en = energyRange(dates[0], dates[6]);
     if (en.n && shown('energy')) html += '<section id="fd-energy" class="card sec' + (foldState.energy ? ' shut' : '') + '"><div class="m-head fh"><div><h3>Énergie de la semaine</h3><span class="goal">' + plural(en.n, 'jour') + ' avec consommées et dépensées</span></div><span class="pill ' + (en.avg >= 0 ? 'good' : 'bad') + '">' + (en.avg >= 0 ? '−' : '+') + fmtN(Math.abs(en.avg)) + ' kcal/j</span></div>' +
@@ -1645,7 +1652,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<p class="note" style="font-size:12px">Repères généraux, à valider avec ton diététicien. La dépense de la montre est une estimation : c\'est la tendance du poids sur plusieurs semaines qui fait foi.</p></section>';
   }
   function bodyView() {
-    var html = progSeg() + energyCard();
+    var html = progSeg() + fold('energyp', energyCard());
     var any = ALL_M.some(function (b) { return bodySeries(b.k).length; });
     if (!any) return html + '<section class="card"><p class="note">Aucune mesure pour l\'instant. Saisis ton poids, ta masse grasse et ta masse musculaire dans la carte « Composition corporelle » de l\'onglet Jour.</p></section>';
     html += '<div class="tiles" style="grid-template-columns:repeat(2,1fr)">' + ALL_M.map(function (b) {
@@ -1676,7 +1683,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<p class="note" style="margin-top:-4px">' + (bodyGoals[def.k] != null ? remainTxt(def.k, sr[sr.length - 1].y) : '') + '</p></section>');
 
     var rows = Object.keys(days).filter(function (k) { return hasBody(days[k]); }).sort().reverse();
-    html += '<section class="card"><div class="m-head"><h3>Historique</h3><span class="sum">' + plural(rows.length, 'jour') + '</span></div><div>' +
+    html += '<section id="fd-histb" class="card sec' + (foldState.histb ? ' shut' : '') + '"><div class="m-head fh"><h3>Historique</h3><span class="sum">' + plural(rows.length, 'jour') + '</span></div><div>' +
       rows.slice(0, 60).map(function (k, i) {
         var d = days[k], prev = rows[i + 1] ? days[rows[i + 1]] : null;
         var parts = [];
@@ -1715,7 +1722,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<div class="tile"><b' + (diff >= 0 ? ' class="g"' : '') + '>' + (diff >= 0 ? '+' : '') + fmtD(diff) + '</b><span>évolution</span></div></div>';
     html += '<section class="card"><div class="m-head"><div><h3>Charge max par séance</h3><span class="goal">1RM estimé : ' + fmtD(e1) + ' kg (formule d\'Epley)</span></div></div>' + chart(pts) +
       '<div class="legend"><span><i style="background:var(--c-muscu)"></i>Charge max (kg)</span><span><i style="background:var(--accent)"></i>1RM estimé</span></div></section>';
-    html += '<section class="card"><div class="m-head"><h3>Historique</h3><span class="sum">' + plural(hist.length, 'séance') + '</span></div><div>' +
+    html += '<section id="fd-histm" class="card sec' + (foldState.histm ? ' shut' : '') + '"><div class="m-head fh"><h3>Historique</h3><span class="sum">' + plural(hist.length, 'séance') + '</span></div><div>' +
       hist.slice().reverse().map(function (h) {
         var sets = h.exo.sets.filter(setDone).map(function (x) { return (x.w != null ? fmtD(x.w) : '–') + '×' + x.r; }).join(' · ');
         return '<div class="h-row"><div><div class="h-date">' + cap(fmtLong.format(parse(h.date))) + '</div><div class="h-sets">' + sets + (h.exo.rir != null ? ' · RIR ' + h.exo.rir : '') + ' · ' + fmtTon(h.st.ton) + '</div></div>' +
@@ -1738,7 +1745,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return { acute: a.load, chronic: c.load / 4, ratio: a.load / (c.load / 4), miss: a.miss };
   }
   function acwrStatus(r) {
-    if (r == null) return { s: 'idle', t: 'Données insuffisantes' };
+    if (r == null) return { s: 'idle', t: 'En attente' };
     if (r < 0.8) return { s: 'idle', t: 'Sous-charge' };
     if (r <= 1.3) return { s: 'good', t: 'Zone idéale' };
     if (r <= 1.5) return { s: 'bad', t: 'Attention' };
@@ -2158,7 +2165,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var st = objStatus(o), over = o.end && o.end < t;
       return '<button class="rc" data-action="of-edit" data-id="' + o.id + '"><span class="rc-main"><b>' + (o.main ? '<span style="color:var(--accent-text)">★ </span>' : '') + esc(o.name) + '</b><small>' + (over ? 'Terminé le ' + dLong(o.end) : esc(st.when)) + (o.notes ? ' · ' + esc(o.notes) : '') + '</small></span><span class="rc-time">' + (over ? '<small style="color:var(--muted)">Terminé</small>' : esc(st.big)) + '</span></button>';
     }).join('');
-    return '<section class="card"><div class="m-head"><div><h3>Objectifs</h3><span class="goal">Recompo, sèche, prise de force… avec une date de début</span></div><span class="sum">' + list.length + '</span></div><div>' + (rows || '<p class="note">Aucun objectif hors course pour l\'instant.</p>') + '</div>' +
+    return '<section class="card"><div class="m-head"><div><h3>Objectifs</h3><span class="goal">Recompo, sèche, prise de force… avec une date de début</span></div><span class="sum cnt">' + list.length + '</span></div><div>' + (rows || '<p class="note">Aucun objectif hors course pour l\'instant.</p>') + '</div>' +
       '<button class="today-btn" style="width:100%;min-height:44px" data-action="of-new">+ Ajouter un objectif</button></section>';
   }
   function raceView() {
@@ -2170,7 +2177,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var ms = objStatus(mo);
       html += '<section class="card next-race"><div class="m-head"><div><div class="sub">★ Objectif principal</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(mo.name) + '</h2><span class="goal">' + esc(ms.when) + '</span>' + (mo.notes ? '<span class="goal">' + esc(mo.notes) + '</span>' : '') + '</div><div class="big">' + esc(ms.big) + '</div></div></section>';
     }
-    html += objCard();
+    html += fold('objs', objCard());
     var nx = mo ? null : mainRace(), isMain = nx && nx.main, up = races.filter(function (r) { return r.date >= todayStr(); }), past = races.filter(function (r) { return r.date < todayStr(); }).reverse();
     if (nx) {
       var dd = raceDays(nx), km = raceKm(nx);
@@ -2182,8 +2189,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     if (nx && !isMain) html += '<p class="note">Aucun objectif principal choisi : le compte à rebours suit la prochaine course. Touche une course ou un objectif puis « ★ Principal » pour le choisir.</p>';
     html += '<button class="today-btn" style="width:100%;min-height:48px" data-action="rf-new">+ Ajouter une course</button>';
-    html += '<section class="card"><div class="m-head"><h3>Courses à venir</h3><span class="sum">' + up.length + '</span></div><div>' + (up.length ? up.map(raceRow).join('') : '<p class="note">Aucune course prévue.</p>') + '</div></section>';
-    html += '<section class="card"><div class="m-head"><h3>Résultats</h3><span class="sum">' + past.length + '</span></div><div>' + (past.length ? past.map(raceRow).join('') : '<p class="note">Ajoute tes courses passées avec leur chrono pour garder ton historique.</p>') + '</div></section>';
+    html += fold('races', '<section class="card"><div class="m-head"><h3>Courses à venir</h3><span class="sum cnt">' + up.length + '</span></div><div>' + (up.length ? up.map(raceRow).join('') : '<p class="note">Aucune course prévue.</p>') + '</div></section>');
+    html += fold('results', '<section class="card"><div class="m-head"><h3>Résultats</h3><span class="sum cnt">' + past.length + '</span></div><div>' + (past.length ? past.map(raceRow).join('') : '<p class="note">Ajoute tes courses passées avec leur chrono pour garder ton historique.</p>') + '</div></section>');
     var pbs = {};
     past.forEach(function (r) { if (!r.result || r.dist === 'autre') return; if (!pbs[r.dist] || r.result < pbs[r.dist].result) pbs[r.dist] = r; });
     var pbk = DISTS.filter(function (d) { return pbs[d[0]]; });
@@ -2743,6 +2750,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       return '<div class="m-row" style="justify-content:space-between"><div><span class="sub">' + label + '</span>' + (hint ? '<span class="goal">' + hint + '</span>' : '') + '</div>' +
         '<label class="field mini"><span class="sr">' + label + '</span><input data-goal="' + k + '" type="number" inputmode="decimal" min="0" step="' + step + '" value="' + v + '"><span class="unit">' + unit + '</span></label></div>';
     }
+    var bk = $('#backup'); if (bk) bk.classList.toggle('shut', !!foldState.backup);
     el.classList.add('sec'); el.dataset.fk = 'settings'; el.classList.toggle('shut', foldState.settings !== 0);
     el.innerHTML = '<div class="m-head fh"><div><h2>Réglages</h2><span class="goal">Style, objectifs, sections, chaussures…</span></div></div>' +
       '<div class="m-head"><div><h3>Style</h3><span class="goal">Change seulement l\'apparence, tes données ne bougent pas</span></div></div>' +
@@ -2762,7 +2770,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       }).join('') + '</div><p class="note" id="set-msg" role="status"></p>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div><div><h3>Sections affichées</h3><span class="goal">Touche pour masquer ce qui ne te sert pas, tes données restent enregistrées</span></div>' +
       ['Jour', 'Semaine'].map(function (v) { return '<div class="sub">' + v + '</div><div class="chips">' + SECTIONS.filter(function (x) { return x[2] === v; }).map(function (x) { return '<button class="chip sm" data-action="toggle-sec" data-k="' + x[0] + '" aria-pressed="' + shown(x[0]) + '">' + (shown(x[0]) ? '' : '<s>') + x[1] + (shown(x[0]) ? '' : '</s>') + '</button>'; }).join('') + '</div>'; }).join('') +
-      '<div class="m-row" style="justify-content:space-between"><div><span class="sub">Import Apple Santé</span><span class="goal">Affiche le bouton en haut de l\'onglet Jour</span></div><button class="chip sm" data-action="toggle-health" aria-pressed="' + settings.health + '">' + (settings.health ? 'Affiché' : 'Masqué') + '</button></div>' +
+      '<div class="m-row" style="justify-content:space-between"><div><span class="sub">Import Apple Santé</span><span class="goal">Affiche le bouton en bas de l\'onglet Jour</span></div><button class="chip sm" data-action="toggle-health" aria-pressed="' + settings.health + '">' + (settings.health ? 'Affiché' : 'Masqué') + '</button></div>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
       '<div class="m-head"><div><h3>Chaussures</h3><span class="goal">Kilométrage suivi à partir des sorties où tu les choisis</span></div></div>' +
       settings.shoes.map(function (x) {

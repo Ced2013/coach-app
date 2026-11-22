@@ -335,6 +335,8 @@ html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-histm { --ic: 
 .evo-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .evo-t { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
 .evo-t small { font-size: 11.5px; color: var(--muted); }
+.msum { display: none; font-size: 14px; color: var(--muted); margin-top: 2px; }
+.card.fold.shut .msum:not(:empty) { display: block; }
 .tmode { min-height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); font: 600 12px var(--font-body); }
 .tmode[aria-pressed="true"] { color: var(--c-muscu); border-color: var(--c-muscu); }
 .s-list { display: flex; flex-direction: column; gap: 10px; }
@@ -1140,9 +1142,18 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function val(v) { return v == null ? '' : v; }
   var ICO = {kcal: '<path d="M12 3c1 3 4 4.5 4 8.5A4 4 0 0 1 8 11.5c0-1.6.8-2.6 1.6-3.4C10 10 11 10.5 12 10c-.6-2.4-.4-4.7 0-7z"/><path d="M8.5 15.5A3.5 3.5 0 0 0 15.5 15.5"/>', water: '<path d="M12 3.5s6 6.6 6 10.5a6 6 0 0 1-12 0c0-3.9 6-10.5 6-10.5z"/>', sleep: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', screen: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>', blue: '<circle cx="7" cy="8" r="1.6"/><circle cx="12" cy="5.8" r="1.6"/><circle cx="17" cy="8" r="1.6"/><path d="M12 11.5c-3 0-5 3.5-5 5.5 0 1.6 1.4 2.5 2.8 2 1-.3 1.4-.6 2.2-.6s1.2.3 2.2.6c1.4.5 2.8-.4 2.8-2 0-2-2-5.5-5-5.5z"/>', reco: '<path d="M3 12h4l2-5 4 10 2-5h6"/>', nutri: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M16 3c-1.7 0-3 2.4-3 5.5S14 13 16 13v8"/>', body: '<rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8.5 9.5a5 5 0 0 1 7 0L12 12.5z"/>', sport: '<path d="M13 2L5 13.5h6L10 22l8-11.5h-6z"/>'};
   function ico(k) { return ICO[k] ? '<span class="mic mic-' + k + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + ICO[k] + '</svg></span>' : ''; }
+  /* Résumé affiché quand la carte est repliée : valeur du jour / objectif. */
+  function metricSum(k, d) {
+    if (k === 'kcal') return d.kcal == null ? '' : fmtN(d.kcal) + ' / ' + fmtN(GOALS.kcal) + ' kcal' + (d.kcalOut != null ? ' · ' + fmtN(d.kcalOut) + ' dépensées' : '');
+    if (k === 'water') return d.water == null ? '' : fmtD(d.water, 2) + ' / ' + fmtD(GOALS.water) + ' L';
+    if (k === 'sleep') return d.sleepMin == null ? '' : fmtDur(d.sleepMin) + ' / ' + fmtDur(GOALS.sleep);
+    if (k === 'screen') return d.screenMin == null ? '' : fmtDur(d.screenMin) + ' / ' + fmtDur(GOALS.screen) + ' max';
+    if (k === 'blue') return d.blue ? 'Sortie faite' + (d.blueMin ? ' · ' + fmtDur(d.blueMin) : '') : '';
+    return '';
+  }
   function metric(key, title, goal, body, extra) {
     return '<section class="card" id="m-' + key + '">' +
-      '<div class="m-head"><div><h2>' + ico(key) + title + '</h2><span class="goal">' + goal + '</span></div><span class="pill" id="st-' + key + '"></span></div>' +
+      '<div class="m-head"><div><h2>' + ico(key) + title + '</h2><span class="goal">' + goal + '</span><span class="msum" id="ms-' + key + '"></span></div><span class="pill" id="st-' + key + '"></span></div>' +
       '<div class="m-row">' + body + '</div>' + (extra || '') +
       '<div class="bar" id="bar-' + key + '"><i></i></div></section>';
   }
@@ -1425,7 +1436,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   function recoCard(d) {
     var r = recoEval(d);
-    return '<section class="card"><div class="m-head"><div><h2>Récupération</h2><span class="goal">Au réveil, avant de te lever</span></div></div>' +
+    return '<section class="card"><div class="m-head"><div><h2>Récupération</h2><span class="goal">Au réveil, avant de te lever</span></div><span class="sum">' + [d.hrRest != null ? 'FC repos ' + d.hrRest + ' bpm' : '', d.hrv != null ? 'VFC ' + d.hrv + ' ms' : ''].filter(Boolean).join(' · ') + '</span></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px">' +
       '<div style="display:flex;flex-direction:column;gap:4px"><span class="sub">FC repos</span><label class="field mini"><span class="sr">FC repos</span><input data-field="hrRest" type="number" inputmode="numeric" min="0" step="1" placeholder="' + (lastBody('hrRest', cur) ? lastBody('hrRest', cur).v : '0') + '" value="' + val(d.hrRest) + '"><span class="unit">bpm</span></label><span class="pill ' + r.hr.s + '" id="rc-hr" style="align-self:flex-start;white-space:normal">' + r.hr.t + '</span></div>' +
       '<div style="display:flex;flex-direction:column;gap:4px"><span class="sub">VFC</span><label class="field mini"><span class="sr">VFC</span><input data-field="hrv" type="number" inputmode="numeric" min="0" step="1" placeholder="' + (lastBody('hrv', cur) ? lastBody('hrv', cur).v : '0') + '" value="' + val(d.hrv) + '"><span class="unit">ms</span></label><span class="pill ' + r.hrv.s + '" id="rc-hrv" style="align-self:flex-start;white-space:normal">' + r.hrv.t + '</span></div>' +
@@ -1438,7 +1449,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   function nutriCard(d) {
     var c = d.coffee || 0, st = c === 0 && d.coffee == null ? 'idle' : c <= GOALS.coffee ? 'good' : 'bad';
-    return '<section class="card"><div class="m-head"><div><h2>Nutrition</h2><span class="goal">Plan en 5 prises · ' + plural(GOALS.coffee, 'café') + ' maximum</span></div><span class="pill ' + ((d.cheats || []).length ? 'bad' : d.meals.length === 5 ? 'good' : 'idle') + '">' + d.meals.length + '/5 repas' + ((d.cheats || []).length ? ' · ' + plural(d.cheats.length, 'écart') : '') + '</span></div>' +
+    return '<section class="card"><div class="m-head"><div><h2>Nutrition</h2><span class="goal">Plan en 5 prises · ' + plural(GOALS.coffee, 'café') + ' maximum</span></div><span class="pill ' + ((d.cheats || []).length ? 'bad' : d.meals.length === 5 ? 'good' : 'idle') + '">' + d.meals.length + '/5 repas' + ((d.cheats || []).length ? ' · ' + plural(d.cheats.length, 'écart') : '') + '</span><span class="sum">' + [(d.extras || []).length ? plural(d.extras.length, 'écart') + ' (' + d.extras.join(', ') + ')' : '', d.coffee != null ? plural(d.coffee, 'café') : ''].filter(Boolean).join(' · ') + '</span></div>' +
       '<p class="note" style="font-size:12.5px;margin:0">Touche pour passer de ✓ respecté à ✗ écart, puis à vide</p>' +
       '<div class="meals">' + MEALS.map(function (m, i) {
         var on = d.meals.indexOf(i) >= 0, ch = (d.cheats || []).indexOf(i) >= 0;
@@ -2561,6 +2572,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       bar.className = 'bar ' + e.s;
       bar.firstElementChild.style.width = Math.round(Math.min(1, e.p) * 100) + '%';
       if (dots[i]) dots[i].className = e.s === 'good' ? 'on' : '';
+      var msE = $('#ms-' + k); if (msE) msE.textContent = metricSum(k, d);
       var rg = $('#ring-' + k);
       if (rg) { rg.className = 'ring ' + e.s; var fg0 = rg.querySelector('.fg'); fg0.style.opacity = (e.s === 'good' || e.p > 0) ? 1 : 0; fg0.setAttribute('stroke-dashoffset', (131.95 * (1 - Math.min(1, Math.max(e.s === 'good' ? 1 : 0, e.p || 0)))).toFixed(1)); }
       var mc = $('#m-' + k);
@@ -2572,7 +2584,10 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var sd = $('#sport-day');
     if (sd) {
       var t = sportTotals(d);
-      sd.textContent = t.n ? plural(t.n, 'séance') + ' · ' + fmtDur(t.min) : 'Aucune séance';
+      var names = d.sports.map(function (x) { return sportDef(x.type).label + (x.min ? ' ' + fmtDurC(x.min) : '') + (x.km ? ' · ' + fmtD(x.km, 1) + ' km' : ''); });
+      var pendP = (d.plan || []).filter(function (q) { return planItemStatus(cur, q).s !== 'good' && !isOff(q.type); }).map(function (q) { return 'Prévu : ' + sportDef(q.type).label; });
+      var offN = (d.plan || []).filter(function (q) { return isOff(q.type); }).map(function (q) { return sportDef(q.type).label; });
+      sd.textContent = names.concat(pendP, offN).join(' · ') || 'Repos';
       var w = weekStats(cur);
       $('#sport-week').textContent = 'Cette semaine : ' + (w.n ? plural(w.n, 'séance') + ' · ' + fmtDur(w.min) + (w.km ? ' · ' + fmtD(w.km, 1) + ' km' : '') + (w.ton ? ' · ' + fmtTon(w.ton) : '') : 'aucune séance');
     }

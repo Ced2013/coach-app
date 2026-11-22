@@ -471,7 +471,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function normPlanExo(x) { return { move: String(x.move || '').slice(0, 60), sets: num(x.sets), reps: num(x.reps), w: num(x.w) }; }
   function normPlanItem(x) {
     return {
-      id: String(x.id || uid('p')), type: String(x.type), min: num(x.min), note: String(x.note || '').slice(0, 120),
+      id: String(x.id || uid('p')), type: String(x.type), min: num(x.min), km: num(x.km), note: String(x.note || '').slice(0, 120),
       exos: Array.isArray(x.exos) ? x.exos.filter(function (e) { return e && e.move; }).map(normPlanExo) : [],
       blocks: Array.isArray(x.blocks) ? fixLinks(x.blocks.filter(Boolean).map(normBlock)) : []
     };
@@ -514,7 +514,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
     if (Array.isArray(o.sports)) e.sports = o.sports.map(function (s) {
       return {
-        id: String(s.id), type: String(s.type), min: num(s.min), km: num(s.km), hr: num(s.hr), rpe: num(s.rpe), shoe: s.shoe ? String(s.shoe) : null,
+        id: String(s.id), type: String(s.type), min: num(s.min), km: num(s.km), hr: num(s.hr), rpe: num(s.rpe), shoe: s.shoe ? String(s.shoe) : null, kcal: num(s.kcal), pmin: num(s.pmin), pkm: num(s.pkm),
         exos: Array.isArray(s.exos) ? s.exos.map(normExo) : [],
         blocks: Array.isArray(s.blocks) ? fixLinks(s.blocks.filter(Boolean).map(normBlock)) : []
       };
@@ -1037,12 +1037,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function sportBlock(s) {
     var def = sportDef(s.type);
     var html = '<div class="s-block ' + def.fam + '" data-sid="' + s.id + '"><div class="s-head"><span class="s-name">' + def.label + '</span>' +
-      '<label class="field mini"><span class="sr">Durée en minutes, ' + def.label + '</span><input data-field="sportMin" data-sid="' + s.id + '" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(s.min) + '"><span class="unit">min</span></label>' +
+      '<label class="field mini"><span class="sr">Durée en minutes, ' + def.label + '</span><input data-field="sportMin" data-sid="' + s.id + '" type="number" inputmode="numeric" min="0" step="1" placeholder="' + (s.pmin || 0) + '" value="' + val(s.min) + '"><span class="unit">min</span></label>' +
       '<button class="icon-btn small" data-action="del-sport" data-id="' + s.id + '" aria-label="Retirer ' + def.label + '">×</button></div>';
     html += '<div class="s-meta">';
     if (def.fam === 'run' || def.fam === 'race' || def.fam === 'bike') {
-      html += '<label class="field mini"><span class="sr">Distance</span><input data-field="sportKm" data-sid="' + s.id + '" type="number" inputmode="decimal" min="0" step="0.1" placeholder="' + (s.blocks && s.blocks.length && blocksTotal(s.blocks).km ? fmtD(blocksTotal(s.blocks).km, 1) : '0') + '" value="' + val(s.km) + '"><span class="unit">km</span></label>';
+      html += '<label class="field mini"><span class="sr">Distance</span><input data-field="sportKm" data-sid="' + s.id + '" type="number" inputmode="decimal" min="0" step="0.1" placeholder="' + (s.pkm ? fmtD(s.pkm, 1) : s.blocks && s.blocks.length && blocksTotal(s.blocks).km ? fmtD(blocksTotal(s.blocks).km, 1) : '0') + '" value="' + val(s.km) + '"><span class="unit">km</span></label>';
     }
+    html += '<label class="field mini"><span class="sr">Calories brûlées</span><input data-field="sportKcal" data-sid="' + s.id + '" type="number" inputmode="numeric" min="0" step="10" placeholder="0" value="' + val(s.kcal) + '"><span class="unit">kcal</span></label>';
     html += '<label class="field mini"><span class="sr">Effort ressenti sur 10</span><input data-field="sportRpe" data-sid="' + s.id + '" type="number" inputmode="numeric" min="1" max="10" step="1" placeholder="–" value="' + val(s.rpe) + '" style="width:1.6em"><span class="unit">RPE /10</span></label>';
     if (def.fam === 'run' || def.fam === 'race') {
       var act = settings.shoes.filter(function (x) { return !x.retired || x.id === s.shoe; });
@@ -1054,6 +1055,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var sh = shoeById(s.shoe);
       if (sh) { var skm = shoeKm(sh); if (skm >= sh.limit * 0.9) html += '<p class="tip" style="color:var(--bad)">' + esc(sh.name) + ' : ' + fmtN(skm) + ' km sur ' + fmtN(sh.limit) + '. Pense à les remplacer.</p>'; }
     }
+    if ((s.pmin || s.pkm) && !(s.blocks && s.blocks.length)) html += '<div class="tip"><b style="color:var(--fam)">Prévu</b> · ' + (s.pmin ? fmtDur(s.pmin) : '') + (s.pmin && s.pkm ? ' · ' : '') + (s.pkm ? fmtD(s.pkm, 1) + ' km' : '') + (function () { var df = []; if (s.min && s.pmin) df.push((s.min >= s.pmin ? '+' : '−') + Math.abs(s.min - s.pmin) + ' min'); if (s.km && s.pkm) df.push((s.km >= s.pkm ? '+' : '−') + fmtD(Math.abs(s.km - s.pkm), 1) + ' km'); return df.length ? ' <span style="color:var(--muted)">(réalisé ' + df.join(', ') + ')</span>' : ''; })() + '</div>';
     if (s.blocks && s.blocks.length) {
       var bt = blocksTotal(s.blocks);
       html += '<div class="tip"><b style="color:var(--fam)">Séance prévue</b> · ' + fmtSecDur(bt.sec) + (bt.km ? ' · ≈ ' + fmtD(bt.km, 1) + ' km' : '') + blockLines(s.blocks).map(function (l) { return '<span style="display:block">• ' + esc(l) + '</span>'; }).join('') + '</div>';
@@ -1116,7 +1118,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var pend = plannedFor(cur).filter(function (pl) { return planItemStatus(cur, pl).s !== 'good'; });
     rows = pend.map(function (pl) {
       var det = planDetailLines(pl).map(function (l) { return '<span style="display:block">• ' + esc(l) + '</span>'; }).join('');
-      return '<div class="planned"><div class="p-txt"><b>Prévu : ' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + '</b>' + (pl.note ? esc(pl.note) : '') + det + '</div><button data-action="plan-add" data-type="' + pl.type + '" data-min="' + val(pl.min) + '" data-pid="' + pl.id + '">Ajouter</button></div>';
+      return '<div class="planned"><div class="p-txt"><b>Prévu : ' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + (pl.km ? ' · ' + fmtD(pl.km, 1) + ' km' : '') + '</b>' + (pl.note ? esc(pl.note) : '') + det + '</div><button data-action="plan-add" data-type="' + pl.type + '" data-min="' + val(pl.min) + '" data-pid="' + pl.id + '">Valider</button></div>';
     }).join('') + rows;
     var chips = SPORTS.map(function (s) { return '<button class="chip ' + s.fam + '" data-action="add-sport" data-type="' + s.id + '"><i></i>' + s.label + '</button>'; }).join('');
     return '<section class="card"><div class="m-head"><h3>Sport du jour</h3><span class="sum" id="sport-day"></span></div>' +
@@ -1163,7 +1165,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     html += '<div class="chips">' + SPORTS.map(function (x) { return '<button class="chip sm ' + x.fam + '" data-action="plan-type" data-type="' + x.id + '" aria-pressed="' + (t === x.id) + '"><i></i>' + x.label + '</button>'; }).join('') + '</div>';
     var bt = planEdit.blocks.length ? blocksTotal(planEdit.blocks) : null;
     html += '<div class="m-row">' + (bt ? '<span class="sum" style="font-weight:600;color:var(--ink)">Total ' + fmtSecDur(bt.sec) + (bt.km ? ' · ≈ ' + fmtD(bt.km, 1) + ' km' : '') + '</span>' :
-      '<label class="field mini"><span class="sr">Durée prévue</span><input id="pe-min" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(planEdit.min) + '"><span class="unit">min</span></label>') +
+      '<label class="field mini"><span class="sr">Durée prévue</span><input id="pe-min" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(planEdit.min) + '"><span class="unit">min</span></label>' +
+      (fam === 'run' || fam === 'race' || fam === 'bike' ? '<label class="field mini"><span class="sr">Distance prévue</span><input id="pe-km" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0" value="' + val(planEdit.km) + '"><span class="unit">km</span></label>' : '')) +
       '<input id="pe-note" class="pe-note" type="text" maxlength="120" placeholder="Note (optionnel)" value="' + esc(planEdit.note || '') + '"></div>';
 
     if (fam === 'muscu') {
@@ -1211,6 +1214,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (!planEdit) return;
     function g(id) { var el = document.querySelector('[data-pe="' + id + '"]'); return el ? el.value : null; }
     var m = $('#pe-min'); if (m) planEdit.min = num(m.value);
+    var mk = $('#pe-km'); if (mk) planEdit.km = num(mk.value);
     var n = $('#pe-note'); if (n) planEdit.note = n.value;
     planEdit.exos.forEach(function (x, i) {
       if (g('ex-sets-' + i) == null) return;
@@ -1238,7 +1242,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var list = items.map(function (pl) {
         var st = planItemStatus(ds, pl);
         total++; if (st.s === 'good') done++;
-        return '<div class="pi ' + sportDef(pl.type).fam + '"><button class="pi-main" data-action="plan-edit" data-date="' + ds + '" data-pid="' + pl.id + '"><span>' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + '</span>' + (pl.note ? '<small>' + esc(pl.note) + '</small>' : '') + planDetailLines(pl).map(function (l) { return '<small>• ' + esc(l) + '</small>'; }).join('') + '</button>' +
+        return '<div class="pi ' + sportDef(pl.type).fam + '"><button class="pi-main" data-action="plan-edit" data-date="' + ds + '" data-pid="' + pl.id + '"><span>' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + (pl.km ? ' · ' + fmtD(pl.km, 1) + ' km' : '') + '</span>' + (pl.note ? '<small>' + esc(pl.note) + '</small>' : '') + planDetailLines(pl).map(function (l) { return '<small>• ' + esc(l) + '</small>'; }).join('') + '</button>' +
           '<span class="ps ' + (st.s === 'idle' ? '' : st.s) + '">' + st.t + '</span>' +
           '<button class="icon-btn tiny" data-action="plan-del" data-date="' + ds + '" data-pid="' + pl.id + '" aria-label="Retirer la séance prévue">×</button></div>';
       }).join('');
@@ -1750,7 +1754,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var p = line.split(';'); if (!/^\s*s[eé]ance\s*$/i.test(p[0] || '')) return;
       var t = String(p[1] || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
       var fam = /velo|cycl|bike|biking/.test(t) ? 'bike' : /muscu|force|renfo|strength|fonctionnel|halt|crossfit|hiit|poids/.test(t) ? 'muscu' : /course|run|jog|trail|marche|walk/.test(t) ? 'run' : null;
-      var date = parseAnyDate(p[2] || ''); if (!date || !fam) return;
+      var date = parseAnyDate(p[2] || ''); if (!date) return;
       var durTxt = String(p[3] || ''), min = durToMin(durTxt, true);
       if (min == null) { var dn = durTxt.replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/); if (dn) { var dv = parseFloat(dn[0]); min = dv > 300 ? dv / 60 : dv; } }
       var kmTxt = String(p[4] || '').toLowerCase(), km = null, kn = kmTxt.replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/);
@@ -1764,11 +1768,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var out = [];
     list.forEach(function (w) {
       var d = get(w.date), famOf = function (t) { var f = sportDef(t).fam; return f === 'race' ? 'run' : f; };
+      /* Type inconnu : on suit la séance prévue du jour, sinon course si de la distance, sinon muscu. */
+      if (!w.fam) { var pl0 = (d.plan || []).filter(function (x) { return planItemStatus(w.date, x).s !== 'good'; })[0] || (d.plan || [])[0]; w.fam = pl0 ? famOf(pl0.type) : w.km && w.km > 0.5 ? 'run' : 'muscu'; }
       var ex = d.sports.filter(function (x) { return famOf(x.type) === w.fam; })[0];
       if (!ex) {
         var pl = (d.plan || []).filter(function (x) { return famOf(x.type) === w.fam; })[0];
         var type = pl ? pl.type : w.fam === 'bike' ? 'velo-taf' : w.fam === 'muscu' ? 'muscu-full' : 'run-ef';
-        ex = { id: uid('s'), type: type, min: null, km: null, hr: null, rpe: null, shoe: defaultShoe(type), exos: [], blocks: pl ? JSON.parse(JSON.stringify(pl.blocks || [])) : [] };
+        ex = { id: uid('s'), type: type, min: null, km: null, hr: null, rpe: null, shoe: defaultShoe(type), kcal: null, pmin: pl ? pl.min : null, pkm: pl ? pl.km : null, exos: [], blocks: pl ? JSON.parse(JSON.stringify(pl.blocks || [])) : [] };
         if (pl) (pl.exos || []).forEach(function (x) {
           var n0 = Math.max(1, Math.round(x.sets || 3)), sets0 = [];
           for (var q = 0; q < n0; q++) sets0.push({ w: null, r: null });
@@ -1779,6 +1785,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       if (w.min) ex.min = w.min;
       if (w.km && w.fam !== 'muscu') ex.km = w.km;
       if (w.hr) ex.hr = Math.round(w.hr);
+      if (w.kcal) ex.kcal = Math.round(w.kcal);
       touch(w.date);
       out.push(sportDef(ex.type).label + ' du ' + dm(w.date) + (w.min ? ' · ' + fmtDur(w.min) : '') + (ex.km ? ' · ' + fmtD(ex.km, 1) + ' km' : '') + (ex.hr ? ' · ' + ex.hr + ' bpm' : ''));
       cur = w.date;
@@ -2138,6 +2145,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     else if (f === 'sportMin' && s) s.min = num(el.value);
     else if (f === 'sportKm' && s) s.km = num(el.value);
     else if (f === 'sportHr' && s) s.hr = num(el.value);
+    else if (f === 'sportKcal' && s) s.kcal = num(el.value);
     else if (f === 'sportRpe' && s) { var rv = num(el.value); s.rpe = rv == null ? null : Math.max(1, Math.min(10, Math.round(rv))); }
     else if (f === 'sportShoe' && s) s.shoe = el.value || null;
     else if (f === 'fcmax') return;
@@ -2350,8 +2358,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     else if (a === 'plan-save') {
       if (!planEdit || !planEdit.type) return;
       readPlanEditor();
-      var pdd = get(planEdit.date), item = normPlanItem({ id: planEdit.id || uid('p'), type: planEdit.type, min: planEdit.min, note: (planEdit.note || '').trim(), exos: planEdit.exos, blocks: planEdit.blocks });
-      if (item.blocks.length) item.min = Math.round(blocksTotal(item.blocks).sec / 60) || item.min;
+      var pdd = get(planEdit.date), item = normPlanItem({ id: planEdit.id || uid('p'), type: planEdit.type, min: planEdit.min, km: planEdit.km, note: (planEdit.note || '').trim(), exos: planEdit.exos, blocks: planEdit.blocks });
+      if (item.blocks.length) { var ibt = blocksTotal(item.blocks); item.min = Math.round(ibt.sec / 60) || item.min; if (ibt.km) item.km = Math.round(ibt.km * 10) / 10; }
+      if (sportDef(item.type).fam === 'muscu') item.km = null;
       var ix = pdd.plan.map(function (x) { return x.id; }).indexOf(item.id);
       if (ix >= 0) pdd.plan[ix] = item; else pdd.plan.push(item);
       touch(planEdit.date); planEdit = null; render();
@@ -2379,7 +2388,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       d = get(cur);
       var pid = uid('s');
       var src0 = plannedFor(cur).filter(function (x) { return x.id === b.dataset.pid; })[0];
-      var nsp = { id: pid, type: b.dataset.type, min: num(b.dataset.min), km: null, hr: null, rpe: null, shoe: defaultShoe(b.dataset.type), exos: [], blocks: [] };
+      var nsp = { id: pid, type: b.dataset.type, min: src0 ? null : num(b.dataset.min), km: null, hr: null, rpe: null, shoe: defaultShoe(b.dataset.type), kcal: null, pmin: src0 ? src0.min : null, pkm: src0 ? src0.km : null, exos: [], blocks: [] };
       if (src0) {
         nsp.blocks = JSON.parse(JSON.stringify(src0.blocks || []));
         (src0.exos || []).forEach(function (x) {

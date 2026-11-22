@@ -2384,8 +2384,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   document.addEventListener('click', function (e) {
     var scd = e.target.closest('.card.sec');
     if (scd && scd.id && (scd.classList.contains('shut') ? !e.target.closest('button:not(.m-head *)') : (!e.target.closest('input,button,select,label,a,textarea') && e.target.closest('.card.sec > .fh')))) {
-      var fk = scd.id.slice(3), sh = !scd.classList.contains('shut'); scd.classList.toggle('shut', sh);
-      if (sh) foldState[fk] = 1; else delete foldState[fk];
+      var fk = scd.dataset.fk || scd.id.slice(3), sh = !scd.classList.contains('shut'); scd.classList.toggle('shut', sh);
+      if (sh) foldState[fk] = 1; else if (fk === 'settings') foldState[fk] = 0; else delete foldState[fk];
       try { localStorage.setItem(LS_FOLD, JSON.stringify(foldState)); } catch (x) {}
       return;
     }
@@ -2738,7 +2738,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       return '<div class="m-row" style="justify-content:space-between"><div><span class="sub">' + label + '</span>' + (hint ? '<span class="goal">' + hint + '</span>' : '') + '</div>' +
         '<label class="field mini"><span class="sr">' + label + '</span><input data-goal="' + k + '" type="number" inputmode="decimal" min="0" step="' + step + '" value="' + v + '"><span class="unit">' + unit + '</span></label></div>';
     }
-    el.innerHTML = '<div class="m-head"><div><h3>Style</h3><span class="goal">Change seulement l\'apparence, tes données ne bougent pas</span></div></div>' +
+    el.classList.add('sec'); el.dataset.fk = 'settings'; el.classList.toggle('shut', foldState.settings !== 0);
+    el.innerHTML = '<div class="m-head fh"><div><h2>Réglages</h2><span class="goal">Style, objectifs, sections, chaussures…</span></div></div>' +
+      '<div class="m-head"><div><h3>Style</h3><span class="goal">Change seulement l\'apparence, tes données ne bougent pas</span></div></div>' +
       '<div class="seg" role="group" aria-label="Style"><button data-action="set-style" data-v="classic" aria-pressed="' + (settings.style === 'classic') + '">Classique</button><button data-action="set-style" data-v="saiyan" aria-pressed="' + (settings.style === 'saiyan') + '">Sombre Saiyan</button></div>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
       '<div class="m-head"><div><h3>Objectifs du jour</h3><span class="goal">Ils servent au score sur 5 et aux pastilles</span></div></div>' +
@@ -2748,7 +2750,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       gRow('screen', "Temps d'écran max", 'h', Math.round(settings.screen / 60 * 100) / 100, 0.25, '1,5 = 1 h 30') +
       gRow('coffee', 'Cafés max', 'cafés', settings.coffee, 1) +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
-      '<div class="m-head"><div><h3>Réglages</h3><span class="goal">FC max pour les zones · durée du repos entre séries</span></div></div>' +
+      '<div class="m-head"><div><h3>Entraînement</h3><span class="goal">FC max pour les zones · durée du repos entre séries</span></div></div>' +
       '<div class="m-row"><span class="sub" style="flex:1">FC max</span><label class="field mini"><span class="sr">FC max</span><input data-field="fcmax" type="number" inputmode="numeric" min="140" max="230" step="1" value="' + settings.fcmax + '"><span class="unit">bpm</span></label></div>' +
       '<div class="sub">Repos entre séries</div><div class="chips">' + [60, 90, 120, 150, 180, 240].map(function (v) {
         return '<button class="chip sm" data-action="rest-dur" data-v="' + v + '" aria-pressed="' + (settings.rest === v) + '">' + fmtClock(v) + '</button>';

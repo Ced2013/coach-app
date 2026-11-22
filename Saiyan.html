@@ -401,6 +401,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     <input type="file" id="file-import" accept=".json,application/json" hidden>
     <p class="note" id="backup-msg" role="status"></p>
   </section>
+  <div id="health-slot" style="display:flex;flex-direction:column"></div>
   <p class="foot" id="sync"></p>
 </div>
 <div class="rest" id="rest" hidden>
@@ -1290,7 +1291,6 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<label class="field mini"><span class="sr">Durée de la sortie en minutes</span><input id="in-blueMin" data-field="blueMin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(d.blueMin) + '"><span class="unit">min</span></label>');
     html += (shown('reco') ? fold('reco', recoCard(d)) : '') + (shown('nutri') ? fold('nutri', nutriCard(d)) : '') + (shown('body') ? fold('body', bodyCard(d)) : '');
     if (shown('sport')) html += fold('sport', sportSection(d));
-    if (settings.health) html += healthCard();
     return html;
   }
 
@@ -2258,6 +2258,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     needsRender = false;
     updateHeader();
     content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : view === 'race' ? raceView() : progView();
+    var hs = $('#health-slot'); if (hs) hs.innerHTML = view === 'day' && settings.health ? healthCard() : '';
     if (view === 'day') refreshDay();
   }
   var openCards = {};

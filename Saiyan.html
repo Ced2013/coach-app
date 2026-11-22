@@ -289,6 +289,38 @@ html[data-style="saiyan"][data-tone="marine"] .card .wgrid .c:not(.good):not(.ba
 html[data-style="saiyan"][data-tone="marine"] #settings.card, html[data-style="saiyan"][data-tone="marine"] #backup.card { background: #fff; }
 html[data-style="saiyan"][data-tone="marine"] .card.score, html[data-style="saiyan"][data-tone="marine"] .card.next-race { background: #1A1B2E; }
 html[data-style="saiyan"][data-tone="marine"] .card.warn { background: #FBF0E1; }
+
+/* Crème couleurs : fond crème, blocs aux couleurs du mode Couleurs */
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] { --k-kcal: #FF8A3D; --k-water: #3FB6FF; --k-sleep: #A08CFF; --k-screen: #FFC64A; --k-blue: #5BD893; --k-reco: #FF6B8B; --k-nutri: #FFB347; --k-body: #4FD1C0; --k-sport: #FF8A3D; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card, html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card.fold:not(.shut) { background: linear-gradient(160deg, color-mix(in srgb, var(--ic, #C8B9A3) 30%, #fff) 0%, color-mix(in srgb, var(--ic, #C8B9A3) 14%, #fff) 100%); border-left-color: var(--ic, #C8B9A3); }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card .goal, html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card .note { color: color-mix(in srgb, var(--ic, #8A8275) 35%, #5E584E); }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .mic svg { stroke: color-mix(in srgb, var(--ic) 75%, #1A1B2E); }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card .bar > i { background: color-mix(in srgb, var(--ic) 85%, #1A1B2E); }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #settings.card, html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #backup.card { background: #fff; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card.score, html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card.next-race { background: #1A1B2E; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card.warn { background: #FBF0E1; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .wgrid .lbl { color: color-mix(in srgb, var(--ic, #8A8275) 60%, #1A1B2E); }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .ring span { color: #CFC3AE; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] .card.fold.shut.done { background: var(--good-bg); }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-reco { --ic: #FF6B8B; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-nutri { --ic: #FFB347; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-body { --ic: #4FD1C0; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-sport { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-plan { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-grid { --ic: #3FB6FF; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-greens { --ic: #5BD893; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-mealsw { --ic: #FFB347; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-tiles { --ic: #A08CFF; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-load { --ic: #FF6B8B; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-energy { --ic: #FFC64A; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-sportw { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-bilan { --ic: #7FA7D9; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-objs { --ic: #A08CFF; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-races { --ic: #FF5A5A; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-results { --ic: #FFC64A; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-energyp { --ic: #FFC64A; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-histb { --ic: #4FD1C0; }
+html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-histm { --ic: #A08CFF; }
 /* ----- Système d'en-têtes uniforme ----- */
 .card > .m-head ~ .m-head h3 { font: 700 12px/1.3 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .card > .m-head ~ .m-head { border-top: 1px solid var(--line); padding-top: 12px; }
@@ -804,7 +836,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       coffee: Math.round(inRange(o.coffee, 0, 10, 3)),
       health: o.health === true,
       hide: (function () { var h = {}; if (o.hide && typeof o.hide === 'object') SECTIONS.forEach(function (x) { if (o.hide[x[0]] === true) h[x[0]] = true; }); return h; })(),
-      style: ['saiyan', 'ardoise', 'vif', 'marine'].indexOf(o.style) >= 0 ? o.style : 'classic',
+      style: ['saiyan', 'ardoise', 'vif', 'marine', 'cremevif'].indexOf(o.style) >= 0 ? o.style : 'classic',
       objectives: Array.isArray(o.objectives) ? o.objectives.filter(function (x) { return x && x.name && /^\d{4}-\d{2}-\d{2}$/.test(x.start); }).map(function (x) { return { id: String(x.id || uid('ob')), name: String(x.name).slice(0, 60), start: x.start, end: /^\d{4}-\d{2}-\d{2}$/.test(x.end || '') ? x.end : '', main: x.main === true, notes: String(x.notes || '').slice(0, 200) }; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; }) : [],
       shoes: Array.isArray(o.shoes) ? o.shoes.filter(function (x) { return x && x.name; }).map(function (x) { return { id: String(x.id || uid('sh')), name: String(x.name).slice(0, 40), start: num(x.start) || 0, limit: num(x.limit) || 700, retired: !!x.retired }; }) : []
     };
@@ -819,7 +851,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return out;
   }
   function shown(k) { return !(settings.hide && settings.hide[k]); }
-  function applyStyle() { document.documentElement.setAttribute('data-style', settings.style === 'classic' ? 'classic' : 'saiyan'); if (settings.style === 'ardoise' || settings.style === 'vif' || settings.style === 'marine') document.documentElement.setAttribute('data-tone', settings.style); else document.documentElement.removeAttribute('data-tone'); var m = document.querySelectorAll('meta[name="theme-color"]'); for (var i = 0; i < m.length; i++) { if (settings.style !== 'classic') { m[i].dataset.c = m[i].dataset.c || m[i].content; m[i].content = settings.style === 'ardoise' ? '#33404D' : settings.style === 'marine' ? '#1A1B2E' : '#0E151B'; } else if (m[i].dataset.c) m[i].content = m[i].dataset.c; } }
+  function applyStyle() { document.documentElement.setAttribute('data-style', settings.style === 'classic' ? 'classic' : 'saiyan'); var tone = settings.style === 'cremevif' ? 'marine' : settings.style; if (['ardoise', 'vif', 'marine'].indexOf(tone) >= 0) document.documentElement.setAttribute('data-tone', tone); else document.documentElement.removeAttribute('data-tone'); if (settings.style === 'cremevif') document.documentElement.setAttribute('data-pal', 'vif'); else document.documentElement.removeAttribute('data-pal'); var m = document.querySelectorAll('meta[name="theme-color"]'); for (var i = 0; i < m.length; i++) { if (settings.style !== 'classic') { m[i].dataset.c = m[i].dataset.c || m[i].content; m[i].content = settings.style === 'ardoise' ? '#33404D' : settings.style === 'marine' || settings.style === 'cremevif' ? '#1A1B2E' : '#0E151B'; } else if (m[i].dataset.c) m[i].content = m[i].dataset.c; } }
   function applyGoals() { applyStyle(); ['kcal', 'water', 'sleep', 'screen', 'coffee'].forEach(function (k) { GOALS[k] = settings[k]; }); }
   applyGoals();
   function saveGoals() {
@@ -2657,7 +2689,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       touch(cur); render(); refreshDay();
     }
     else if (a === 'toggle-sec') { settings.hide = settings.hide || {}; if (settings.hide[b.dataset.k]) delete settings.hide[b.dataset.k]; else settings.hide[b.dataset.k] = true; saveGoals(); renderSettings(); render(); }
-    else if (a === 'set-style') { settings.style = ['saiyan', 'ardoise', 'vif', 'marine'].indexOf(b.dataset.v) >= 0 ? b.dataset.v : 'classic'; saveGoals(); renderSettings(); render(); }
+    else if (a === 'set-style') { settings.style = ['saiyan', 'ardoise', 'vif', 'marine', 'cremevif'].indexOf(b.dataset.v) >= 0 ? b.dataset.v : 'classic'; saveGoals(); renderSettings(); render(); }
     else if (a === 'rest-dur') { settings.rest = +b.dataset.v; saveGoals(); renderSettings(); }
     else if (a === 'meal') {
       d = get(cur); d.cheats = d.cheats || []; var mi = +b.dataset.i, k = d.meals.indexOf(mi), kc = d.cheats.indexOf(mi);
@@ -2925,7 +2957,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     el.classList.add('sec'); el.dataset.fk = 'settings'; el.classList.toggle('shut', foldState.settings !== 0);
     el.innerHTML = '<div class="m-head fh"><div><h2>Réglages</h2><span class="goal">Style, objectifs, sections, chaussures…</span></div></div>' +
       '<div class="m-head"><div><h3>Style</h3><span class="goal">Change seulement l\'apparence, tes données ne bougent pas</span></div></div>' +
-      '<div class="seg style-seg" role="group" aria-label="Style"><button data-action="set-style" data-v="classic" aria-pressed="' + (settings.style === 'classic') + '">Classique</button><button data-action="set-style" data-v="saiyan" aria-pressed="' + (settings.style === 'saiyan') + '">Sombre</button><button data-action="set-style" data-v="ardoise" aria-pressed="' + (settings.style === 'ardoise') + '">Ardoise</button><button data-action="set-style" data-v="vif" aria-pressed="' + (settings.style === 'vif') + '">Couleurs</button><button data-action="set-style" data-v="marine" aria-pressed="' + (settings.style === 'marine') + '">Crème</button></div>' +
+      '<div class="seg style-seg" role="group" aria-label="Style"><button data-action="set-style" data-v="classic" aria-pressed="' + (settings.style === 'classic') + '">Classique</button><button data-action="set-style" data-v="saiyan" aria-pressed="' + (settings.style === 'saiyan') + '">Sombre</button><button data-action="set-style" data-v="ardoise" aria-pressed="' + (settings.style === 'ardoise') + '">Ardoise</button><button data-action="set-style" data-v="vif" aria-pressed="' + (settings.style === 'vif') + '">Couleurs</button><button data-action="set-style" data-v="marine" aria-pressed="' + (settings.style === 'marine') + '">Crème</button><button data-action="set-style" data-v="cremevif" aria-pressed="' + (settings.style === 'cremevif') + '">Crème couleurs</button></div>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
       '<div class="m-head"><div><h3>Objectifs du jour</h3><span class="goal">Ils servent au score sur 5 et aux pastilles</span></div></div>' +
       gRow('kcal', 'Calories max', 'kcal', settings.kcal, 10) +

@@ -241,7 +241,7 @@ html[data-style="saiyan"][data-tone="marine"] .ring .bg { stroke: rgba(255,255,2
 html[data-style="saiyan"][data-tone="marine"] .ring span { color: #CFC3AE; }
 html[data-style="saiyan"][data-tone="marine"] .ring.good span { color: #fff; }
 html[data-style="saiyan"][data-tone="marine"] .seg-tabs { background: #1A1B2E; border-top: 0; }
-html[data-style="saiyan"][data-tone="marine"] .seg-tabs button { color: #8E8FA8; font: 400 14px var(--font-display); letter-spacing: .1em; text-transform: uppercase; }
+html[data-style="saiyan"][data-tone="marine"] .seg-tabs button { color: #8E8FA8; font: 400 13px var(--font-display); letter-spacing: .04em; text-transform: uppercase; padding: 0 2px; min-width: 0; }
 html[data-style="saiyan"][data-tone="marine"] .seg-tabs button[aria-selected="true"] { color: #E0A04A; box-shadow: inset 0 3px 0 #C8862A; }
 html[data-style="saiyan"][data-tone="marine"] .planned button, html[data-style="saiyan"][data-tone="marine"] .seg button[aria-pressed="true"] { background: #1A1B2E; color: #EAD9BC; }
 html[data-style="saiyan"][data-tone="marine"] .planned { background: #FBF5EC; }
@@ -327,6 +327,14 @@ html[data-style="saiyan"][data-tone="marine"][data-pal="vif"] #fd-histm { --ic: 
 .card > .m-head:not(.fh) > .sum { flex: none; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .card > .m-head .pill { align-self: flex-start; }
 .card.sec.shut > .fh .pill { align-self: center; }
+.evo-g { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.evo-g + .evo-g { border-top: 1px solid var(--line); padding-top: 12px; }
+.evo-row { display: grid; grid-template-columns: 3.6em minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.evo-row:last-child { border-bottom: 0; }
+.evo-d { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.evo-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.evo-t { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.evo-t small { font-size: 11.5px; color: var(--muted); }
 .tmode { min-height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); font: 600 12px var(--font-body); }
 .tmode[aria-pressed="true"] { color: var(--c-muscu); border-color: var(--c-muscu); }
 .s-list { display: flex; flex-direction: column; gap: 10px; }
@@ -442,6 +450,9 @@ textarea, select, input[type=text], input[type=date], input[type=file] { font-si
 .plan-row.today .pd { color: var(--accent-text); }
 .pday { padding: 10px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .pday:first-child { border-top: 0; }
+.pday.empty { padding: 3px 0; }
+.pday.empty .pd { min-height: 28px; }
+.pday.empty .pe-add { min-height: 28px; padding: 0 10px; font-size: 12.5px; }
 .pday-head { display: flex; align-items: center; gap: 10px; }
 .pday-head .pd { border: 0; background: transparent; padding: 0; font-weight: 600; font-size: 14px; min-height: 32px; }
 .pday.today .pd { color: var(--accent-text); }
@@ -527,7 +538,7 @@ html[data-style="saiyan"] .seg-tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; border-radius: 0; padding: 6px max(10px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px));
   background: rgba(14,21,27,.94); border-top: 1px solid var(--line); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
 }
-html[data-style="saiyan"] .seg-tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 54px; font-size: 11px; background: transparent !important; color: var(--muted); }
+html[data-style="saiyan"] .seg-tabs button { min-width: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 54px; font-size: 11px; background: transparent !important; color: var(--muted); }
 html[data-style="saiyan"] .seg-tabs button[aria-selected="true"] { color: var(--accent); }
 html[data-style="saiyan"] .tab-ic { display: block; width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 html[data-style="saiyan"] .rest { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); padding-bottom: 10px; }
@@ -587,11 +598,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         <button role="tab" id="tab-week" data-action="tab" data-view="week"><svg class="tab-ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Semaine</button>
         <button role="tab" id="tab-prog" data-action="tab" data-view="prog"><svg class="tab-ic" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Progrès</button>
         <button role="tab" id="tab-race" data-action="tab" data-view="race"><svg class="tab-ic" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>Objectifs</button>
+        <button role="tab" id="tab-set" data-action="tab" data-view="settings"><svg class="tab-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
       </div>
       <button class="today-btn" id="today-btn" data-action="today" aria-label="Revenir à aujourd'hui">Auj.</button>
     </div>
   </header>
   <main id="content" style="display:flex;flex-direction:column;gap:14px"></main>
+  <div id="health-slot" style="display:flex;flex-direction:column"></div>
   <section class="card" id="settings"></section>
   <section class="card sec" id="backup" data-fk="backup">
     <div class="m-head fh"><div><h3>Sauvegarde</h3><span class="goal">Tes données sont enregistrées sur ce téléphone.</span></div></div>
@@ -599,7 +612,6 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     <input type="file" id="file-import" accept=".json,application/json" hidden>
     <p class="note" id="backup-msg" role="status"></p>
   </section>
-  <div id="health-slot" style="display:flex;flex-direction:column"></div>
   <p class="foot" id="sync"></p>
 </div>
 <div class="rest" id="rest" hidden>
@@ -1589,7 +1601,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
           '<button class="icon-btn tiny" data-action="plan-del" data-date="' + ds + '" data-pid="' + pl.id + '" aria-label="Retirer la séance prévue">×</button></div>';
       }).join('');
       var editing = planEdit && planEdit.date === ds;
-      return '<div class="pday' + (ds === todayStr() ? ' today' : '') + '"><div class="pday-head"><button class="pd" data-action="goto" data-date="' + ds + '">' + cap(fmtWd.format(dt).replace('.', '')) + ' ' + dt.getDate() + '</button>' +
+      return '<div class="pday' + (ds === todayStr() ? ' today' : '') + (!items.length && !editing ? ' empty' : '') + '"><div class="pday-head"><button class="pd" data-action="goto" data-date="' + ds + '">' + cap(fmtWd.format(dt).replace('.', '')) + ' ' + dt.getDate() + '</button>' +
         (items.length ? '' : '<span class="pr">Repos</span>') +
         (editing ? '' : '<button class="pe-add" data-action="plan-new" data-date="' + ds + '">+ Prévoir</button>') + '</div>' + list + (editing ? planEditor(ds) : '') + '</div>';
     }).join('');
@@ -2315,13 +2327,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return t > 0 ? Math.round(t) : null;
   }
   function raceForm() {
-    var r = raceEdit, past = r.date && r.date < todayStr();
-    return '<section class="card"><div class="m-head"><h3>' + (r.id ? 'Modifier la course' : 'Nouvelle course') + '</h3></div><div class="r-form">' +
+    var r = raceEdit, past = r.past || (r.date && r.date < todayStr());
+    return '<section class="card"><div class="m-head"><div><h3>' + (r.id ? 'Modifier la course' : past ? 'Course passée' : 'Nouvelle course') + '</h3>' + (past && !r.id ? '<span class="goal">Note ton chrono pour suivre ton évolution sur la distance</span>' : '') + '</div></div><div class="r-form">' +
       '<label class="blk">Nom<input class="txt" id="rf-name" type="text" maxlength="80" placeholder="Ex. 10 km de Tours" value="' + esc(r.name || '') + '"></label>' +
       '<div class="two"><label class="blk">Date<input class="txt" id="rf-date" type="date" value="' + esc(r.date || '') + '"></label>' +
       '<label class="blk">Lieu<input class="txt" id="rf-place" type="text" maxlength="60" placeholder="Ville" value="' + esc(r.place || '') + '"></label></div>' +
-      '<div class="sub">Type d\'objectif</div><div class="seg" role="group" aria-label="Type d\'objectif"><button data-action="rf-main" data-v="1" aria-pressed="' + !!r.main + '">★ Principal</button><button data-action="rf-main" data-v="0" aria-pressed="' + !r.main + '">Secondaire</button></div>' +
-      '<span class="goal" style="margin-top:-6px">Le compte à rebours affiché est celui de l\'objectif principal.</span>' +
+      (past ? '' : '<div class="sub">Type d\'objectif</div><div class="seg" role="group" aria-label="Type d\'objectif"><button data-action="rf-main" data-v="1" aria-pressed="' + !!r.main + '">★ Principal</button><button data-action="rf-main" data-v="0" aria-pressed="' + !r.main + '">Secondaire</button></div>' +
+      '<span class="goal" style="margin-top:-6px">Le compte à rebours affiché est celui de l\'objectif principal.</span>') +
       '<div class="sub">Distance</div><div class="chips">' + DISTS.map(function (d) { return '<button class="chip sm" data-action="rf-dist" data-d="' + d[0] + '" aria-pressed="' + (r.dist === d[0]) + '">' + d[1] + '</button>'; }).join('') + '</div>' +
       (r.dist === 'autre' ? '<label class="blk">Distance (km)<input class="txt" id="rf-km" type="number" inputmode="decimal" step="0.1" min="0" value="' + val(r.km) + '"></label>' : '') +
       chronoField('rf-goal', 'Objectif', r.goal) + chronoField('rf-result', 'Chrono réalisé', r.result) +
@@ -2330,6 +2342,33 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<div class="m-row"><button class="pe-save" data-action="rf-save">Enregistrer</button><button class="pe-cancel" data-action="rf-cancel">Annuler</button>' +
       (r.id ? '<button class="pe-cancel" style="margin-left:auto;color:var(--bad)" data-action="rf-del">Supprimer</button>' : '') + '</div>' +
       '<p class="note" id="rf-msg" role="status"></p></div></section>';
+  }
+  function spark(vals, w, h) {
+    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), rg = mx - mn || 1;
+    var pts = vals.map(function (v, i) { return (vals.length === 1 ? w / 2 : 6 + i * (w - 12) / (vals.length - 1)).toFixed(1) + ',' + (6 + (v - mn) / rg * (h - 12)).toFixed(1); });
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:' + h + 'px" aria-hidden="true"><polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      pts.map(function (p, i) { var xy = p.split(','); return '<circle cx="' + xy[0] + '" cy="' + xy[1] + '" r="' + (vals[i] === mn ? 5 : 3.5) + '" fill="' + (vals[i] === mn ? 'var(--good)' : 'var(--accent)') + '"/>'; }).join('') + '</svg>';
+  }
+  /* Évolution des chronos par distance (courses passées avec un chrono). Plus bas sur le graphique = plus rapide. */
+  function evoCard() {
+    var done = races.filter(function (r) { return r.result && r.date <= todayStr(); });
+    var groups = {};
+    done.forEach(function (r) { var k = r.dist === 'autre' ? 'autre-' + (r.km || '') : r.dist; (groups[k] = groups[k] || []).push(r); });
+    var keys = Object.keys(groups).sort(function (a, b) { return (raceKm(groups[a][0]) || 0) - (raceKm(groups[b][0]) || 0); });
+    var body = keys.map(function (k) {
+      var g = groups[k].slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }), km = raceKm(g[0]);
+      var best = g.reduce(function (m, r) { return !m || r.result < m.result ? r : m; }, null);
+      var rows = g.slice().reverse().map(function (r) {
+        var i = g.indexOf(r), prev = i > 0 ? g[i - 1] : null, d = prev ? r.result - prev.result : null;
+        return '<div class="evo-row"><span class="evo-d">' + dm(r.date) + ' ' + r.date.slice(2, 4) + '</span><span class="evo-n">' + esc(r.name) + (r === best ? ' <b style="color:var(--good)">★ record</b>' : '') + '</span><span class="evo-t"><b>' + fmtChrono(r.result) + '</b>' + (km ? '<small>' + fmtPace(r.result / 60 / km) + '</small>' : '') +
+          (d != null ? '<small style="color:var(--' + (d <= 0 ? 'good' : 'bad') + ')">' + (d <= 0 ? '−' : '+') + fmtChrono(Math.abs(d)) + '</small>' : '') + '</span></div>';
+      }).join('');
+      var tot = g.length > 1 ? g[g.length - 1].result - g[0].result : null;
+      return '<div class="evo-g"><div class="m-row" style="justify-content:space-between;align-items:baseline"><span class="sub" style="margin:0">' + distLabel(g[0]) + ' · ' + plural(g.length, 'course') + '</span><span class="note" style="margin:0">Record <b>' + fmtChrono(best.result) + '</b></span></div>' +
+        (g.length > 1 ? spark(g.map(function (r) { return r.result; }), 320, 60) + '<p class="note" style="margin:0">' + (tot <= 0 ? 'Tu as gagné ' + fmtChrono(-tot) : 'Tu as perdu ' + fmtChrono(tot)) + ' entre ta première et ta dernière course.</p>' : '') + rows + '</div>';
+    }).join('');
+    return '<section class="card"><div class="m-head"><div><h3>Mon évolution</h3><span class="goal">Tes chronos par distance, du plus récent au plus ancien</span></div><span class="sum cnt">' + done.length + '</span></div>' +
+      (body || '<p class="note">Ajoute tes courses passées avec leur chrono (bouton « + Course passée ») pour suivre ta progression sur chaque distance.</p>') + '</section>';
   }
   function raceRow(r) {
     var dt = parse(r.date), km = raceKm(r), sub = [distLabel(r)];
@@ -2390,7 +2429,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         (dd > 0 ? '<span class="goal">' + plural(Math.floor(dd / 7), 'semaine') + (dd % 7 ? ' et ' + plural(dd % 7, 'jour') : '') + '</span>' : '<span class="goal">C\'est aujourd\'hui. Bonne course !</span>') + '</section>';
     }
     if (nx && !isMain) html += '<p class="note">Aucun objectif principal choisi : le compte à rebours suit la prochaine course. Touche une course ou un objectif puis « ★ Principal » pour le choisir.</p>';
-    html += '<button class="today-btn" style="width:100%;min-height:48px" data-action="rf-new">+ Ajouter une course</button>';
+    html += '<div class="m-row" style="gap:8px"><button class="today-btn" style="flex:1;min-height:48px" data-action="rf-new">+ Course à venir</button><button class="today-btn" style="flex:1;min-height:48px" data-action="rf-new" data-past="1">+ Course passée</button></div>';
+    html += fold('evo', evoCard());
     html += fold('races', '<section class="card"><div class="m-head"><h3>Courses à venir</h3><span class="sum cnt">' + up.length + '</span></div><div>' + (up.length ? up.map(raceRow).join('') : '<p class="note">Aucune course prévue.</p>') + '</div></section>');
     html += fold('results', '<section class="card"><div class="m-head"><h3>Résultats</h3><span class="sum cnt">' + past.length + '</span></div><div>' + (past.length ? past.map(raceRow).join('') : '<p class="note">Ajoute tes courses passées avec leur chrono pour garder ton historique.</p>') + '</div></section>');
     var pbs = {};
@@ -2417,7 +2457,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     $('#tab-week').setAttribute('aria-selected', view === 'week');
     $('#tab-prog').setAttribute('aria-selected', view === 'prog');
     $('#tab-race').setAttribute('aria-selected', view === 'race');
-    var nav = view !== 'prog' && view !== 'race';
+    $('#tab-set').setAttribute('aria-selected', view === 'settings');
+    var nav = view === 'day' || view === 'week';
     $('#btn-prev').style.visibility = nav ? '' : 'hidden';
     $('#btn-next').style.visibility = nav ? '' : 'hidden';
     if (view === 'day') {
@@ -2435,6 +2476,10 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     } else if (view === 'race') {
       $('#nav-title').textContent = 'Objectifs';
       $('#eyebrow').textContent = 'Objectifs & courses';
+      $('#today-btn').hidden = true;
+    } else if (view === 'settings') {
+      $('#nav-title').textContent = 'Réglages';
+      $('#eyebrow').textContent = 'Import · style · sauvegarde';
       $('#today-btn').hidden = true;
     } else {
       $('#nav-title').textContent = 'Progression';
@@ -2459,12 +2504,15 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (!isTyping() || !document.activeElement.closest('#settings')) renderSettings();
     needsRender = false;
     updateHeader();
-    content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : view === 'race' ? raceView() : progView();
-    var hs = $('#health-slot'); if (hs) hs.innerHTML = view === 'day' && settings.health ? healthCard() : '';
+    content.innerHTML = view === 'day' ? dayView() : view === 'week' ? weekView() : view === 'race' ? raceView() : view === 'settings' ? '' : progView();
+    content.hidden = view === 'settings';
+    $('#settings').hidden = view !== 'settings'; $('#backup').hidden = view !== 'settings';
+    var hs = $('#health-slot'); if (hs) { hs.innerHTML = view === 'settings' && settings.health ? healthCard() : ''; hs.hidden = !hs.innerHTML; }
     if (view === 'day') refreshDay();
   }
   var openCards = {};
   function refreshDay() {
+    if (!$('#score-num')) return;
     var d = get(cur), ev = evalDay(d), score = 0, dots = document.querySelectorAll('#dots i');
     KEYS.forEach(function (k, i) {
       var e = ev[k];
@@ -2600,7 +2648,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var scd = e.target.closest('.card.sec');
     if (scd && scd.id && (scd.classList.contains('shut') ? !e.target.closest('button:not(.m-head *)') : (!e.target.closest('input,button,select,label,a,textarea') && e.target.closest('.card.sec > .fh')))) {
       var fk = scd.dataset.fk || scd.id.slice(3), sh = !scd.classList.contains('shut'); scd.classList.toggle('shut', sh);
-      if (sh) foldState[fk] = 1; else if (fk === 'settings') foldState[fk] = 0; else delete foldState[fk];
+      if (fk === 'settings') { if (sh) foldState.settingsShut = 1; else delete foldState.settingsShut; } else if (sh) foldState[fk] = 1; else delete foldState[fk];
       try { localStorage.setItem(LS_FOLD, JSON.stringify(foldState)); } catch (x) {}
       return;
     }
@@ -2699,7 +2747,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       d.meals.sort(); d.cheats.sort(); touch(cur); render();
     }
     else if (a === 'coffee') { d = get(cur); d.coffee = Math.max(0, (d.coffee || 0) + +b.dataset.d); touch(cur); render(); }
-    else if (a === 'rf-new') { raceEdit = { name: '', date: '', dist: 'semi', km: null, goal: null, result: null, place: '', rank: '', notes: '' }; render(); window.scrollTo(0, 0); focusSel('#rf-name'); }
+    else if (a === 'rf-new') { raceEdit = { name: '', date: '', dist: 'semi', km: null, goal: null, result: null, place: '', rank: '', notes: '', past: b.dataset.past === '1' }; render(); window.scrollTo(0, 0); focusSel('#rf-name'); }
     else if (a === 'rf-edit') { var re0 = races.filter(function (x) { return x.id === b.dataset.id; })[0]; if (re0) { raceEdit = JSON.parse(JSON.stringify(re0)); render(); window.scrollTo(0, 0); } }
     else if (a === 'rf-dist') { readRaceForm(); raceEdit.dist = b.dataset.d; render(); }
     else if (a === 'of-new') { objEdit = { name: '', start: todayStr(), end: '', main: false, notes: '' }; render(); window.scrollTo(0, 0); focusSel('#of-name'); }
@@ -2954,7 +3002,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         '<label class="field mini"><span class="sr">' + label + '</span><input data-goal="' + k + '" type="number" inputmode="decimal" min="0" step="' + step + '" value="' + v + '"><span class="unit">' + unit + '</span></label></div>';
     }
     var bk = $('#backup'); if (bk) bk.classList.toggle('shut', !!foldState.backup);
-    el.classList.add('sec'); el.dataset.fk = 'settings'; el.classList.toggle('shut', foldState.settings !== 0);
+    el.classList.add('sec'); el.dataset.fk = 'settings'; el.classList.toggle('shut', !!foldState.settingsShut);
     el.innerHTML = '<div class="m-head fh"><div><h2>Réglages</h2><span class="goal">Style, objectifs, sections, chaussures…</span></div></div>' +
       '<div class="m-head"><div><h3>Style</h3><span class="goal">Change seulement l\'apparence, tes données ne bougent pas</span></div></div>' +
       '<div class="seg style-seg" role="group" aria-label="Style"><button data-action="set-style" data-v="classic" aria-pressed="' + (settings.style === 'classic') + '">Classique</button><button data-action="set-style" data-v="saiyan" aria-pressed="' + (settings.style === 'saiyan') + '">Sombre</button><button data-action="set-style" data-v="ardoise" aria-pressed="' + (settings.style === 'ardoise') + '">Ardoise</button><button data-action="set-style" data-v="vif" aria-pressed="' + (settings.style === 'vif') + '">Couleurs</button><button data-action="set-style" data-v="marine" aria-pressed="' + (settings.style === 'marine') + '">Crème</button><button data-action="set-style" data-v="cremevif" aria-pressed="' + (settings.style === 'cremevif') + '">Crème couleurs</button></div>' +
@@ -2973,7 +3021,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       }).join('') + '</div><p class="note" id="set-msg" role="status"></p>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div><div><h3>Sections affichées</h3><span class="goal">Touche pour masquer ce qui ne te sert pas, tes données restent enregistrées</span></div>' +
       ['Jour', 'Semaine'].map(function (v) { return '<div class="sub">' + v + '</div><div class="chips">' + SECTIONS.filter(function (x) { return x[2] === v; }).map(function (x) { return '<button class="chip sm" data-action="toggle-sec" data-k="' + x[0] + '" aria-pressed="' + shown(x[0]) + '">' + (shown(x[0]) ? '' : '<s>') + x[1] + (shown(x[0]) ? '' : '</s>') + '</button>'; }).join('') + '</div>'; }).join('') +
-      '<div class="m-row" style="justify-content:space-between"><div><span class="sub">Import Apple Santé</span><span class="goal">Affiche le bouton en bas de l\'onglet Jour</span></div><button class="chip sm" data-action="toggle-health" aria-pressed="' + settings.health + '">' + (settings.health ? 'Affiché' : 'Masqué') + '</button></div>' +
+      '<div class="m-row" style="justify-content:space-between"><div><span class="sub">Import Apple Santé</span><span class="goal">Affiche le bouton d\'import en haut de cet onglet</span></div><button class="chip sm" data-action="toggle-health" aria-pressed="' + settings.health + '">' + (settings.health ? 'Affiché' : 'Masqué') + '</button></div>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
       '<div class="m-head"><div><h3>Chaussures</h3><span class="goal">Kilométrage suivi à partir des sorties où tu les choisis</span></div></div>' +
       settings.shoes.map(function (x) {

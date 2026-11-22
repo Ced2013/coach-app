@@ -112,9 +112,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .card.sec > .fh { cursor: pointer; }
 .card.sec > .fh > :first-child { flex: 1; min-width: 0; }
 .card.sec > .fh::after { order: 2; }
-.card.sec.shut > .fh { flex-wrap: wrap; align-items: center; row-gap: 4px; }
-.card.sec.shut > .fh > .sum { order: 3; flex-basis: 100%; font-size: 14px; line-height: 1.35; }
-.card.sec.shut > .fh > .sum:empty { display: none; }
+.card.sec > .fh { flex-wrap: wrap; row-gap: 4px; }
+.card.sec > .fh > .sum { order: 3; flex-basis: 100%; font-size: 14px; line-height: 1.35; }
+.card.sec > .fh > .sum:empty { display: none; }
+.card.sec.shut > .fh { align-items: center; }
 .card.sec > .fh::after { content: ''; width: 8px; height: 8px; border-left: 2px solid var(--muted); border-top: 2px solid var(--muted); transform: rotate(45deg); margin: 8px 2px 0 6px; flex: none; }
 .card.sec.shut > :not(.fh) { display: none !important; }
 .card.sec.shut > .fh { border-top: 0 !important; padding-top: 0 !important; }

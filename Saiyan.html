@@ -234,6 +234,12 @@ textarea, select, input[type=text], input[type=date], input[type=file] { font-si
 .pe-row-head b { font-size: 14px; }
 .pe-row select { min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--ink); font: 600 14px var(--font-body); padding: 0 8px; }
 .pe-btns { display: flex; gap: 2px; }
+.pe-set { border: 1.5px dashed var(--line); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.pe-set-head { display: flex; align-items: center; gap: 8px; }
+.pe-set-head b { font-size: 14px; }
+.pe-set .pe-row { padding: 8px; }
+.pe-set .pe-row .m-row { flex-wrap: nowrap; gap: 6px; }
+.pe-set-head .pe-btns { margin-left: auto; }
 .pe-row .field.mini input { font-size: 18px; }
 .blk-warm { border-left-color: #E3A008; } .blk-work { border-left-color: var(--bad); } .blk-rec { border-left-color: var(--c-run); } .blk-cool { border-left-color: var(--c-bike); }
 .chip.blk-warm, .chip.blk-work, .chip.blk-rec, .chip.blk-cool { border-left-width: 4px; }
@@ -457,27 +463,44 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   var BLOCK_KINDS = [['warm', 'Échauffement'], ['work', 'Effort'], ['rec', 'Récup'], ['cool', 'Retour au calme']];
   function kindLabel(k) { var x = BLOCK_KINDS.filter(function (b) { return b[0] === k; })[0]; return x ? x[1] : 'Bloc'; }
   function normBlock(b) {
-    return { k: BLOCK_KINDS.some(function (x) { return x[0] === b.k; }) ? b.k : 'work', n: Math.max(1, Math.round(num(b.n) || 1)), dur: num(b.dur), pace: num(b.pace) };
+    var o = { k: BLOCK_KINDS.some(function (x) { return x[0] === b.k; }) ? b.k : 'work', n: Math.max(1, Math.round(num(b.n) || 1)), dur: num(b.dur), pace: num(b.pace) };
+    if (num(b.pace2)) o.pace2 = num(b.pace2);
+    if (b.link) o.link = true;
+    return o;
   }
   function normPlanExo(x) { return { move: String(x.move || '').slice(0, 60), sets: num(x.sets), reps: num(x.reps), w: num(x.w) }; }
   function normPlanItem(x) {
     return {
       id: String(x.id || uid('p')), type: String(x.type), min: num(x.min), note: String(x.note || '').slice(0, 120),
       exos: Array.isArray(x.exos) ? x.exos.filter(function (e) { return e && e.move; }).map(normPlanExo) : [],
-      blocks: Array.isArray(x.blocks) ? x.blocks.filter(Boolean).map(normBlock) : []
+      blocks: Array.isArray(x.blocks) ? fixLinks(x.blocks.filter(Boolean).map(normBlock)) : []
     };
+  }
+  /* Séries : un bloc « link » fait partie de la même répétition que le bloc précédent (même nombre de répétitions). */
+  function fixLinks(blocks) { blocks.forEach(function (b, i) { if (i === 0) b.link = false; if (b.link) b.n = blocks[i - 1].n; if (!b.link) delete b.link; }); return blocks; }
+  function blockGroups(blocks) {
+    var g = [];
+    blocks.forEach(function (b, i) { if (b.link && g.length) g[g.length - 1].items.push(b); else g.push({ n: b.n, start: i, items: [b] }); });
+    return g;
   }
   function blocksTotal(blocks) {
     var sec = 0, km = 0, kmOk = true;
-    blocks.forEach(function (b) { var d = (b.dur || 0) * b.n; sec += d; if (b.pace) km += d / b.pace; else if (d) kmOk = false; });
+    blocks.forEach(function (b) { var d = (b.dur || 0) * b.n, pc = b.pace && b.pace2 ? (b.pace + b.pace2) / 2 : b.pace; sec += d; if (pc) km += d / pc; else if (d) kmOk = false; });
     return { sec: sec, km: kmOk ? km : null };
   }
-  function fmtSecDur(sec) { sec = Math.round(sec); var m = Math.floor(sec / 60), x = sec % 60; return x ? m + ' min ' + pad(x) : m + ' min'; }
+  function fmtSecDur(sec) { sec = Math.round(sec); var m = Math.floor(sec / 60), x = sec % 60; return !m ? x + ' s' : x ? m + ' min ' + pad(x) : m + ' min'; }
   function fmtPaceSec(p) { p = Math.round(p); return Math.floor(p / 60) + ':' + pad(p % 60); }
-  function blockText(b) { return (b.n > 1 ? b.n + ' × ' : '') + (b.dur ? fmtSecDur(b.dur) : '?') + ' ' + kindLabel(b.k).toLowerCase() + (b.pace ? ' à ' + fmtPaceSec(b.pace) + ' /km' : ''); }
+  function paceText(b) { return b.pace ? ' à ' + fmtPaceSec(b.pace) + (b.pace2 && b.pace2 !== b.pace ? '–' + fmtPaceSec(b.pace2) : '') + ' /km' : ''; }
+  function blockText(b, noN) { return (!noN && b.n > 1 ? b.n + ' × ' : '') + (b.dur ? fmtSecDur(b.dur) : '?') + ' ' + kindLabel(b.k).toLowerCase() + paceText(b); }
+  function blockLines(blocks) {
+    return blockGroups(blocks).map(function (g) {
+      if (g.items.length === 1) return blockText(g.items[0]);
+      return (g.n > 1 ? g.n + ' × ' : '') + '(' + g.items.map(function (b) { return blockText(b, true); }).join(' + ') + ')';
+    });
+  }
   function exoPlanText(x) { return x.move + (x.sets || x.reps ? ' ' + (x.sets || '?') + ' × ' + (x.reps || '?') : '') + (x.w ? ' à ' + fmtD(x.w) + ' kg' : ''); }
   function planDetailLines(pl) {
-    if (pl.blocks && pl.blocks.length) return pl.blocks.map(blockText);
+    if (pl.blocks && pl.blocks.length) return blockLines(pl.blocks);
     if (pl.exos && pl.exos.length) return pl.exos.map(exoPlanText);
     return [];
   }
@@ -493,7 +516,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       return {
         id: String(s.id), type: String(s.type), min: num(s.min), km: num(s.km), hr: num(s.hr), rpe: num(s.rpe), shoe: s.shoe ? String(s.shoe) : null,
         exos: Array.isArray(s.exos) ? s.exos.map(normExo) : [],
-        blocks: Array.isArray(s.blocks) ? s.blocks.filter(Boolean).map(normBlock) : []
+        blocks: Array.isArray(s.blocks) ? fixLinks(s.blocks.filter(Boolean).map(normBlock)) : []
       };
     });
     return e;
@@ -1033,7 +1056,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     if (s.blocks && s.blocks.length) {
       var bt = blocksTotal(s.blocks);
-      html += '<div class="tip"><b style="color:var(--fam)">Séance prévue</b> · ' + fmtSecDur(bt.sec) + (bt.km ? ' · ≈ ' + fmtD(bt.km, 1) + ' km' : '') + s.blocks.map(function (b) { return '<span style="display:block">• ' + esc(blockText(b)) + '</span>'; }).join('') + '</div>';
+      html += '<div class="tip"><b style="color:var(--fam)">Séance prévue</b> · ' + fmtSecDur(bt.sec) + (bt.km ? ' · ≈ ' + fmtD(bt.km, 1) + ' km' : '') + blockLines(s.blocks).map(function (l) { return '<span style="display:block">• ' + esc(l) + '</span>'; }).join('') + '</div>';
     }
     if (def.fam === 'muscu' && !s.exos.length) {
       var tpl = lastSessionOfType(s.type, cur);
@@ -1159,17 +1182,27 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     if (fam === 'run' || fam === 'race') {
       html += '<div class="sub">Blocs</div>';
-      html += planEdit.blocks.map(function (b, i) {
+      function bkRow(b, i, inSet) {
         var pm = b.pace ? Math.floor(b.pace / 60) : '', ps = b.pace ? pad(Math.round(b.pace % 60)) : '';
+        var pm2 = b.pace2 ? Math.floor(b.pace2 / 60) : '', ps2 = b.pace2 ? pad(Math.round(b.pace2 % 60)) : '';
         var dm0 = b.dur != null ? Math.floor(b.dur / 60) : '', ds0 = b.dur != null && b.dur % 60 ? pad(Math.round(b.dur % 60)) : '';
         return '<div class="pe-row blk-' + b.k + '"><div class="pe-row-head"><select data-pe="bk-k-' + i + '" aria-label="Type de bloc">' + BLOCK_KINDS.map(function (k) { return '<option value="' + k[0] + '"' + (k[0] === b.k ? ' selected' : '') + '>' + k[1] + '</option>'; }).join('') + '</select>' +
-          '<span class="pe-btns"><button class="icon-btn tiny" data-action="pe-dup-block" data-i="' + i + '" aria-label="Dupliquer le bloc">⧉</button><button class="icon-btn tiny" data-action="pe-del-block" data-i="' + i + '" aria-label="Retirer le bloc">×</button></span></div>' +
-          '<div class="m-row">' + peNum('bk-n-' + i, b.n > 1 ? b.n : '', '×', 1, '1.6em', '1') +
+          '<span class="pe-btns">' + (inSet ? '' : '<button class="icon-btn tiny" data-action="pe-dup-block" data-i="' + i + '" aria-label="Dupliquer le bloc">⧉</button>') + '<button class="icon-btn tiny" data-action="pe-del-block" data-i="' + i + '" aria-label="Retirer le bloc">×</button></span></div>' +
+          '<div class="m-row">' + (inSet ? '' : peNum('bk-n-' + i, b.n > 1 ? b.n : '', '×', 1, '1.6em', '1')) +
           peNum('bk-dm-' + i, dm0, 'min', 1, '2em', '0') + peNum('bk-ds-' + i, ds0, 's', 1, '1.6em', '00') + '</div>' +
-          '<div class="m-row"><span class="unit">Allure cible</span>' + peNum('bk-pm-' + i, pm, ':', 1, '1.6em', '5') + peNum('bk-ps-' + i, ps, '/km', 1, '1.6em', '00') + '</div></div>';
+          '<div class="m-row"><span class="unit">Allure</span>' + peNum('bk-pm-' + i, pm, ':', 1, '1.6em', '5') + peNum('bk-ps-' + i, ps, '', 1, '1.6em', '00') +
+          '<span class="unit">à</span>' + peNum('bk-pm2-' + i, pm2, ':', 1, '1.6em', '–') + peNum('bk-ps2-' + i, ps2, '/km', 1, '1.6em', '') + '</div></div>';
+      }
+      html += blockGroups(planEdit.blocks).map(function (g) {
+        if (g.items.length === 1 && !g.set) return bkRow(g.items[0], g.start, false);
+        var last = g.start + g.items.length - 1;
+        return '<div class="pe-set"><div class="pe-set-head"><b>Série</b>' + peNum('bk-n-' + g.start, g.n, 'fois', 1, '1.8em', '5') +
+          '<span class="pe-btns"><button class="icon-btn tiny" data-action="pe-dup-set" data-i="' + g.start + '" aria-label="Dupliquer la série">⧉</button><button class="icon-btn tiny" data-action="pe-del-set" data-i="' + g.start + '" aria-label="Retirer la série">×</button></span></div>' +
+          g.items.map(function (b, j) { return bkRow(b, g.start + j, true); }).join('') +
+          '<button class="chip sm" style="align-self:flex-start" data-action="pe-add-step" data-i="' + last + '">+ Étape dans la série</button></div>';
       }).join('');
-      html += '<div class="chips">' + BLOCK_KINDS.map(function (k) { return '<button class="chip sm blk-' + k[0] + '" data-action="pe-add-block" data-k="' + k[0] + '">+ ' + k[1] + '</button>'; }).join('') + '</div>';
-      html += '<p class="note" style="font-size:12.5px">Exemple de fractionné : Échauffement 20 min à 6:00 · Effort 5 × 4 min à 4:20 · Récup 5 × 2 min à 6:30 · Retour au calme 10 min.</p>';
+      html += '<div class="chips">' + BLOCK_KINDS.map(function (k) { return '<button class="chip sm blk-' + k[0] + '" data-action="pe-add-block" data-k="' + k[0] + '">+ ' + k[1] + '</button>'; }).join('') + '<button class="chip sm blk-work" data-action="pe-add-set">+ Série (effort + récup) ×N</button></div>';
+      html += '<p class="note" style="font-size:12.5px">Exemple : Échauffement 20 min à 6:05–6:35 · Série 5 fois (30 s effort + 3 min récup) · Retour au calme 10 min. L\'allure peut être une fourchette (2ᵉ case optionnelle).</p>';
     }
     html += '<div class="m-row"><button class="pe-save" data-action="plan-save"' + (t ? '' : ' disabled') + '>' + (planEdit.id ? 'Enregistrer' : 'Prévoir') + '</button><button class="pe-cancel" data-action="plan-cancel">Annuler</button></div></div>';
     return html;
@@ -1184,14 +1217,19 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       x.sets = num(g('ex-sets-' + i)); x.reps = num(g('ex-reps-' + i)); x.w = num(g('ex-w-' + i));
     });
     planEdit.blocks.forEach(function (b, i) {
-      if (g('bk-n-' + i) == null) return;
+      if (g('bk-dm-' + i) == null) return;
       b.k = g('bk-k-' + i) || b.k;
-      b.n = Math.max(1, Math.round(num(g('bk-n-' + i)) || 1));
+      if (g('bk-n-' + i) != null) b.n = Math.max(1, Math.round(num(g('bk-n-' + i)) || 1));
       var dm1 = num(g('bk-dm-' + i)), ds1 = num(g('bk-ds-' + i));
       b.dur = dm1 == null && ds1 == null ? null : (dm1 || 0) * 60 + (ds1 || 0);
       var pm1 = num(g('bk-pm-' + i)), ps1 = num(g('bk-ps-' + i));
       b.pace = pm1 == null && ps1 == null ? null : (pm1 || 0) * 60 + (ps1 || 0) || null;
+      var pm2 = num(g('bk-pm2-' + i)), ps2 = num(g('bk-ps2-' + i));
+      var p2 = pm2 == null && ps2 == null ? null : (pm2 || 0) * 60 + (ps2 || 0) || null;
+      if (p2 && b.pace && p2 < b.pace) { var tq = b.pace; b.pace = p2; p2 = tq; }
+      if (p2 && p2 !== b.pace) b.pace2 = p2; else delete b.pace2;
     });
+    fixLinks(planEdit.blocks);
   }
   function planCard() {
     var ws = weekStart(cur), dr = daysToRace(), done = 0, total = 0;
@@ -1705,7 +1743,56 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     });
     return { days: cnt, from: ok[0], to: ok[ok.length - 1] };
   }
+  /* Séance Apple Watch : « seance;Type;Date de début;Durée;Distance;Énergie active;FC moyenne » (une ligne par séance). */
+  function parseWorkouts(txt) {
+    var list = [];
+    String(txt || '').split(/\n+/).forEach(function (line) {
+      var p = line.split(';'); if (!/^\s*s[eé]ance\s*$/i.test(p[0] || '')) return;
+      var t = String(p[1] || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      var fam = /velo|cycl|bike|biking/.test(t) ? 'bike' : /muscu|force|renfo|strength|fonctionnel|halt|crossfit|hiit|poids/.test(t) ? 'muscu' : /course|run|jog|trail|marche|walk/.test(t) ? 'run' : null;
+      var date = parseAnyDate(p[2] || ''); if (!date || !fam) return;
+      var durTxt = String(p[3] || ''), min = durToMin(durTxt, true);
+      if (min == null) { var dn = durTxt.replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/); if (dn) { var dv = parseFloat(dn[0]); min = dv > 300 ? dv / 60 : dv; } }
+      var kmTxt = String(p[4] || '').toLowerCase(), km = null, kn = kmTxt.replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/);
+      if (kn) { km = parseFloat(kn[0]); if (/\bm\b/.test(kmTxt.replace('km', '')) && !/km/.test(kmTxt) || km > 200) km = km / 1000; }
+      function n(x) { var m = String(x || '').replace(/\s/g, '').replace(',', '.').match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; }
+      list.push({ fam: fam, date: date, min: min ? Math.round(min) : null, km: km ? Math.round(km * 100) / 100 : null, kcal: n(p[5]), hr: n(p[6]) });
+    });
+    return list;
+  }
+  function applyWorkouts(list) {
+    var out = [];
+    list.forEach(function (w) {
+      var d = get(w.date), famOf = function (t) { var f = sportDef(t).fam; return f === 'race' ? 'run' : f; };
+      var ex = d.sports.filter(function (x) { return famOf(x.type) === w.fam; })[0];
+      if (!ex) {
+        var pl = (d.plan || []).filter(function (x) { return famOf(x.type) === w.fam; })[0];
+        var type = pl ? pl.type : w.fam === 'bike' ? 'velo-taf' : w.fam === 'muscu' ? 'muscu-full' : 'run-ef';
+        ex = { id: uid('s'), type: type, min: null, km: null, hr: null, rpe: null, shoe: defaultShoe(type), exos: [], blocks: pl ? JSON.parse(JSON.stringify(pl.blocks || [])) : [] };
+        if (pl) (pl.exos || []).forEach(function (x) {
+          var n0 = Math.max(1, Math.round(x.sets || 3)), sets0 = [];
+          for (var q = 0; q < n0; q++) sets0.push({ w: null, r: null });
+          ex.exos.push({ id: uid('e'), move: x.move, rir: null, sets: sets0, target: { sets: x.sets, reps: x.reps, w: x.w } });
+        });
+        d.sports.push(ex);
+      }
+      if (w.min) ex.min = w.min;
+      if (w.km && w.fam !== 'muscu') ex.km = w.km;
+      if (w.hr) ex.hr = Math.round(w.hr);
+      touch(w.date);
+      out.push(sportDef(ex.type).label + ' du ' + dm(w.date) + (w.min ? ' · ' + fmtDur(w.min) : '') + (ex.km ? ' · ' + fmtD(ex.km, 1) + ' km' : '') + (ex.hr ? ' · ' + ex.hr + ' bpm' : ''));
+      cur = w.date;
+    });
+    return out;
+  }
   function doHealth(txt) {
+    var wk = parseWorkouts(txt);
+    if (wk.length) {
+      var wd = applyWorkouts(wk);
+      txt = String(txt).split(/\n+/).filter(function (l) { return !/^\s*s[eé]ance\s*;/i.test(l); }).join('\n');
+      if (!txt.trim()) { healthMsg = 'Séance importée : ' + wd.join(' ; ') + '.'; healthPaste = false; render(); refreshDay(); return; }
+      healthMsg = 'Séance importée : ' + wd.join(' ; ') + '. ';
+    }
     var hist = parseHistory(txt);
     var hq = parseHealth(txt), hasEq = Object.keys(hq).some(function (k) { return k !== 'date'; });
     if (hist && hasEq) {
@@ -2240,8 +2327,25 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       planEdit.blocks.push({ k: k, n: df[0], dur: df[1], pace: df[2] }); render();
       focusSel('[data-pe="bk-dm-' + (planEdit.blocks.length - 1) + '"]');
     }
+    else if (a === 'pe-add-set') {
+      readPlanEditor();
+      planEdit.blocks.push({ k: 'work', n: 5, dur: 30, pace: 230 }, { k: 'rec', n: 5, dur: 180, pace: 390, link: true }); render();
+      focusSel('[data-pe="bk-n-' + (planEdit.blocks.length - 2) + '"]');
+    }
+    else if (a === 'pe-add-step') { readPlanEditor(); var si = +b.dataset.i; planEdit.blocks.splice(si + 1, 0, { k: 'work', n: planEdit.blocks[si].n, dur: 60, pace: null, link: true }); render(); }
+    else if (a === 'pe-dup-set' || a === 'pe-del-set') {
+      readPlanEditor(); var s0 = +b.dataset.i, e0 = s0 + 1; while (e0 < planEdit.blocks.length && planEdit.blocks[e0].link) e0++;
+      if (a === 'pe-del-set') planEdit.blocks.splice(s0, e0 - s0);
+      else { var cp = JSON.parse(JSON.stringify(planEdit.blocks.slice(s0, e0))); cp[0].link = false; Array.prototype.splice.apply(planEdit.blocks, [e0, 0].concat(cp)); }
+      fixLinks(planEdit.blocks); render();
+    }
     else if (a === 'pe-dup-block') { readPlanEditor(); var bi = +b.dataset.i; planEdit.blocks.splice(bi + 1, 0, JSON.parse(JSON.stringify(planEdit.blocks[bi]))); render(); }
-    else if (a === 'pe-del-block') { readPlanEditor(); planEdit.blocks.splice(+b.dataset.i, 1); render(); }
+    else if (a === 'pe-del-block') {
+      readPlanEditor(); var di = +b.dataset.i, wasHead = !planEdit.blocks[di].link;
+      planEdit.blocks.splice(di, 1);
+      if (wasHead && planEdit.blocks[di] && planEdit.blocks[di].link) planEdit.blocks[di].link = false;
+      fixLinks(planEdit.blocks); render();
+    }
     else if (a === 'plan-cancel') { planEdit = null; render(); }
     else if (a === 'plan-save') {
       if (!planEdit || !planEdit.type) return;

@@ -15,7 +15,7 @@
 <title>Planning & routines</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #EEF1F3; --surface: #FFFFFF; --surface-2: #E4E9ED; --ink: #12202B; --muted: #5B6B78; --line: #D3DAE0;
@@ -122,6 +122,173 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .card.sec.shut > .fh { border-top: 0 !important; padding-top: 0 !important; }
 .card.sec.shut > .fh::after { transform: rotate(-135deg); margin-top: -2px; }
 .card.sec.shut .fh .goal { display: none; }
+
+/* ===== Saiyan : couleurs vivantes ===== */
+.mic { display: none; }
+html[data-style="saiyan"] { --k-kcal: #FF8A3D; --k-water: #3FB6FF; --k-sleep: #A08CFF; --k-screen: #FFC64A; --k-blue: #5BD893; --k-reco: #FF6B8B; --k-nutri: #FFB347; --k-body: #4FD1C0; --k-sport: #FF8A3D; }
+html[data-style="saiyan"] body { background: radial-gradient(900px 340px at 50% -120px, rgba(255,138,61,.22), transparent 70%), radial-gradient(700px 300px at 110% 30%, rgba(63,182,255,.07), transparent 70%), var(--bg); background-attachment: fixed; }
+html[data-style="saiyan"] .mic { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; margin-right: 9px; vertical-align: -6px; background: color-mix(in srgb, var(--ic) 18%, transparent); }
+html[data-style="saiyan"] .mic svg { width: 16px; height: 16px; fill: none; stroke: var(--ic); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+html[data-style="saiyan"] .mic-kcal, html[data-style="saiyan"] #m-kcal, html[data-style="saiyan"] #ring-kcal { --ic: var(--k-kcal); }
+html[data-style="saiyan"] .mic-water, html[data-style="saiyan"] #m-water, html[data-style="saiyan"] #ring-water { --ic: var(--k-water); }
+html[data-style="saiyan"] .mic-sleep, html[data-style="saiyan"] #m-sleep, html[data-style="saiyan"] #ring-sleep { --ic: var(--k-sleep); }
+html[data-style="saiyan"] .mic-screen, html[data-style="saiyan"] #m-screen, html[data-style="saiyan"] #ring-screen { --ic: var(--k-screen); }
+html[data-style="saiyan"] .mic-blue, html[data-style="saiyan"] #m-blue, html[data-style="saiyan"] #ring-blue { --ic: var(--k-blue); }
+html[data-style="saiyan"] .mic-reco, html[data-style="saiyan"] #m-reco, html[data-style="saiyan"] #ring-reco { --ic: var(--k-reco); }
+html[data-style="saiyan"] .mic-nutri, html[data-style="saiyan"] #m-nutri, html[data-style="saiyan"] #ring-nutri { --ic: var(--k-nutri); }
+html[data-style="saiyan"] .mic-body, html[data-style="saiyan"] #m-body, html[data-style="saiyan"] #ring-body { --ic: var(--k-body); }
+html[data-style="saiyan"] .mic-sport, html[data-style="saiyan"] #m-sport, html[data-style="saiyan"] #ring-sport { --ic: var(--k-sport); }
+html[data-style="saiyan"] .card.fold > .bar > i { background: var(--ic); }
+html[data-style="saiyan"] .card.fold > .bar.bad > i { background: var(--bad); }
+html[data-style="saiyan"] .card.fold > .bar.good > i { background: linear-gradient(90deg, var(--ic), var(--good)); }
+html[data-style="saiyan"] .card.fold:not(.shut) { border-color: color-mix(in srgb, var(--ic) 28%, var(--line)); background: linear-gradient(160deg, color-mix(in srgb, var(--ic) 9%, var(--surface)) 0%, var(--surface) 55%); }
+html[data-style="saiyan"] .ring .fg { stroke: var(--ic); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ic) 55%, transparent)); }
+html[data-style="saiyan"] .ring.bad .fg { stroke: var(--bad); filter: none; }
+html[data-style="saiyan"] .ring span { color: color-mix(in srgb, var(--ic) 75%, var(--muted)); }
+html[data-style="saiyan"] .ring.good span { color: var(--ic); font-weight: 600; }
+html[data-style="saiyan"] .score { background: linear-gradient(150deg, #24170E 0%, #161F27 60%); border-color: rgba(255,138,61,.35); box-shadow: 0 8px 30px -12px rgba(255,138,61,.45); }
+html[data-style="saiyan"] .score-num { background: linear-gradient(90deg, #FFB347, #FF6A2B); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 40px; }
+html[data-style="saiyan"] .card.fold.shut.done { background: linear-gradient(90deg, color-mix(in srgb, var(--ic) 22%, #12261C), #15382A); }
+html[data-style="saiyan"] .card.fold.shut.done .m-head h2::before { content: none; }
+html[data-style="saiyan"] .card.fold.shut.done .mic { background: var(--good); }
+html[data-style="saiyan"] .card.fold .quick button { background: color-mix(in srgb, var(--ic) 16%, var(--surface)); color: color-mix(in srgb, var(--ic) 85%, #fff); border-color: transparent; }
+html[data-style="saiyan"] .card.fold.shut.done .mic svg { stroke: #0E151B; }
+html[data-style="saiyan"] .planned button, html[data-style="saiyan"] .seg button[aria-pressed="true"] { background: linear-gradient(135deg, #FFB347, #FF6A2B); color: #1A0F08; }
+html[data-style="saiyan"] .today-btn { background: rgba(255,138,61,.08); }
+html[data-style="saiyan"] #nav-title { background: linear-gradient(90deg, #FFFFFF, #FFD2B0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+html[data-style="saiyan"] .seg-tabs button[aria-selected="true"] .tab-ic { filter: drop-shadow(0 0 6px rgba(255,138,61,.7)); }
+
+/* ===== Saiyan Ardoise : même style, tons plus clairs ===== */
+html[data-style="saiyan"][data-tone="ardoise"] {
+  --bg: #2F3B48; --surface: #3B4856; --surface-2: #475565; --ink: #F4F7FA; --muted: #C3CDD8; --line: #536274;
+  --accent-bg: #5C3D28; --accent-text: #FFB27A; --good-bg: #2F5745; --bad-bg: #5E3442; --good: #6FE0A2; --bad: #FF8A9C;
+}
+html[data-style="saiyan"][data-tone="ardoise"] .seg-tabs { background: rgba(47,59,72,.95); }
+html[data-style="saiyan"][data-tone="ardoise"] .score { background: linear-gradient(150deg, #5A3E2C 0%, #3B4856 62%); }
+html[data-style="saiyan"][data-tone="ardoise"] .card.fold.shut.done { background: linear-gradient(90deg, color-mix(in srgb, var(--ic) 22%, #2F5745), #2F5745); }
+html[data-style="saiyan"][data-tone="ardoise"] .card.fold.shut.done .mic svg { stroke: #2F3B48; }
+html[data-style="saiyan"][data-tone="ardoise"] .wgrid .c.good { background: #3E9A6C; }
+html[data-style="saiyan"][data-tone="ardoise"] .wgrid .c.bad { background: #A84558; }
+html[data-style="saiyan"][data-tone="ardoise"] .wgrid .c.sp { background: #6A4329; }
+html[data-style="saiyan"][data-tone="ardoise"] body { background: radial-gradient(900px 340px at 50% -120px, rgba(255,154,82,.25), transparent 70%), radial-gradient(700px 300px at 110% 30%, rgba(63,182,255,.08), transparent 70%), var(--bg); background-attachment: fixed; }
+
+/* ===== Saiyan Couleurs : fond sombre, chaque bloc a sa couleur ===== */
+html[data-style="saiyan"][data-tone="vif"] .card.card.card { --ic: #8A9BB0; background: linear-gradient(155deg, color-mix(in srgb, var(--ic) 34%, #0E151B) 0%, color-mix(in srgb, var(--ic) 16%, #0E151B) 100%); border-color: color-mix(in srgb, var(--ic) 50%, transparent); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card .goal, html[data-style="saiyan"][data-tone="vif"] .card.card.card .note { color: color-mix(in srgb, var(--ic) 25%, #C9D3DC); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card .bar, html[data-style="saiyan"][data-tone="vif"] .card.card.card .meal, html[data-style="saiyan"][data-tone="vif"] .card.card.card .tile, html[data-style="saiyan"][data-tone="vif"] .card.card.card .s-block, html[data-style="saiyan"][data-tone="vif"] .card.card.card .exo { background: rgba(0,0,0,.22); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card .wgrid .c:not(.good):not(.bad):not(.sp) { background: rgba(0,0,0,.25); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card.fold.shut.done { background: linear-gradient(90deg, color-mix(in srgb, var(--ic) 30%, #15382A), #15382A); border-color: transparent; }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card.score { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card input::placeholder { color: rgba(255,255,255,.38); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card .quick button { background: rgba(255,255,255,.10); color: #fff; }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card .field { border-bottom-color: rgba(255,255,255,.22); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card .bar { background: rgba(0,0,0,.3); }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card.warn { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="vif"] #settings.card.card.card, html[data-style="saiyan"][data-tone="vif"] #backup.card.card.card { --ic: #6B7A8C; }
+html[data-style="saiyan"][data-tone="vif"] .card.card.card.next-race { background: var(--accent); }
+html[data-style="saiyan"][data-tone="vif"] #fd-reco.card.card.card { --ic: #FF6B8B; }
+html[data-style="saiyan"][data-tone="vif"] #fd-nutri.card.card.card { --ic: #FFB347; }
+html[data-style="saiyan"][data-tone="vif"] #fd-body.card.card.card { --ic: #4FD1C0; }
+html[data-style="saiyan"][data-tone="vif"] #fd-sport.card.card.card { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="vif"] #fd-plan.card.card.card { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="vif"] #fd-grid.card.card.card { --ic: #3FB6FF; }
+html[data-style="saiyan"][data-tone="vif"] #fd-greens.card.card.card { --ic: #5BD893; }
+html[data-style="saiyan"][data-tone="vif"] #fd-mealsw.card.card.card { --ic: #FFB347; }
+html[data-style="saiyan"][data-tone="vif"] #fd-tiles.card.card.card { --ic: #A08CFF; }
+html[data-style="saiyan"][data-tone="vif"] #fd-load.card.card.card { --ic: #FF6B8B; }
+html[data-style="saiyan"][data-tone="vif"] #fd-energy.card.card.card { --ic: #FFC64A; }
+html[data-style="saiyan"][data-tone="vif"] #fd-sportw.card.card.card { --ic: #FF8A3D; }
+html[data-style="saiyan"][data-tone="vif"] #fd-bilan.card.card.card { --ic: #7FA7D9; }
+html[data-style="saiyan"][data-tone="vif"] #fd-objs.card.card.card { --ic: #A08CFF; }
+html[data-style="saiyan"][data-tone="vif"] #fd-races.card.card.card { --ic: #FF5A5A; }
+html[data-style="saiyan"][data-tone="vif"] #fd-results.card.card.card { --ic: #FFC64A; }
+html[data-style="saiyan"][data-tone="vif"] #fd-energyp.card.card.card { --ic: #FFC64A; }
+html[data-style="saiyan"][data-tone="vif"] #fd-histb.card.card.card { --ic: #4FD1C0; }
+html[data-style="saiyan"][data-tone="vif"] #fd-histm.card.card.card { --ic: #A08CFF; }
+html[data-style="saiyan"][data-tone="vif"] #fd-tiles2.card.card.card { --ic: #A08CFF; }
+html[data-style="saiyan"][data-tone="vif"] #m-kcal.card.card.card { --ic: var(--k-kcal); }
+html[data-style="saiyan"][data-tone="vif"] #m-water.card.card.card { --ic: var(--k-water); }
+html[data-style="saiyan"][data-tone="vif"] #m-sleep.card.card.card { --ic: var(--k-sleep); }
+html[data-style="saiyan"][data-tone="vif"] #m-screen.card.card.card { --ic: var(--k-screen); }
+html[data-style="saiyan"][data-tone="vif"] #m-blue.card.card.card { --ic: var(--k-blue); }
+
+/* ===== Crème & Marine (inspiré de la liste de courses) ===== */
+html[data-style="saiyan"][data-tone="marine"] { --bg: #F4F0EA; --surface: #FFFFFF; --surface-2: #F1EBE2; --ink: #1A1B2E; --muted: #8A8275; --line: #E7DFD3;
+  --accent: #C8862A; --accent-text: #A86E1C; --accent-bg: #F6E9D6; --accent-ink: #1A1B2E; --good: #2E7D4F; --good-bg: #E2F1E7; --bad: #B23A3A; --bad-bg: #F9E2E2;
+  --k-kcal: #C4622D; --k-water: #2F6F8F; --k-sleep: #4B4F9C; --k-screen: #B8892B; --k-blue: #5C8A5A; --k-reco: #6E8F6A; --k-nutri: #B8892B; --k-body: #6E8F6A; --k-sport: #C4622D;
+  --font-display: 'Bebas Neue', 'Oswald', system-ui, sans-serif; --font-body: 'DM Sans', system-ui, -apple-system, sans-serif; color-scheme: light; }
+html[data-style="saiyan"][data-tone="marine"] body { background: var(--bg); }
+html[data-style="saiyan"][data-tone="marine"] header { position: relative; padding-bottom: 14px; margin-bottom: 4px; }
+html[data-style="saiyan"][data-tone="marine"] header::before { content: ''; position: absolute; left: calc(50% - 50vw); right: calc(50% - 50vw); top: calc(-18px - env(safe-area-inset-top, 0px)); bottom: 0; background: #1A1B2E; z-index: -1; }
+html[data-style="saiyan"][data-tone="marine"] header .icon-btn { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); color: #E9DCC4; }
+html[data-style="saiyan"][data-tone="marine"] #nav-title { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #EAD9BC; font: 400 32px/1.05 var(--font-display); letter-spacing: .06em; text-transform: uppercase; }
+html[data-style="saiyan"][data-tone="marine"] .eyebrow { color: #C8862A; letter-spacing: .14em; }
+html[data-style="saiyan"][data-tone="marine"] .today-btn { background: #1A1B2E; color: #EAD9BC; border-color: #1A1B2E; font: 400 16px var(--font-display); letter-spacing: .08em; }
+html[data-style="saiyan"][data-tone="marine"] .card { background: #fff; border: 0; border-left: 5px solid var(--ic, var(--line)); border-radius: 16px; box-shadow: 0 1px 2px rgba(26,27,46,.05), 0 6px 18px -10px rgba(26,27,46,.18); }
+html[data-style="saiyan"][data-tone="marine"] .card.fold:not(.shut) { background: #fff; border-color: transparent; border-left: 5px solid var(--ic); }
+html[data-style="saiyan"][data-tone="marine"] .card.fold.shut.done { background: var(--good-bg); border-left: 5px solid var(--good); }
+html[data-style="saiyan"][data-tone="marine"] .card.fold.shut.done .m-head h2, html[data-style="saiyan"][data-tone="marine"] .card.fold.shut.done .pill { color: var(--good); }
+html[data-style="saiyan"][data-tone="marine"] .card.fold.shut.done .mic svg { stroke: #fff; }
+html[data-style="saiyan"][data-tone="marine"] .m-head h2, html[data-style="saiyan"][data-tone="marine"] .m-head h3 { font: 700 16.5px/1.2 var(--font-body); color: var(--ink); }
+html[data-style="saiyan"][data-tone="marine"] .card > .m-head ~ .m-head h3, html[data-style="saiyan"][data-tone="marine"] .sub { font: 400 15px/1.2 var(--font-display); letter-spacing: .14em; color: #8A8275; text-transform: uppercase; }
+html[data-style="saiyan"][data-tone="marine"] .pill { background: #F3ECE1; color: #A9906B; }
+html[data-style="saiyan"][data-tone="marine"] .pill.good { background: var(--good-bg); color: var(--good); }
+html[data-style="saiyan"][data-tone="marine"] .pill.bad { background: var(--bad-bg); color: var(--bad); }
+html[data-style="saiyan"][data-tone="marine"] .score { background: #1A1B2E; color: #EAD9BC; border-left: 5px solid #C8862A; box-shadow: 0 10px 24px -14px rgba(26,27,46,.6); }
+html[data-style="saiyan"][data-tone="marine"] .score-num { background: none; color: #E0A04A; -webkit-background-clip: border-box; background-clip: border-box; font: 400 48px/1 var(--font-display); letter-spacing: .04em; }
+html[data-style="saiyan"][data-tone="marine"] .score-lbl { color: #CFC3AE; }
+html[data-style="saiyan"][data-tone="marine"] .ring .bg { stroke: rgba(255,255,255,.12); }
+html[data-style="saiyan"][data-tone="marine"] .ring span { color: #CFC3AE; }
+html[data-style="saiyan"][data-tone="marine"] .ring.good span { color: #fff; }
+html[data-style="saiyan"][data-tone="marine"] .seg-tabs { background: #1A1B2E; border-top: 0; }
+html[data-style="saiyan"][data-tone="marine"] .seg-tabs button { color: #8E8FA8; font: 400 14px var(--font-display); letter-spacing: .1em; text-transform: uppercase; }
+html[data-style="saiyan"][data-tone="marine"] .seg-tabs button[aria-selected="true"] { color: #E0A04A; box-shadow: inset 0 3px 0 #C8862A; }
+html[data-style="saiyan"][data-tone="marine"] .planned button, html[data-style="saiyan"][data-tone="marine"] .seg button[aria-pressed="true"] { background: #1A1B2E; color: #EAD9BC; }
+html[data-style="saiyan"][data-tone="marine"] .planned { background: #FBF5EC; }
+html[data-style="saiyan"][data-tone="marine"] .card.fold .quick button { background: #F6EFE5; color: var(--ink); }
+html[data-style="saiyan"][data-tone="marine"] .meal, html[data-style="saiyan"][data-tone="marine"] .tile { background: #FAF6F0; }
+html[data-style="saiyan"][data-tone="marine"] .field { border-bottom-color: #E0D6C7; }
+html[data-style="saiyan"][data-tone="marine"] .warn { background: #FBF0E1; border-left: 5px solid #C8862A; }
+html[data-style="saiyan"][data-tone="marine"] .wgrid .c { background: #F1EBE2; color: #A9906B; }
+html[data-style="saiyan"][data-tone="marine"] .wgrid .c.good { background: #3F8F5F; color: #fff; }
+html[data-style="saiyan"][data-tone="marine"] .wgrid .c.bad { background: #C0504E; color: #fff; }
+html[data-style="saiyan"][data-tone="marine"] .wgrid .c.sp { background: #F6E1C2; color: #A86E1C; }
+html[data-style="saiyan"][data-tone="marine"] #settings, html[data-style="saiyan"][data-tone="marine"] #backup { --ic: #B9AE9E; }
+html[data-style="saiyan"][data-tone="marine"] .next-race { background: #1A1B2E; color: #EAD9BC; border-left: 5px solid #C8862A; }
+html[data-style="saiyan"][data-tone="marine"] .next-race .big, html[data-style="saiyan"][data-tone="marine"] .countdown b { font-family: var(--font-display); color: #E0A04A; letter-spacing: .04em; }
+html[data-style="saiyan"][data-tone="marine"] #fd-reco { --ic: #6E8F6A; }
+html[data-style="saiyan"][data-tone="marine"] #fd-nutri { --ic: #B8892B; }
+html[data-style="saiyan"][data-tone="marine"] #fd-body { --ic: #6E8F6A; }
+html[data-style="saiyan"][data-tone="marine"] #fd-sport { --ic: #C4622D; }
+html[data-style="saiyan"][data-tone="marine"] #fd-plan { --ic: #C4622D; }
+html[data-style="saiyan"][data-tone="marine"] #fd-grid { --ic: #2E3A5C; }
+html[data-style="saiyan"][data-tone="marine"] #fd-greens { --ic: #2E3A5C; }
+html[data-style="saiyan"][data-tone="marine"] #fd-mealsw { --ic: #B8892B; }
+html[data-style="saiyan"][data-tone="marine"] #fd-tiles { --ic: #2E3A5C; }
+html[data-style="saiyan"][data-tone="marine"] #fd-load { --ic: #C4622D; }
+html[data-style="saiyan"][data-tone="marine"] #fd-energy { --ic: #B8892B; }
+html[data-style="saiyan"][data-tone="marine"] #fd-sportw { --ic: #C4622D; }
+html[data-style="saiyan"][data-tone="marine"] #fd-bilan { --ic: #2E3A5C; }
+html[data-style="saiyan"][data-tone="marine"] #fd-objs { --ic: #2E3A5C; }
+html[data-style="saiyan"][data-tone="marine"] #fd-races { --ic: #C4622D; }
+html[data-style="saiyan"][data-tone="marine"] #fd-results { --ic: #C4622D; }
+html[data-style="saiyan"][data-tone="marine"] #fd-energyp { --ic: #B8892B; }
+html[data-style="saiyan"][data-tone="marine"] #fd-histb { --ic: #6E8F6A; }
+html[data-style="saiyan"][data-tone="marine"] #fd-histm { --ic: #C4622D; }
+.seg.style-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; border: 0; background: none; padding: 0; }
+.seg.style-seg button { border: 1px solid var(--line); border-radius: 10px; min-height: 42px; }
+/* Crème : blocs teintés de leur couleur */
+html[data-style="saiyan"][data-tone="marine"], html[data-style="saiyan"][data-tone="marine"] body { overflow-x: clip; }
+html[data-style="saiyan"][data-tone="marine"] .card { background: linear-gradient(160deg, color-mix(in srgb, var(--ic, #C8B9A3) 15%, #fff) 0%, color-mix(in srgb, var(--ic, #C8B9A3) 5%, #fff) 100%); }
+html[data-style="saiyan"][data-tone="marine"] .card.fold:not(.shut) { background: linear-gradient(160deg, color-mix(in srgb, var(--ic) 15%, #fff) 0%, color-mix(in srgb, var(--ic) 5%, #fff) 100%); }
+html[data-style="saiyan"][data-tone="marine"] .card .meal, html[data-style="saiyan"][data-tone="marine"] .card .tile, html[data-style="saiyan"][data-tone="marine"] .card.fold .quick button, html[data-style="saiyan"][data-tone="marine"] .card .s-block, html[data-style="saiyan"][data-tone="marine"] .card .exo { background: rgba(255,255,255,.7); }
+html[data-style="saiyan"][data-tone="marine"] .card .pill:not(.good):not(.bad) { background: rgba(255,255,255,.75); }
+html[data-style="saiyan"][data-tone="marine"] .card .bar { background: rgba(26,27,46,.08); }
+html[data-style="saiyan"][data-tone="marine"] .card .mic { background: rgba(255,255,255,.8); }
+html[data-style="saiyan"][data-tone="marine"] .card .wgrid .c:not(.good):not(.bad):not(.sp) { background: rgba(255,255,255,.75); }
+html[data-style="saiyan"][data-tone="marine"] #settings.card, html[data-style="saiyan"][data-tone="marine"] #backup.card { background: #fff; }
+html[data-style="saiyan"][data-tone="marine"] .card.score, html[data-style="saiyan"][data-tone="marine"] .card.next-race { background: #1A1B2E; }
+html[data-style="saiyan"][data-tone="marine"] .card.warn { background: #FBF0E1; }
 /* ----- Système d'en-têtes uniforme ----- */
 .card > .m-head ~ .m-head h3 { font: 700 12px/1.3 var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .card > .m-head ~ .m-head { border-top: 1px solid var(--line); padding-top: 12px; }
@@ -359,13 +526,12 @@ html[data-style="saiyan"] .card.fold.shut .goal { display: none; }
 html[data-style="saiyan"] .card.fold.shut .m-head::after { transform: rotate(-135deg); margin: -4px 2px 0 4px; }
 html[data-style="saiyan"] .card.fold.shut.done { background: var(--good-bg); border-color: transparent; }
 html[data-style="saiyan"] .card.fold.shut.done .m-head h2 { color: var(--good); }
-html[data-style="saiyan"] .card.fold.shut.done .m-head h2::before { content: '✓  '; }
 html[data-style="saiyan"] .card.fold.shut.done .pill { background: transparent; padding: 0; }
 html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: var(--good); }
 .wgrid { display: grid; grid-template-columns: 58px repeat(7, 1fr); gap: 4px; font-variant-numeric: tabular-nums; }
 .wgrid .h { font-size: 11px; color: var(--muted); text-align: center; padding: 2px 0; background: none; border: 0; }
 .wgrid .h.today { color: var(--accent); font-weight: 700; }
-.wgrid .lbl { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; }
+.wgrid .lbl { font-size: 11.5px; color: color-mix(in srgb, var(--ic, var(--muted)) 80%, var(--muted)); font-weight: 600; display: flex; align-items: center; }
 .wgrid .c { border-radius: 7px; min-height: 34px; display: grid; place-items: center; font-size: 10.5px; font-weight: 600; background: var(--surface-2); color: var(--muted); border: 0; padding: 0; }
 .wgrid .c.good { background: #2E7D57; color: #E9FFF3; }
 .wgrid .c.bad { background: #8A2E3E; color: #FFE9ED; }
@@ -638,7 +804,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       coffee: Math.round(inRange(o.coffee, 0, 10, 3)),
       health: o.health === true,
       hide: (function () { var h = {}; if (o.hide && typeof o.hide === 'object') SECTIONS.forEach(function (x) { if (o.hide[x[0]] === true) h[x[0]] = true; }); return h; })(),
-      style: o.style === 'saiyan' ? 'saiyan' : 'classic',
+      style: ['saiyan', 'ardoise', 'vif', 'marine'].indexOf(o.style) >= 0 ? o.style : 'classic',
       objectives: Array.isArray(o.objectives) ? o.objectives.filter(function (x) { return x && x.name && /^\d{4}-\d{2}-\d{2}$/.test(x.start); }).map(function (x) { return { id: String(x.id || uid('ob')), name: String(x.name).slice(0, 60), start: x.start, end: /^\d{4}-\d{2}-\d{2}$/.test(x.end || '') ? x.end : '', main: x.main === true, notes: String(x.notes || '').slice(0, 200) }; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; }) : [],
       shoes: Array.isArray(o.shoes) ? o.shoes.filter(function (x) { return x && x.name; }).map(function (x) { return { id: String(x.id || uid('sh')), name: String(x.name).slice(0, 40), start: num(x.start) || 0, limit: num(x.limit) || 700, retired: !!x.retired }; }) : []
     };
@@ -648,10 +814,12 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   /* Rend une carte repliable avec la flèche, comme les objectifs (état mémorisé). */
   function fold(key, html) {
     if (!html || html.indexOf('<section class="card') !== 0) return html;
-    return html.replace('<section class="card', '<section id="fd-' + key + '" class="card sec' + (foldState[key] ? ' shut' : '')).replace('<div class="m-head"', '<div class="m-head fh"');
+    var out = html.replace('<section class="card', '<section id="fd-' + key + '" class="card sec' + (foldState[key] ? ' shut' : '')).replace('<div class="m-head"', '<div class="m-head fh"');
+    if (ICO[key]) out = out.replace(/(<div class="m-head fh">(?:<div>)?<h[23][^>]*>)/, '$1' + ico(key));
+    return out;
   }
   function shown(k) { return !(settings.hide && settings.hide[k]); }
-  function applyStyle() { document.documentElement.setAttribute('data-style', settings.style); var m = document.querySelectorAll('meta[name="theme-color"]'); for (var i = 0; i < m.length; i++) { if (settings.style === 'saiyan') { m[i].dataset.c = m[i].dataset.c || m[i].content; m[i].content = '#0E151B'; } else if (m[i].dataset.c) m[i].content = m[i].dataset.c; } }
+  function applyStyle() { document.documentElement.setAttribute('data-style', settings.style === 'classic' ? 'classic' : 'saiyan'); if (settings.style === 'ardoise' || settings.style === 'vif' || settings.style === 'marine') document.documentElement.setAttribute('data-tone', settings.style); else document.documentElement.removeAttribute('data-tone'); var m = document.querySelectorAll('meta[name="theme-color"]'); for (var i = 0; i < m.length; i++) { if (settings.style !== 'classic') { m[i].dataset.c = m[i].dataset.c || m[i].content; m[i].content = settings.style === 'ardoise' ? '#33404D' : settings.style === 'marine' ? '#1A1B2E' : '#0E151B'; } else if (m[i].dataset.c) m[i].content = m[i].dataset.c; } }
   function applyGoals() { applyStyle(); ['kcal', 'water', 'sleep', 'screen', 'coffee'].forEach(function (k) { GOALS[k] = settings[k]; }); }
   applyGoals();
   function saveGoals() {
@@ -917,9 +1085,11 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
 
   /* ---------- vue Jour ---------- */
   function val(v) { return v == null ? '' : v; }
+  var ICO = {kcal: '<path d="M12 3c1 3 4 4.5 4 8.5A4 4 0 0 1 8 11.5c0-1.6.8-2.6 1.6-3.4C10 10 11 10.5 12 10c-.6-2.4-.4-4.7 0-7z"/><path d="M8.5 15.5A3.5 3.5 0 0 0 15.5 15.5"/>', water: '<path d="M12 3.5s6 6.6 6 10.5a6 6 0 0 1-12 0c0-3.9 6-10.5 6-10.5z"/>', sleep: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', screen: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>', blue: '<circle cx="7" cy="8" r="1.6"/><circle cx="12" cy="5.8" r="1.6"/><circle cx="17" cy="8" r="1.6"/><path d="M12 11.5c-3 0-5 3.5-5 5.5 0 1.6 1.4 2.5 2.8 2 1-.3 1.4-.6 2.2-.6s1.2.3 2.2.6c1.4.5 2.8-.4 2.8-2 0-2-2-5.5-5-5.5z"/>', reco: '<path d="M3 12h4l2-5 4 10 2-5h6"/>', nutri: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M16 3c-1.7 0-3 2.4-3 5.5S14 13 16 13v8"/>', body: '<rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8.5 9.5a5 5 0 0 1 7 0L12 12.5z"/>', sport: '<path d="M13 2L5 13.5h6L10 22l8-11.5h-6z"/>'};
+  function ico(k) { return ICO[k] ? '<span class="mic mic-' + k + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + ICO[k] + '</svg></span>' : ''; }
   function metric(key, title, goal, body, extra) {
     return '<section class="card" id="m-' + key + '">' +
-      '<div class="m-head"><div><h2>' + title + '</h2><span class="goal">' + goal + '</span></div><span class="pill" id="st-' + key + '"></span></div>' +
+      '<div class="m-head"><div><h2>' + ico(key) + title + '</h2><span class="goal">' + goal + '</span></div><span class="pill" id="st-' + key + '"></span></div>' +
       '<div class="m-row">' + body + '</div>' + (extra || '') +
       '<div class="bar" id="bar-' + key + '"><i></i></div></section>';
   }
@@ -1509,8 +1679,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         '<td class="' + (e.blue.s === 'idle' ? '' : e.blue.s) + '" aria-label="' + e.blue.t + '">' + (d.blue ? '✓' : '–') + '</td>' +
         '<td>' + sp + '</td></tr>';
     }).join('');
-    html = (shown('plan') ? fold('plan', planCard()) : '') + (settings.style === 'saiyan' && shown('grid') ? fold('grid', weekGrid(dates)) : '') + (shown('greens') ? fold('greens', greensCard()) : '') + (shown('mealsw') ? fold('mealsw', mealsWeekCard()) : '') + html;
-    if (settings.style !== 'saiyan' && shown('grid')) html += '<section class="card"><div class="m-head"><h3>Jour par jour</h3></div><div class="table-wrap"><table>' +
+    html = (shown('plan') ? fold('plan', planCard()) : '') + (settings.style !== 'classic' && shown('grid') ? fold('grid', weekGrid(dates)) : '') + (shown('greens') ? fold('greens', greensCard()) : '') + (shown('mealsw') ? fold('mealsw', mealsWeekCard()) : '') + html;
+    if (settings.style === 'classic' && shown('grid')) html += '<section class="card"><div class="m-head"><h3>Jour par jour</h3></div><div class="table-wrap"><table>' +
       '<thead><tr><th scope="col" style="text-align:left">Jour</th><th scope="col">Kcal</th><th scope="col">Eau L</th><th scope="col">Som.</th><th scope="col">Écran</th><th scope="col">Blue</th><th scope="col">Sport</th></tr></thead>' +
       '<tbody><tr class="goals"><td></td><td>≤ ' + fmtN(GOALS.kcal) + '</td><td>≥ ' + fmtD(GOALS.water, 2) + '</td><td>≥ ' + fmtDurC(GOALS.sleep) + '</td><td>≤ ' + fmtDurC(GOALS.screen) + '</td><td></td><td></td></tr>' + body + '</tbody></table></div></section>';
     if (shown('bilan')) html += '<section id="fd-bilan" class="card sec' + (foldState.bilan ? ' shut' : '') + '"><div class="m-head fh"><h3>Bilan de la semaine</h3><button class="today-btn" style="min-height:38px" data-action="copy-bilan">Copier</button></div><pre class="bilan" id="bilan">' + esc(bilanText()) + '</pre><p class="note" id="bilan-msg" role="status"></p></section>';
@@ -1529,7 +1699,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       return d.blue ? '✓' : '';
     }
     rows.forEach(function (r) {
-      h += '<div class="lbl">' + r[1] + '</div>' + ev.map(function (x, i) {
+      h += '<div class="lbl" style="--ic:var(--k-' + r[0] + ')">' + r[1] + '</div>' + ev.map(function (x, i) {
         var s = x.e[r[0]].s, cls = s === 'good' ? 'good' : s === 'bad' ? 'bad' : dates[i] > today ? 'fut' : '';
         return '<button class="c ' + cls + '" data-action="goto" data-date="' + dates[i] + '" aria-label="' + r[1] + ' ' + dates[i] + ' : ' + x.e[r[0]].t + '">' + txt(r[0], x.d) + '</button>';
       }).join('');
@@ -2402,7 +2572,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       try { localStorage.setItem(LS_FOLD, JSON.stringify(foldState)); } catch (x) {}
       return;
     }
-    var fc = settings.style === 'saiyan' && e.target.closest('.card.fold');
+    var fc = settings.style !== 'classic' && e.target.closest('.card.fold');
     if (fc && fc.id && fc.id.indexOf('m-') === 0 && (fc.classList.contains('shut') || (!e.target.closest('input,button,select,label') && e.target.closest('.card.fold > .m-head')))) {
       var shut = !fc.classList.contains('shut'); fc.classList.toggle('shut', shut); openCards[cur + fc.id.slice(2)] = shut ? 'shut' : 'open'; return;
     }
@@ -2487,7 +2657,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       touch(cur); render(); refreshDay();
     }
     else if (a === 'toggle-sec') { settings.hide = settings.hide || {}; if (settings.hide[b.dataset.k]) delete settings.hide[b.dataset.k]; else settings.hide[b.dataset.k] = true; saveGoals(); renderSettings(); render(); }
-    else if (a === 'set-style') { settings.style = b.dataset.v === 'saiyan' ? 'saiyan' : 'classic'; saveGoals(); renderSettings(); render(); }
+    else if (a === 'set-style') { settings.style = ['saiyan', 'ardoise', 'vif', 'marine'].indexOf(b.dataset.v) >= 0 ? b.dataset.v : 'classic'; saveGoals(); renderSettings(); render(); }
     else if (a === 'rest-dur') { settings.rest = +b.dataset.v; saveGoals(); renderSettings(); }
     else if (a === 'meal') {
       d = get(cur); d.cheats = d.cheats || []; var mi = +b.dataset.i, k = d.meals.indexOf(mi), kc = d.cheats.indexOf(mi);
@@ -2755,7 +2925,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     el.classList.add('sec'); el.dataset.fk = 'settings'; el.classList.toggle('shut', foldState.settings !== 0);
     el.innerHTML = '<div class="m-head fh"><div><h2>Réglages</h2><span class="goal">Style, objectifs, sections, chaussures…</span></div></div>' +
       '<div class="m-head"><div><h3>Style</h3><span class="goal">Change seulement l\'apparence, tes données ne bougent pas</span></div></div>' +
-      '<div class="seg" role="group" aria-label="Style"><button data-action="set-style" data-v="classic" aria-pressed="' + (settings.style === 'classic') + '">Classique</button><button data-action="set-style" data-v="saiyan" aria-pressed="' + (settings.style === 'saiyan') + '">Sombre Saiyan</button></div>' +
+      '<div class="seg style-seg" role="group" aria-label="Style"><button data-action="set-style" data-v="classic" aria-pressed="' + (settings.style === 'classic') + '">Classique</button><button data-action="set-style" data-v="saiyan" aria-pressed="' + (settings.style === 'saiyan') + '">Sombre</button><button data-action="set-style" data-v="ardoise" aria-pressed="' + (settings.style === 'ardoise') + '">Ardoise</button><button data-action="set-style" data-v="vif" aria-pressed="' + (settings.style === 'vif') + '">Couleurs</button><button data-action="set-style" data-v="marine" aria-pressed="' + (settings.style === 'marine') + '">Crème</button></div>' +
       '<div style="border-top:1px solid var(--line);margin:4px 0 0"></div>' +
       '<div class="m-head"><div><h3>Objectifs du jour</h3><span class="goal">Ils servent au score sur 5 et aux pastilles</span></div></div>' +
       gRow('kcal', 'Calories max', 'kcal', settings.kcal, 10) +

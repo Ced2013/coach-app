@@ -1187,13 +1187,19 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     return null;
   }
+  /* Dernière séance du même type avec des séries notées : d'abord avant ce jour, sinon n'importe quel autre jour (saisie dans le désordre), sinon même famille. */
   function lastSessionOfType(type, before) {
-    var keys = Object.keys(days).filter(function (k) { return k < before; }).sort().reverse();
-    for (var i = 0; i < keys.length; i++) {
-      var ss = days[keys[i]].sports;
-      for (var j = 0; j < ss.length; j++) if (ss[j].type === type && ss[j].exos.length) return { date: keys[i], s: ss[j] };
+    var all = Object.keys(days).filter(function (k) { return k !== before; }).sort().reverse();
+    var prev = all.filter(function (k) { return k < before; }), other = all.filter(function (k) { return k > before; });
+    function find(keys, ok) {
+      for (var i = 0; i < keys.length; i++) {
+        var ss = days[keys[i]].sports || [];
+        for (var j = 0; j < ss.length; j++) if (ok(ss[j]) && ss[j].exos.some(function (e) { return e.sets.some(setDone); })) return { date: keys[i], s: ss[j] };
+      }
+      return null;
     }
-    return null;
+    var fam = sportDef(type).fam, same = function (x) { return x.type === type; }, fm = function (x) { return sportDef(x.type).fam === fam; };
+    return find(prev, same) || find(other, same) || find(prev, fm) || find(other, fm);
   }
   /* ---------- zones cardio ---------- */
   function zoneOf(hr) {
@@ -1434,7 +1440,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var bt = blocksTotal(s.blocks);
       html += '<div class="tip"><b style="color:var(--fam)">Séance prévue</b> · ' + fmtSecDur(bt.sec) + (bt.km ? ' · ≈ ' + fmtD(bt.km, 1) + ' km' : '') + blockLines(s.blocks).map(function (l) { return '<span style="display:block">• ' + esc(l) + '</span>'; }).join('') + '</div>';
     }
-    if ((def.fam === 'muscu' || def.fam === 'mob') && !s.exos.length) {
+    if ((def.fam === 'muscu' || def.fam === 'mob') && !s.exos.some(function (e) { return e.sets.some(setDone); })) {
       var tpl = lastSessionOfType(s.type, cur);
       if (tpl) html += '<button class="tpl" data-action="use-tpl" data-sid="' + s.id + '">↻ Copier ma dernière séance (' + dm(tpl.date) + ')<small>' + tpl.s.exos.map(function (e) { return esc(e.move); }).join(' · ') + '</small></button>';
     }
@@ -2975,6 +2981,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       s = findSport(get(cur), b.dataset.sid);
       var tp = s && lastSessionOfType(s.type, cur);
       if (!tp) return;
+      s.exos = [];
       tp.s.exos.forEach(function (x) {
         /* Copie la séance avec ses valeurs (charges, reps, temps) : il ne reste qu'à ajuster. */
         var done0 = x.sets.filter(setDone), sets = done0.length ? done0.map(function (q) { var o = { w: q.w, r: q.r }; if (q.t) o.t = q.t; return o; }) : [{ w: null, r: null }];

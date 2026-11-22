@@ -1242,7 +1242,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function plannedFor(date) { var d = days[date]; return d ? d.plan : []; }
   function planItemStatus(date, pl) {
     var d = days[date], fam = sportDef(pl.type).fam;
-    if (fam === 'off') return { s: 'off', t: sportDef(pl.type).label };
+    if (fam === 'off') return { s: 'off', t: pl.type !== 'malade' && date <= todayStr() ? 'Fait ✓' : sportDef(pl.type).label, ok: pl.type !== 'malade' && date <= todayStr() };
     var sickDay = d && (d.plan || []).some(function (q) { return q.type === 'malade'; });
     var done = d && d.sports.some(function (x) { return x.type === pl.type || sportDef(x.type).fam === fam; });
     if (done) return { s: 'good', t: 'Fait' };
@@ -1613,7 +1613,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         var st = planItemStatus(ds, pl);
         if (st.s !== 'off') { total++; if (st.s === 'good') done++; }
         return '<div class="pi ' + sportDef(pl.type).fam + '"><button class="pi-main" data-action="plan-edit" data-date="' + ds + '" data-pid="' + pl.id + '"><span>' + sportDef(pl.type).label + (pl.min ? ' · ' + fmtDur(pl.min) : '') + (pl.km ? ' · ' + fmtD(pl.km, 1) + ' km' : '') + '</span>' + (pl.note ? '<small>' + esc(pl.note) + '</small>' : '') + planDetailLines(pl).map(function (l) { return '<small>• ' + esc(l) + '</small>'; }).join('') + '</button>' +
-          '<span class="ps ' + (st.s === 'idle' ? '' : st.s) + '">' + st.t + '</span>' +
+          '<span class="ps ' + (st.ok ? 'good' : st.s === 'idle' ? '' : st.s) + '">' + st.t + '</span>' +
           '<button class="icon-btn tiny" data-action="plan-del" data-date="' + ds + '" data-pid="' + pl.id + '" aria-label="Retirer la séance prévue">×</button></div>';
       }).join('');
       var editing = planEdit && planEdit.date === ds;
@@ -1785,12 +1785,12 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       else if (doneL.length && !(past && missL.length)) { cls = 'good'; txt0 = uniqL(doneL); }
       else if (past && missL.length) { cls = 'bad'; txt0 = uniqL(missL.concat(doneL)); }
       else if (missL.length) { cls = 'fut'; txt0 = uniqL(missL); }
-      else if (offP.length) { cls = 'rp'; txt0 = offP[0].type === 'recup' ? 'Rc' : 'Rp'; }
+      else if (offP.length) { cls = dates[i] <= today ? 'good' : 'fut'; txt0 = offP[0].type === 'recup' ? 'Rc' : 'Rp'; }
       else if (dates[i] <= today) { cls = 'rp'; txt0 = 'Rp'; }
       else { cls = 'fut'; txt0 = ''; }
       return '<button class="c ' + cls + '" data-action="goto" data-date="' + dates[i] + '" aria-label="Sport ' + dates[i] + '">' + txt0 + '</button>';
     }).join('');
-    return '<section class="card"><div class="m-head"><div><h3>Ta semaine en un coup d\'œil</h3><span class="goal">Vert tenu · rouge raté · touche une case pour ouvrir le jour</span><span class="goal">Sport : M muscu · R running · C CrossFit · V vélo · Mo mobilité · Rc récup · Rp repos · Ma maladie</span></div></div><div class="wgrid">' + h + '</div></section>';
+    return '<section class="card"><div class="m-head"><div><h3>Ta semaine en un coup d\'œil</h3><span class="goal">Vert tenu · rouge raté · touche une case pour ouvrir le jour. Un repos ou une récup prévus passent en vert.</span><span class="goal">Sport : M muscu · R running · C CrossFit · V vélo · Mo mobilité · Rc récup · Rp repos · Ma maladie</span></div></div><div class="wgrid">' + h + '</div></section>';
   }
 
   /* ---------- vue Progrès ---------- */

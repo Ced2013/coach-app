@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menus de la famille</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4efe6;--surface:#fffdf8;--surface2:#f5f0e7;--orange:#2f5d50;--orange2:#3d7564;--text:#1f2a26;--muted:#857e70;--border:#e3dacb;--red:#a8453a;--green:#2f5d50}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;padding:16px 16px 100px}
+
+  .tab-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,253,248,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+  .tab{flex:1;padding:12px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:.4px;cursor:pointer}
+  .tab.active{color:var(--orange)}
+  .tab-icon{font-size:20px}
+  .page{display:none}
+  .page.active{display:block}
+
+  .page-title{font-family:'Fraunces',Georgia,serif;font-size:40px;font-weight:600;letter-spacing:0;text-align:center;color:var(--text);line-height:1.1}
+  .page-sub{color:var(--muted);letter-spacing:2.5px;font-size:10px;text-transform:uppercase;text-align:center;margin:6px 0 16px}
+  .navrow{display:flex;gap:6px;margin-bottom:8px}
+  .navrow button{flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;font-size:14px}
+  .navrow button.wide{flex:2;color:var(--orange);font-weight:600;font-size:13px}
+
+  input,select{background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:8px 10px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--orange)}
+  .dp{text-align:center;margin-bottom:10px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:16px;margin-bottom:12px;box-shadow:0 1px 0 rgba(60,45,20,.04),0 10px 26px -14px rgba(60,45,20,.22)}
+  .card-title{font-family:'Fraunces',Georgia,serif;font-size:18px;font-weight:600;letter-spacing:0;color:var(--text);margin-bottom:12px}
+  .lbl{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+  .field{margin-bottom:10px}
+
+  .btn{width:100%;padding:13px;border:none;border-radius:12px;background:var(--orange);color:#fdfbf7;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;letter-spacing:.3px;cursor:pointer}
+  .btn:hover{background:var(--orange2)}
+  .btn-ghost{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Inter',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:8px}
+  .btn-ghost.on{background:var(--orange);border-color:var(--orange);color:#fdfbf7}
+  .btn-gen{background:var(--surface);color:var(--orange);border:1px solid var(--orange);font-weight:600;text-transform:none;letter-spacing:.3px;font-size:13px;padding:11px}
+  .btn-gen:hover{background:var(--orange);color:#fdfbf7}
+  .btn-add{width:100%;padding:8px;background:transparent;border:1px dashed #c4b9a5;border-radius:8px;color:var(--orange);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;margin-top:6px}
+  .btn-del{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 4px}
+  .btn-sm{padding:5px 11px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
+  .btn-sm.danger{color:var(--red);border-color:#e6c3bb}
+  .msg{color:var(--red);font-size:12px;min-height:16px;margin-top:6px}
+  .empty{text-align:center;color:var(--muted);padding:24px 12px;font-size:12px;line-height:1.8}
+
+  .day-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 0 rgba(60,45,20,.04),0 10px 26px -14px rgba(60,45,20,.22)}
+  .day-card.today{border-color:var(--orange);box-shadow:0 0 0 2px rgba(47,93,80,.12)}
+  .day-header{padding:13px 14px;cursor:pointer}
+  .day-name{font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:600;color:var(--text)}
+  .dnum{color:var(--muted);font-family:'Inter',sans-serif;font-size:12px}
+  .day-sum{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.6}
+  .day-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border)}
+  .day-body.open{display:block}
+  .slot{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px}
+  .slot-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+  .slot-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .slot-top select{width:auto}
+  .line{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .line select{flex:1;min-width:0}
+  .line input{width:64px;text-align:center;color:var(--text);font-weight:500;padding:8px 4px}
+
+  .row-c{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .qty{color:var(--orange);font-family:'Fraunces',Georgia,serif;font-size:14px;font-weight:600;white-space:nowrap}
+  .sec{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:12px 0 6px}
+  .plat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+  .plat-nom{font-family:'Fraunces',Georgia,serif;font-size:15px;font-weight:600;margin-bottom:4px}
+  .plat-ing{font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:8px}
+  .row-btns{display:flex;gap:8px}
+  .ing-row{display:grid;grid-template-columns:1fr 70px 80px 28px;gap:5px;align-items:center;margin-bottom:5px}
+  .ing-row input,.ing-row select{font-size:12px;padding:7px 8px}
+
+  .pr{display:none}
+  .print-title{display:none}
+  @media print{
+    body{background:#fff;color:#000;padding:0}
+    .tab-bar,.ctl,.page-title,.page-sub,.navrow,.dp,.btn-ghost,.btn-add,.btn-gen,.day-sum{display:none!important}
+    .page{display:none!important}
+    #page-semaine{display:block!important}
+    .pr{display:block}
+    .print-title{display:block;font-size:20px;font-weight:700;margin-bottom:10px;color:#000}
+    .day-card{background:#fff;border:1px solid #999;margin-bottom:8px;break-inside:avoid;box-shadow:none}
+    .day-name{color:#000}
+    .day-body{display:block!important;border-top:none}
+    .day-header{padding:8px 10px}
+    .slot{background:#fff;border:1px solid #ddd;padding:6px;margin-top:6px}
+    .slot-lbl{color:#000}
+    .line{display:block;font-size:12px;color:#000;margin-bottom:2px}
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE SEMAINE -->
+<div class="page active" id="page-semaine">
+  <div class="page-title">MENUS</div>
+  <div class="page-sub" id="weekLabel">—</div>
+  <div class="navrow">
+    <button onclick="shiftWeek(-1)">‹</button>
+    <button class="wide" onclick="goToday()">📍 Aujourd'hui</button>
+    <button onclick="shiftWeek(1)">›</button>
+  </div>
+  <input type="date" id="datePicker" class="dp ctl" onchange="goDate(this.value)">
+  <button class="btn-ghost" id="btnCantine" style="margin-top:0" onclick="toggleCantine()"></button>
+  <button class="btn-ghost btn-gen" id="btnGen" onclick="genererManquants()">✨ Générer les repas manquants</button>
+  <div class="print-title" id="printTitle"></div>
+  <div id="weekContainer"></div>
+  <button class="btn-ghost" id="btnClear" onclick="clearWeek()">↺ Vider la semaine</button>
+  <button class="btn-ghost" id="btnCopy" onclick="copyWeek()">Copier le menu en texte</button>
+</div>
+
+<!-- PAGE COURSES -->
+<div class="page" id="page-courses">
+  <div class="page-title">COURSES</div>
+  <div class="page-sub">Semaine affichée</div>
+  <div class="card">
+    <div class="card-title">🛒 Liste</div>
+    <div id="coursesList"></div>
+  </div>
+</div>
+
+<!-- PAGE PLATS -->
+<div class="page" id="page-plats">
+  <div class="page-title">PLATS</div>
+  <div class="page-sub">Ma bibliothèque</div>
+  <div class="card">
+    <div class="card-title" id="formTitle">+ Nouveau plat</div>
+    <div class="field"><span class="lbl">Nom</span><input type="text" id="pNom" placeholder="Ex : Lasagnes"></div>
+    <div class="field">
+      <span class="lbl">Repas</span>
+      <select id="pRepas">
+        <option value="dejeuner">🕛 Déjeuner</option>
+        <option value="diner">🌙 Dîner</option>
+        <option value="any" selected>🍽️ Tous repas</option>
+      </select>
+    </div>
+    <div class="field">
+      <span class="lbl">Ingrédients (quantités pour 1 adulte)</span>
+      <div id="ingList"></div>
+      <button class="btn-add" onclick="addIng()">+ Ingrédient</button>
+    </div>
+    <div class="msg" id="pMsg"></div>
+    <button class="btn" onclick="savePlat()">Enregistrer</button>
+    <button class="btn-ghost" id="btnCancel" style="display:none" onclick="resetForm()">Annuler</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Mes plats</div>
+    <div id="platsList"></div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" id="tab-semaine" onclick="showPage('semaine')"><span class="tab-icon">📅</span>Semaine</button>
+  <button class="tab" id="tab-courses" onclick="showPage('courses')"><span class="tab-icon">🛒</span>Courses</button>
+  <button class="tab" id="tab-plats" onclick="showPage('plats')"><span class="tab-icon">🍽️</span>Plats</button>
+</div>
+
+<script>
+// ── DONNÉES ───────────────────────────────────────────
+const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const SEED=[
+ {id:'s1',nom:'Pâtes tomate-mozzarella',repas:'any',ing:[{nom:'pâtes',qty:125,unit:'g'},{nom:'sauce tomate',qty:100,unit:'g'},{nom:'mozzarella',qty:60,unit:'g'},{nom:'basilic',qty:1,unit:'unité'}]},
+ {id:'s2',nom:'Omelette aux champignons et salade',repas:'dejeuner',ing:[{nom:'œufs',qty:2,unit:'unité'},{nom:'champignons',qty:60,unit:'g'},{nom:'salade',qty:0.25,unit:'unité'},{nom:'beurre',qty:5,unit:'g'}]},
+ {id:'s3',nom:'Colin au citron et pommes vapeur',repas:'diner',ing:[{nom:'filets de colin',qty:130,unit:'g'},{nom:'pommes de terre',qty:150,unit:'g'},{nom:'citron',qty:0.25,unit:'unité'}]},
+ {id:'s4',nom:'Dahl de lentilles corail',repas:'any',ing:[{nom:'lentilles corail',qty:60,unit:'g'},{nom:'lait de coco',qty:100,unit:'ml'},{nom:'tomates',qty:100,unit:'g'},{nom:'oignon',qty:0.25,unit:'unité'},{nom:'riz',qty:75,unit:'g'}]},
+ {id:'s5',nom:'Gratin de courgettes et pommes de terre',repas:'diner',ing:[{nom:'courgettes',qty:200,unit:'g'},{nom:'pommes de terre',qty:150,unit:'g'},{nom:'gruyère',qty:40,unit:'g'},{nom:'crème fraîche',qty:50,unit:'ml'}]},
+ {id:'s6',nom:'Wraps haricots noirs et maïs',repas:'dejeuner',ing:[{nom:'haricots noirs',qty:100,unit:'g'},{nom:'maïs',qty:50,unit:'g'},{nom:'tortillas',qty:2.5,unit:'unité'},{nom:'avocat',qty:0.5,unit:'unité'},{nom:'fromage râpé',qty:40,unit:'g'}]},
+ {id:'s7',nom:'Croque-monsieur',repas:'dejeuner',ing:[{nom:'pain de mie',qty:2,unit:'unité'},{nom:'jambon végétal',qty:40,unit:'g'},{nom:'emmental',qty:40,unit:'g'},{nom:'béchamel',qty:75,unit:'ml'}]},
+ {id:'s8',nom:'Quiche aux poireaux',repas:'any',ing:[{nom:'pâte brisée',qty:0.25,unit:'unité'},{nom:'poireaux',qty:125,unit:'g'},{nom:'œufs',qty:1,unit:'unité'},{nom:'crème fraîche',qty:50,unit:'ml'},{nom:'gruyère',qty:25,unit:'g'}]}
+];
+
+// ── ÉTAT ──────────────────────────────────────────────
+let S={plats:null,weeks:{},cantine:true};
+try{Object.assign(S,JSON.parse(localStorage.getItem('menus-v6')||'{}'))}catch(e){}
+if(!S.plats)S.plats=SEED;
+function save(){try{localStorage.setItem('menus-v6',JSON.stringify(S))}catch(e){}}
+
+let offset=0, openDays=new Set(), pendingClear=false, pendingDel=null, editId=null;
+let formIng=[{nom:'',qty:'',unit:'g'}];
+
+// ── UTILITAIRES ───────────────────────────────────────
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+function monday(off){const t=new Date();t.setHours(0,0,0,0);t.setDate(t.getDate()-((t.getDay()+6)%7)+off*7);return t;}
+function dayDates(off){const m=monday(off);return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});}
+const wkKey=off=>iso(monday(off));
+const platById=id=>S.plats.find(p=>p.id===id);
+
+// ── DONNÉES DE SEMAINE ────────────────────────────────
+function slotOf(wk,di,slot){return ((S.weeks[wk]||{})[di]||{})[slot]||{};}
+function etatOf(wk,di,i,slot){
+  const s=slotOf(wk,di,slot);
+  if(s.etat)return s.etat;
+  return (slot==='midi'&&i<5&&S.cantine)?'cantine':'repas';
+}
+function setSlot(wk,di,slot,patch){
+  S.weeks[wk]=S.weeks[wk]||{};
+  S.weeks[wk][di]=S.weeks[wk][di]||{};
+  S.weeks[wk][di][slot]=Object.assign({lines:[]},S.weeks[wk][di][slot]||{},patch);
+  save();render();
+}
+function addLine(wk,di,slot){
+  const lines=[...(slotOf(wk,di,slot).lines||[]),{pid:'',mult:1}];
+  setSlot(wk,di,slot,{lines});
+}
+function setLine(wk,di,slot,li,field,val){
+  const lines=(slotOf(wk,di,slot).lines||[]).map(x=>({...x}));
+  lines[li][field]=field==='mult'?(parseFloat(val)||1):val;
+  setSlot(wk,di,slot,{lines});
+}
+function delLine(wk,di,slot,li){
+  const lines=(slotOf(wk,di,slot).lines||[]).filter((_,j)=>j!==li);
+  setSlot(wk,di,slot,{lines});
+}
+function namesOf(wk,di,i,slot){
+  const e=etatOf(wk,di,i,slot),s=slotOf(wk,di,slot);
+  if(e==='cantine')return 'Cantine';
+  if(e==='bloque')return s.label||'Bloqué';
+  const n=(s.lines||[]).map(l=>platById(l.pid)).filter(Boolean).map(p=>p.nom);
+  return n.length?n.join(', '):'—';
+}
+
+// ── GÉNÉRATION DES REPAS MANQUANTS ────────────────────
+function genererManquants(){
+  const wk=wkKey(offset),dates=dayDates(offset),btn=document.getElementById('btnGen');
+  const repOf=slot=>slot==='midi'?'dejeuner':'diner';
+  // Plages « repas » sans plat valide
+  const vides=[];
+  dates.forEach((d,i)=>{
+    const di=iso(d);
+    ['midi','soir'].forEach(slot=>{
+      if(etatOf(wk,di,i,slot)!=='repas')return;
+      const valides=(slotOf(wk,di,slot).lines||[]).filter(l=>platById(l.pid));
+      if(!valides.length)vides.push({di,slot,valides});
+    });
+  });
+  if(!vides.length){
+    btn.textContent='Rien à générer : toutes les plages ont un repas';
+    setTimeout(()=>btn.textContent='✨ Générer les repas manquants',2000);
+    return;
+  }
+  // Plats déjà utilisés cette semaine, pour éviter les doublons
+  const utilises=new Set();
+  dates.forEach(d=>{const di=iso(d);['midi','soir'].forEach(slot=>{
+    (slotOf(wk,di,slot).lines||[]).forEach(l=>{if(l.pid)utilises.add(l.pid)});
+  });});
+  let precedent=null, ajoutes=0;
+  vides.forEach(({di,slot,valides})=>{
+    const rep=repOf(slot);
+    const compatibles=S.plats.filter(p=>p.repas===rep||p.repas==='any');
+    let pool=compatibles.filter(p=>!utilises.has(p.id)&&p.id!==precedent);
+    if(!pool.length)pool=compatibles.filter(p=>p.id!==precedent);
+    if(!pool.length)pool=compatibles;
+    if(!pool.length)return;
+    const choisi=pool[Math.floor(Math.random()*pool.length)];
+    utilises.add(choisi.id);
+    precedent=choisi.id;
+    const lines=[...valides,{pid:choisi.id,mult:1}];
+    setSlot(wk,di,slot,{lines});
+    ajoutes++;
+  });
+  if(!ajoutes){
+    btn.textContent='Ajoute d’abord des plats dans l’onglet Plats';
+    setTimeout(()=>btn.textContent='✨ Générer les repas manquants',2500);
+    return;
+  }
+  // setSlot a déjà sauvegardé et rendu à chaque plage
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+function showPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+n));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+n));
+  if(n==='courses')renderCourses();
+  window.scrollTo(0,0);
+}
+function shiftWeek(n){offset+=n;render();}
+function goToday(){offset=0;render();}
+function goDate(v){
+  if(!v)return;
+  const [y,m,d]=v.split('-').map(Number);
+  const t=new Date(y,m-1,d);t.setHours(0,0,0,0);
+  const tm=new Date(t);tm.setDate(t.getDate()-((t.getDay()+6)%7));
+  offset=Math.round((tm-monday(0))/604800000);
+  render();
+}
+function toggleCantine(){S.cantine=!S.cantine;save();render();}
+function toggleDay(di){openDays.has(di)?openDays.delete(di):openDays.add(di);render();}
+
+// ── RENDU SEMAINE ─────────────────────────────────────
+function slotHtml(wk,di,i,slot){
+  const e=etatOf(wk,di,i,slot),s=slotOf(wk,di,slot);
+  const sel=`<select class="ctl" onchange="setSlot('${wk}','${di}','${slot}',{etat:this.value})">`+
+    [['repas','Repas'],['cantine','Cantine'],['bloque','Bloqué']].map(([v,t])=>`<option value="${v}"${e===v?' selected':''}>${t}</option>`).join('')+`</select>`;
+  let body='';
+  if(e==='cantine'){
+    body='<span>🍽️ Cantine</span>';
+  }else if(e==='bloque'){
+    body=`<input class="ctl" type="text" value="${esc(s.label||'')}" placeholder="Libellé (ex. sport)" onchange="setSlot('${wk}','${di}','${slot}',{label:this.value})"><span class="pr">${esc(s.label||'Bloqué')}</span>`;
+  }else{
+    const rep=slot==='midi'?'dejeuner':'diner';
+    body=(s.lines||[]).map((ln,li)=>{
+      const p=platById(ln.pid);
+      const opts=S.plats.filter(x=>x.repas===rep||x.repas==='any'||x.id===ln.pid);
+      return `<div class="line">`+
+        `<select class="ctl" onchange="setLine('${wk}','${di}','${slot}',${li},'pid',this.value)"><option value="">— choisir —</option>${opts.map(x=>`<option value="${x.id}"${x.id===ln.pid?' selected':''}>${esc(x.nom)}</option>`).join('')}</select>`+
+        `<span class="pr">${p?esc(p.nom):'—'}${ln.mult!==1?' (×'+ln.mult+')':''}</span>`+
+        `<input class="ctl" type="number" step="0.5" min="0.5" value="${ln.mult}" title="1 = adulte, 0.5 = enfant" onchange="setLine('${wk}','${di}','${slot}',${li},'mult',this.value)">`+
+        `<button class="ctl btn-del" onclick="delLine('${wk}','${di}','${slot}',${li})">✕</button></div>`;
+    }).join('')+`<button class="ctl btn-add" onclick="addLine('${wk}','${di}','${slot}')">+ Ajouter un plat</button>`;
+  }
+  return `<div class="slot"><div class="slot-top"><span class="slot-lbl">${slot==='midi'?'☀️ Midi':'🌙 Soir'}</span>${sel}</div>${body}</div>`;
+}
+function dayHtml(d,i,wk,today){
+  const di=iso(d),open=openDays.has(di);
+  return `<div class="day-card${di===today?' today':''}">`+
+    `<div class="day-header" onclick="toggleDay('${di}')">`+
+      `<div class="day-name">${DAYS[i]} <span class="dnum">${d.getDate()}/${d.getMonth()+1}</span></div>`+
+      `<div class="day-sum">☀️ ${esc(namesOf(wk,di,i,'midi'))}<br>🌙 ${esc(namesOf(wk,di,i,'soir'))}</div>`+
+    `</div>`+
+    `<div class="day-body${open?' open':''}">${slotHtml(wk,di,i,'midi')}${slotHtml(wk,di,i,'soir')}</div>`+
+  `</div>`;
+}
+function render(){
+  const dates=dayDates(offset),wk=wkKey(offset),today=iso(new Date());
+  const label='Semaine du '+fmt(dates[0])+' au '+fmt(dates[6]);
+  document.getElementById('weekLabel').textContent=label;
+  document.getElementById('printTitle').textContent='Menus — '+label;
+  document.getElementById('datePicker').value=iso(dates[0]);
+  const bc=document.getElementById('btnCantine');
+  bc.textContent=S.cantine?'🍽️ Cantine le midi (lun.–ven.) : activée':'🏖️ Mode vacances : cantine désactivée';
+  bc.className='btn-ghost'+(S.cantine?'':' on');
+  document.getElementById('weekContainer').innerHTML=dates.map((d,i)=>dayHtml(d,i,wk,today)).join('');
+  document.getElementById('btnClear').textContent=pendingClear?'Confirmer : vider la semaine':'↺ Vider la semaine';
+  renderCourses();
+  renderPlats();
+}
+function clearWeek(){
+  if(!pendingClear){
+    pendingClear=true;render();
+    setTimeout(()=>{pendingClear=false;render();},4000);
+    return;
+  }
+  pendingClear=false;
+  delete S.weeks[wkKey(offset)];
+  save();render();
+}
+
+// ── COURSES ───────────────────────────────────────────
+function coursesOf(){
+  const wk=wkKey(offset),dates=dayDates(offset),tot={};
+  dates.forEach((d,i)=>{
+    const di=iso(d);
+    ['midi','soir'].forEach(slot=>{
+      if(etatOf(wk,di,i,slot)!=='repas')return;
+      (slotOf(wk,di,slot).lines||[]).forEach(ln=>{
+        const p=platById(ln.pid);if(!p)return;
+        (p.ing||[]).forEach(g=>{
+          const k=g.nom.toLowerCase()+'|'+g.unit;
+          tot[k]=tot[k]||{nom:g.nom,unit:g.unit,qty:0};
+          tot[k].qty+=(parseFloat(g.qty)||0)*(parseFloat(ln.mult)||1);
+        });
+      });
+    });
+  });
+  return Object.values(tot).sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+}
+function renderCourses(){
+  const list=coursesOf();
+  document.getElementById('coursesList').innerHTML=list.length
+    ?list.map(g=>`<div class="row-c"><span>${esc(g.nom)}</span><span class="qty">${Math.round(g.qty*10)/10} ${g.unit}</span></div>`).join('')
+    :'<div class="empty">Aucun ingrédient pour cette semaine. Choisis des plats dans l’onglet Semaine.</div>';
+}
+function weekText(){
+  const wk=wkKey(offset),dates=dayDates(offset);
+  const lines=['Menus — '+document.getElementById('weekLabel').textContent,''];
+  dates.forEach((d,i)=>{const di=iso(d);lines.push(`${DAYS[i]} : midi ${namesOf(wk,di,i,'midi')} / soir ${namesOf(wk,di,i,'soir')}`)});
+  return lines.join('\n');
+}
+function copyWeek(){
+  const b=document.getElementById('btnCopy');
+  try{navigator.clipboard.writeText(weekText());b.textContent='Copié ✔';}
+  catch(e){b.textContent='Copie impossible';}
+  setTimeout(()=>b.textContent='Copier le menu en texte',2000);
+}
+
+// ── PLATS ─────────────────────────────────────────────
+const REP={dejeuner:'🕛 Déjeuner',diner:'🌙 Dîner',any:'🍽️ Tous repas'};
+function renderPlats(){
+  const el=document.getElementById('platsList');
+  if(!S.plats.length){el.innerHTML='<div class="empty">Aucun plat encore.</div>';return;}
+  el.innerHTML=Object.keys(REP).map(r=>{
+    const items=S.plats.filter(p=>p.repas===r);
+    if(!items.length)return '';
+    return `<div class="sec">${REP[r]}</div>`+items.map(p=>
+      `<div class="plat"><div class="plat-nom">${esc(p.nom)}</div>`+
+      `<div class="plat-ing">${(p.ing||[]).map(g=>`${g.qty} ${g.unit} ${esc(g.nom)}`).join(' · ')||'Aucun ingrédient'}</div>`+
+      `<div class="row-btns"><button class="btn-sm" onclick="editPlat('${p.id}')">✏️ Modifier</button>`+
+      `<button class="btn-sm danger" onclick="delPlat('${p.id}')">${pendingDel===p.id?'Confirmer ✕':'✕ Supprimer'}</button></div></div>`
+    ).join('');
+  }).join('');
+}
+function ingRows(){
+  document.getElementById('ingList').innerHTML=formIng.map((g,i)=>
+    `<div class="ing-row">`+
+    `<input type="text" placeholder="Ingrédient" value="${esc(g.nom)}" onchange="formIng[${i}].nom=this.value">`+
+    `<input type="number" placeholder="Qté" step="0.1" value="${esc(g.qty)}" onchange="formIng[${i}].qty=this.value">`+
+    `<select onchange="formIng[${i}].unit=this.value">${['g','ml','unité'].map(u=>`<option${g.unit===u?' selected':''}>${u}</option>`).join('')}</select>`+
+    `<button class="btn-del" onclick="formIng.splice(${i},1);ingRows()">✕</button></div>`
+  ).join('');
+}
+function addIng(){formIng.push({nom:'',qty:'',unit:'g'});ingRows();}
+function msg(t){document.getElementById('pMsg').textContent=t;}
+function resetForm(){
+  editId=null;
+  formIng=[{nom:'',qty:'',unit:'g'}];
+  document.getElementById('pNom').value='';
+  document.getElementById('pRepas').value='any';
+  document.getElementById('formTitle').textContent='+ Nouveau plat';
+  document.getElementById('btnCancel').style.display='none';
+  msg('');ingRows();
+}
+function savePlat(){
+  const nom=document.getElementById('pNom').value.trim();
+  if(!nom){msg('Entre un nom de plat.');return;}
+  const ing=formIng.filter(g=>g.nom.trim()).map(g=>({nom:g.nom.trim(),qty:parseFloat(g.qty)||0,unit:g.unit}));
+  const repas=document.getElementById('pRepas').value;
+  const existing=editId?platById(editId):null;
+  if(existing)Object.assign(existing,{nom,repas,ing});
+  else S.plats.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),nom,repas,ing});
+  save();resetForm();render();
+}
+function editPlat(id){
+  const p=platById(id);if(!p)return;
+  editId=id;
+  document.getElementById('pNom').value=p.nom;
+  document.getElementById('pRepas').value=p.repas;
+  formIng=(p.ing||[]).map(g=>({nom:g.nom,qty:g.qty,unit:g.unit}));
+  if(!formIng.length)formIng=[{nom:'',qty:'',unit:'g'}];
+  document.getElementById('formTitle').textContent='✏️ Modifier le plat';
+  document.getElementById('btnCancel').style.display='block';
+  ingRows();showPage('plats');
+}
+function delPlat(id){
+  if(pendingDel!==id){
+    pendingDel=id;renderPlats();
+    setTimeout(()=>{if(pendingDel===id){pendingDel=null;renderPlats();}},4000);
+    return;
+  }
+  S.plats=S.plats.filter(p=>p.id!==id);
+  pendingDel=null;save();render();
+}
+
+// ── INIT ──────────────────────────────────────────────
+ingRows();
+render();
+</script>
+</body>
+</html>

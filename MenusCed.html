@@ -130,9 +130,10 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     { id: 'e7', nom: 'Poisson blanc, quinoa et courgettes', slots: [2, 4], kcal: 450, prot: 40, ing: [{ nom: 'poisson blanc', qty: 160, unit: 'g' }, { nom: 'quinoa', qty: 60, unit: 'g' }, { nom: 'courgettes', qty: 200, unit: 'g' }] },
     { id: 'e8', nom: 'Bowl bœuf haché 5 %, haricots rouges', slots: [2, 4], kcal: 540, prot: 42, ing: [{ nom: 'bœuf haché 5 %', qty: 125, unit: 'g' }, { nom: 'haricots rouges', qty: 100, unit: 'g' }, { nom: 'riz', qty: 50, unit: 'g' }, { nom: 'poivrons', qty: 100, unit: 'g' }] }
   ];
-  var S = { plats: null, weeks: {}, goals: { kcal: 1950, prot: null }, checked: {} };
+  var S = { plats: null, weeks: {}, goals: { kcal: 1950, prot: 150 }, checked: {} };
   try { var raw = JSON.parse(localStorage.getItem(LS) || '{}'); if (raw && typeof raw === 'object') { S.plats = raw.plats || null; S.weeks = raw.weeks || {}; S.goals = Object.assign(S.goals, raw.goals || {}); S.checked = raw.checked || {}; } } catch (e) {}
   if (!S.plats) S.plats = SEED.slice();
+  if (S.goals.prot == null) S.goals.prot = 150;
   function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
   var view = 'semaine', offset = 0, openDays = {}, edit = null, pendingDel = null, pendingClear = false, msgTxt = '';
@@ -155,7 +156,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   }
   function dayTotals(di) {
     var k = 0, p = 0, n = 0;
-    SLOTS.forEach(function (_, si) { var s = slot(di, si); if (s.etat !== 'repas') return; (s.lines || []).forEach(function (l) { var pl = plat(l.pid); if (!pl) return; n++; k += (pl.kcal || 0) * (l.mult || 1); p += (pl.prot || 0) * (l.mult || 1); }); });
+    SLOTS.forEach(function (_, si) { var s = slot(di, si); if (s.etat === 'dehors') { k += s.kcal || 0; p += s.prot || 0; if (s.kcal) n++; return; } if (s.etat && s.etat !== 'repas') return; (s.lines || []).forEach(function (l) { var pl = plat(l.pid); if (!pl) return; n++; k += (pl.kcal || 0) * (l.mult || 1); p += (pl.prot || 0) * (l.mult || 1); }); });
     return { kcal: k, prot: p, n: n };
   }
   function slotNames(di, si) {
@@ -171,7 +172,9 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     var s = slot(di, si), e = s.etat || 'repas';
     var h = '<div class="slot" style="--sc:var(--c' + si + ')"><div class="slot-top"><b>' + SLOTS[si][0] + '<small>' + SLOTS[si][1] + '</small></b><div class="seg">' +
       [['repas', 'Repas'], ['dehors', 'Dehors'], ['saute', 'Sauté']].map(function (o) { return '<button data-a="etat" data-di="' + di + '" data-si="' + si + '" data-v="' + o[0] + '" aria-pressed="' + (e === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
-    if (e === 'dehors') return h + '<input type="text" data-f="label" data-di="' + di + '" data-si="' + si + '" placeholder="Ex. resto, repas du boulot…" value="' + esc(s.label || '') + '"></div>';
+    if (e === 'dehors') return h + '<input type="text" data-f="label" data-di="' + di + '" data-si="' + si + '" placeholder="Ex. resto, repas du boulot…" value="' + esc(s.label || '') + '">' +
+      '<div class="two"><input type="number" inputmode="numeric" data-f="dk" data-di="' + di + '" data-si="' + si + '" placeholder="kcal estimées" value="' + (s.kcal || '') + '"><input type="number" inputmode="numeric" data-f="dp" data-di="' + di + '" data-si="' + si + '" placeholder="protéines (g)" value="' + (s.prot || '') + '"></div>' +
+      '<span class="muted" style="font-size:12.5px">Une estimation aide la génération à équilibrer le reste de la journée.</span></div>';
     if (e === 'saute') return h + '</div>';
     h += (s.lines || []).map(function (l, li) {
       var opts = S.plats.filter(function (p) { return !p.slots || !p.slots.length || p.slots.indexOf(si) >= 0 || p.id === l.pid; });
@@ -191,34 +194,49 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     h += '<p class="msg" style="text-align:center">' + esc(msgTxt) + '</p>';
     ds.forEach(function (d, i) {
       var di = iso(d), t = dayTotals(di), open = openDays[di] != null ? openDays[di] : di === today;
-      var over = t.kcal > S.goals.kcal, pc = Math.min(100, Math.round(t.kcal / S.goals.kcal * 100));
+      var over = t.kcal > S.goals.kcal * 1.05, okD = Math.abs(t.kcal - S.goals.kcal) <= S.goals.kcal * 0.05 && (!S.goals.prot || t.prot >= S.goals.prot * 0.9), pc = Math.min(100, Math.round(t.kcal / S.goals.kcal * 100));
       h += '<section class="card ' + (open ? 'open' : '') + (di === today ? ' today-card' : '') + '" style="--ic:var(--c' + (i % 5) + ')"><div class="head" data-a="day" data-di="' + di + '"><div class="t"><h2>' + DAYS[i] + ' ' + d.getDate() + '/' + (d.getMonth() + 1) + '</h2>' +
         '<small>' + SLOTS.map(function (sl, si) { return slotNames(di, si); }).filter(function (x) { return x !== '—'; }).slice(0, 3).join(' · ') + '</small></div>' +
-        (t.n ? '<span class="pill ' + (over ? 'bad' : 'good') + '">' + fmtN(t.kcal) + ' kcal · ' + fmtN(t.prot) + ' g</span>' : '<span class="pill">À planifier</span>') + '<span class="chev"></span></div>' +
+        (t.n ? '<span class="pill ' + (okD ? 'good' : over ? 'bad' : '') + '">' + fmtN(t.kcal) + ' kcal · ' + fmtN(t.prot) + ' g</span>' : '<span class="pill">À planifier</span>') + '<span class="chev"></span></div>' +
         '<div class="body">' + (t.n ? '<div class="bar' + (over ? ' over' : '') + '"><i style="width:' + pc + '%"></i></div>' : '') + SLOTS.map(function (_, si) { return slotHtml(di, si); }).join('') + '</div></section>';
     });
     h += '<button class="btn ghost" data-a="copy">Copier le menu en texte</button>';
     h += '<button class="btn ghost warn" data-a="clear">' + (pendingClear ? 'Confirmer : vider la semaine' : '↺ Vider la semaine') + '</button>';
     return h;
   }
+  /* Génération : pour chaque jour, on cherche la combinaison de plats et de portions
+     la plus proche de l'objectif kcal ET protéines, en tenant compte de ce qui est déjà rempli. */
+  var MULTS = [0.75, 1, 1.25, 1.5, 2];
   function generer() {
-    var ds = dates(offset), used = {}, added = 0;
+    var ds = dates(offset), used = {}, added = 0, gk = S.goals.kcal || 1950, gp = S.goals.prot || 0;
     ds.forEach(function (d) { SLOTS.forEach(function (_, si) { (slot(iso(d), si).lines || []).forEach(function (l) { used[l.pid] = (used[l.pid] || 0) + 1; }); }); });
+    var report = [];
     ds.forEach(function (d) {
-      var di = iso(d);
+      var di = iso(d), base = dayTotals(di), empty = [];
       SLOTS.forEach(function (_, si) {
         var s = slot(di, si); if (s.etat && s.etat !== 'repas') return;
         if ((s.lines || []).some(function (l) { return plat(l.pid); })) return;
-        var ok = S.plats.filter(function (p) { return !p.slots || !p.slots.length || p.slots.indexOf(si) >= 0; });
-        if (!ok.length) return;
-        var min = Math.min.apply(null, ok.map(function (p) { return used[p.id] || 0; }));
-        var pool = ok.filter(function (p) { return (used[p.id] || 0) === min; }), ch = pool[Math.floor(Math.random() * pool.length)];
-        used[ch.id] = (used[ch.id] || 0) + 1; setSlot(di, si, { lines: [{ pid: ch.id, mult: 1 }] }); added++;
+        var ok = S.plats.filter(function (p) { return (!p.slots || !p.slots.length || p.slots.indexOf(si) >= 0) && p.kcal; });
+        if (ok.length) empty.push({ si: si, ok: ok });
       });
+      if (!empty.length) return;
+      var best = null;
+      for (var t = 0; t < 4000; t++) {
+        var k = base.kcal, p = base.prot, pick = [], pen = 0, seen = {};
+        empty.forEach(function (e) {
+          var pl = e.ok[Math.floor(Math.random() * e.ok.length)], m = MULTS[Math.floor(Math.random() * MULTS.length)];
+          if (e.si === 1 || e.si === 3) m = Math.min(m, 1.5);
+          k += pl.kcal * m; p += (pl.prot || 0) * m; pick.push({ si: e.si, pid: pl.id, mult: m });
+          pen += (used[pl.id] || 0) * 0.015 + (seen[pl.id] ? 0.04 : 0) + Math.abs(m - 1) * 0.01; seen[pl.id] = 1;
+        });
+        var sc = Math.abs(k - gk) / gk + (gp ? Math.abs(p - gp) / gp : 0) + pen;
+        if (!best || sc < best.sc) best = { sc: sc, pick: pick, k: k, p: p };
+      }
+      best.pick.forEach(function (x) { used[x.pid] = (used[x.pid] || 0) + 1; setSlot(di, x.si, { lines: [{ pid: x.pid, mult: x.mult }] }); added++; });
+      report.push(Math.round(best.k));
     });
-    msgTxt = added ? '' : 'Rien à générer : toutes les prises « Repas » ont un plat.';
+    msgTxt = added ? '' : 'Rien à générer : toutes les prises « Repas » ont un plat (avec ses calories).';
   }
-
   /* ---------- Courses ---------- */
   function courses() {
     var tot = {};
@@ -335,6 +353,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     if (el.id === 'g-prot') { S.goals.prot = num(el.value); save(); return; }
     if (!f) return;
     if (f === 'label') { setSlot(di, si, { label: el.value }); return; }
+    if (f === 'dk' || f === 'dp') { var pt = {}; pt[f === 'dk' ? 'kcal' : 'prot'] = num(el.value); setSlot(di, si, pt); render(); return; }
     var ls = (slot(di, si).lines || []).map(function (x) { return Object.assign({}, x); }), li = +el.dataset.li;
     if (!ls[li]) return;
     if (f === 'pid') ls[li].pid = el.value; else ls[li].mult = num(el.value) || 1;

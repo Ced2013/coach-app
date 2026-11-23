@@ -151,6 +151,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   function plat(id) { return S.plats.filter(function (p) { return p.id === id; })[0]; }
   function num(v) { var n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : null; }
   function fmtN(n) { return Math.round(n).toLocaleString('fr-FR'); }
+  function plural(n, w) { return n + ' ' + w + (n > 1 ? 's' : ''); }
   function fmtQ(n) { return (Math.round(n * 10) / 10).toLocaleString('fr-FR'); }
 
   function slot(di, si) { return ((S.weeks[wkKey()] || {})[di] || {})[si] || { etat: 'repas', lines: [] }; }
@@ -202,7 +203,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     h += '<p class="msg" style="text-align:center">' + esc(msgTxt) + '</p>';
     ds.forEach(function (d, i) {
       var di = iso(d), t = dayTotals(di), open = openDays[di] != null ? openDays[di] : di === today;
-      var over = t.kcal > S.goals.kcal * 1.05, okD = Math.abs(t.kcal - S.goals.kcal) <= S.goals.kcal * 0.05 && (!S.goals.prot || t.prot >= S.goals.prot * 0.9), pc = Math.min(100, Math.round(t.kcal / S.goals.kcal * 100));
+      var over = t.kcal > S.goals.kcal, okD = !over && t.kcal >= S.goals.kcal * 0.95 && (!S.goals.prot || t.prot >= S.goals.prot * 0.9), pc = Math.min(100, Math.round(t.kcal / S.goals.kcal * 100));
       h += '<section class="card ' + (open ? 'open' : '') + (di === today ? ' today-card' : '') + '" style="--ic:var(--c' + (i % 5) + ')"><div class="head" data-a="day" data-di="' + di + '"><div class="t"><h2>' + DAYS[i] + ' ' + d.getDate() + '/' + (d.getMonth() + 1) + '</h2>' +
         '<small>' + SLOTS.map(function (sl, si) { return slotNames(di, si); }).filter(function (x) { return x !== '—'; }).slice(0, 3).join(' · ') + '</small></div>' +
         (t.n ? '<span class="pill ' + (okD ? 'good' : over ? 'bad' : '') + '">' + fmtN(t.kcal) + ' kcal · ' + fmtN(t.prot) + ' g</span>' : '<span class="pill">À planifier</span>') + '<span class="chev"></span></div>' +
@@ -216,7 +217,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
      la plus proche de l'objectif kcal ET protéines, en tenant compte de ce qui est déjà rempli. */
   var MULTS = [0.75, 1, 1.25, 1.5, 2];
   function generer() {
-    var ds = dates(offset), used = {}, added = 0, gk = S.goals.kcal || 1950, gp = S.goals.prot || 0;
+    var skipped = 0, ds = dates(offset), used = {}, added = 0, gk = S.goals.kcal || 1950, gp = S.goals.prot || 0;
     ds.forEach(function (d) { SLOTS.forEach(function (_, si) { (slot(iso(d), si).lines || []).forEach(function (l) { used[l.pid] = (used[l.pid] || 0) + 1; }); }); });
     var report = [];
     ds.forEach(function (d) {
@@ -242,25 +243,27 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
           /* 1 plat, parfois 2 (ex. egg muffin + fromage blanc) */
           var n = e.ok.length > 1 && Math.random() < 0.4 ? 2 : 1, lines = [];
           for (var q = 0; q < n; q++) {
-            var pool = e.ok;
-            if (q > 0 || e.hasMain) pool = e.ok.filter(function (x) { return prole(x) === 'complement' || (q > 0 && !lines.some(function (l) { return prole(plat(l.pid)) === 'principal'; }) && !e.hasMain); });
+            var pool = e.ok.filter(function (x) { return !x.max || (used[x.id] || 0) + (seen[x.id] || 0) < x.max; });
+            if (q > 0 || e.hasMain) pool = pool.filter(function (x) { return prole(x) === 'complement' || (q > 0 && !lines.some(function (l) { return prole(plat(l.pid)) === 'principal'; }) && !e.hasMain); });
             if (!pool.length) break;
             var pl = pool[Math.floor(Math.random() * pool.length)];
             if (lines.some(function (l) { return l.pid === pl.id; })) continue;
             var m = mult(pl, e.si);
             k += pl.kcal * m; p += (pl.prot || 0) * m; lines.push({ pid: pl.id, mult: m });
-            pen += (used[pl.id] || 0) * 0.012 + (seen[pl.id] ? 0.04 : 0) + (pmode(pl) === 'decimal' ? Math.abs(m - 1) * 0.01 : (m - 1) * 0.006); seen[pl.id] = 1;
+            pen += (used[pl.id] || 0) * 0.012 + (seen[pl.id] ? 0.04 : 0); seen[pl.id] = (seen[pl.id] || 0) + 1; pen += 0 + (pmode(pl) === 'decimal' ? Math.abs(m - 1) * 0.01 : (m - 1) * 0.006);
           }
           if (lines.length > 1) pen += 0.006;
           pick.push({ si: e.si, lines: lines });
         });
-        var sc = Math.abs(k - gk) / gk + (gp ? Math.abs(p - gp) / gp : 0) + pen;
+        if (k > gk) continue; /* jamais au-dessus de l'objectif kcal */
+        var sc = (gk - k) / gk + (gp ? Math.abs(p - gp) / gp : 0) + pen;
         if (!best || sc < best.sc) best = { sc: sc, pick: pick, k: k, p: p };
       }
+      if (!best) { skipped++; return; }
       best.pick.forEach(function (x) { x.lines.forEach(function (l) { used[l.pid] = (used[l.pid] || 0) + 1; }); var keep = (slot(di, x.si).lines || []).filter(function (l) { return plat(l.pid); }); setSlot(di, x.si, { lines: keep.concat(x.lines) }); added++; });
       report.push(Math.round(best.k));
     });
-    msgTxt = added ? '' : 'Rien à générer : toutes les prises « Repas » ont un plat (avec ses calories).';
+    msgTxt = skipped ? plural(skipped, 'jour') + ' sans solution sous ' + fmtN(gk) + ' kcal : allège ce qui est déjà prévu ou ajoute des plats plus légers.' : added ? '' : 'Rien à générer : toutes les prises « Repas » ont un plat (avec ses calories).';
   }
   /* ---------- Courses ---------- */
   function courses() {
@@ -294,6 +297,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       '<span class="muted" style="font-size:12.5px;margin-top:-6px">Un seul plat principal par prise. Les compléments (skyr, fruit, fromage blanc…) peuvent s\'ajouter à côté.</span>' +
       '<div class="sub">Portion</div><div class="seg" style="align-self:flex-start">' + [['fixe', 'Fixe'], ['entier', 'Entière'], ['decimal', 'Décimale']].map(function (o) { return '<button data-a="pmode" data-v="' + o[0] + '" aria-pressed="' + ((e.mode || 'fixe') === o[0]) + '" style="padding:8px 12px">' + o[1] + '</button>'; }).join('') + '</div>' +
       '<span class="muted" style="font-size:12.5px;margin-top:-6px">' + ({ fixe: 'Fixe : toujours 1 portion (plat préparé à l\'avance).', entier: 'Entière : 1, 2 ou 3 (egg muffins, œufs, barres…).', decimal: 'Décimale : ×0,75 à ×2 (skyr, fromage blanc, flocons…).' })[e.mode || 'fixe'] + '</span>' +
+      '<label class="f">Maximum par semaine<input type="number" inputmode="numeric" min="1" id="p-max" value="' + esc(e.max || '') + '" placeholder="Illimité (ex. 1 pour le camembert rôti)"></label>' +
       '<div class="two"><label class="f">Calories / portion<input type="number" inputmode="numeric" id="p-kcal" value="' + esc(e.kcal) + '" placeholder="kcal"></label><label class="f">Protéines / portion<input type="number" inputmode="numeric" id="p-prot" value="' + esc(e.prot) + '" placeholder="g"></label></div>' +
       '<div class="sub">Ingrédients</div>' + e.ing.map(function (g, i) {
         return '<div class="ing"><input type="text" data-ing="nom" data-i="' + i + '" value="' + esc(g.nom) + '" placeholder="Ingrédient"><input type="number" inputmode="decimal" data-ing="qty" data-i="' + i + '" value="' + esc(g.qty) + '" placeholder="Qté"><select data-ing="unit" data-i="' + i + '">' + ['g', 'ml', 'unité'].map(function (u) { return '<option' + (g.unit === u ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select><button class="x" data-a="ingdel" data-i="' + i + '" aria-label="Retirer">✕</button></div>';
@@ -309,14 +313,14 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     return h;
   }
   function platCard(p) {
-    return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', (prole(p) === 'principal' ? 'plat principal' : 'complément'), ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
+    return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', (prole(p) === 'principal' ? 'plat principal' : 'complément'), p.max ? 'max ' + p.max + '×/sem.' : '', ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
       '<span class="muted" style="font-size:12.5px">' + ((p.ing || []).map(function (g) { return fmtQ(g.qty) + ' ' + g.unit + ' ' + esc(g.nom); }).join(' · ') || 'Aucun ingrédient') + '</span>' +
       '<div class="btns"><button data-a="pedit" data-id="' + p.id + '">✏️ Modifier</button><button class="del" data-a="pdel" data-id="' + p.id + '">' + (pendingDel === p.id ? 'Confirmer ✕' : '✕ Supprimer') + '</button></div></div>';
   }
   function readForm() {
     if (!edit) edit = { nom: '', slots: [], role: 'principal', mode: 'fixe', kcal: '', prot: '', ing: [] };
     var n = $('#p-nom'); if (!n) return;
-    edit.nom = n.value; edit.kcal = $('#p-kcal').value; edit.prot = $('#p-prot').value;
+    edit.nom = n.value; edit.max = $('#p-max').value; edit.kcal = $('#p-kcal').value; edit.prot = $('#p-prot').value;
     edit.ing = [].map.call(document.querySelectorAll('.ing'), function (r) { return { nom: r.querySelector('[data-ing=nom]').value, qty: r.querySelector('[data-ing=qty]').value, unit: r.querySelector('[data-ing=unit]').value }; });
   }
 
@@ -376,7 +380,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       readForm();
       if (!edit.nom.trim()) { msgTxt = 'Donne un nom au plat.'; render(); return; }
       if (!edit.slots.length) { msgTxt = 'Choisis au moins une prise.'; render(); return; }
-      var obj = { id: edit.id || 'p' + Date.now().toString(36), nom: edit.nom.trim(), slots: edit.slots.slice(), role: edit.role || 'principal', mode: edit.mode || 'fixe', fixe: (edit.mode || 'fixe') === 'fixe', kcal: num(edit.kcal), prot: num(edit.prot), ing: edit.ing.filter(function (g) { return g.nom.trim(); }).map(function (g) { return { nom: g.nom.trim(), qty: num(g.qty) || 0, unit: g.unit }; }) };
+      var obj = { id: edit.id || 'p' + Date.now().toString(36), nom: edit.nom.trim(), slots: edit.slots.slice(), max: num(edit.max) ? Math.max(1, Math.round(num(edit.max))) : null, role: edit.role || 'principal', mode: edit.mode || 'fixe', fixe: (edit.mode || 'fixe') === 'fixe', kcal: num(edit.kcal), prot: num(edit.prot), ing: edit.ing.filter(function (g) { return g.nom.trim(); }).map(function (g) { return { nom: g.nom.trim(), qty: num(g.qty) || 0, unit: g.unit }; }) };
       var ex = plat(obj.id); if (ex) Object.assign(ex, obj); else S.plats.push(obj);
       edit = null; save();
     }

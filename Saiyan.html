@@ -703,6 +703,11 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   var openPicker = {};
   var db = null, migrated = false, needsRender = false, loadTimer = null;
 
+  /* Valeurs plausibles uniquement : une FC « au repos » de 245 vient d'un import de la FC normale, pas du repos. */
+  /* Apple Watch depuis le 23/09/2026 : FC repos et VFC antérieures non fiables, ignorées. */
+  var WATCH_START = '2026-09-23';
+  function okHr(v) { return v != null && v >= 30 && v <= 100 ? v : null; }
+  function okHrv(v) { return v != null && v >= 5 && v <= 300 ? v : null; }
   function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, musclePct: null, waist: null, kcalOut: null, hrRest: null, hrv: null, coffee: null, meals: [], cheats: [], extras: [], plan: [], sports: [] }; }
   function normSet(x) { var o = { w: num(x && x.w), r: num(x && x.r) }; if (x && num(x.t)) o.t = num(x.t); return o; }
   function normExo(e) {
@@ -793,7 +798,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); if (e.sleepMin != null && e.sleepMin > 1200) e.sleepMin = null; e.screenMin = num(o.screenMin);
     e.blue = !!o.blue; e.blueMin = num(o.blueMin);
     e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.musclePct = num(o.musclePct); e.waist = num(o.waist); e.kcalOut = num(o.kcalOut);
-    e.hrRest = num(o.hrRest); e.hrv = num(o.hrv); e.coffee = num(o.coffee);
+    e.hrRest = date >= WATCH_START ? okHr(num(o.hrRest)) : null; e.hrv = date >= WATCH_START ? okHrv(num(o.hrv)) : null; e.coffee = num(o.coffee);
     if (Array.isArray(o.plan)) e.plan = o.plan.filter(function (x) { return x && x.type; }).map(normPlanItem);
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
     e.extras = Array.isArray(o.extras) ? o.extras.map(function (x) { return String(x).slice(0, 40); }).filter(Boolean) : [];
@@ -2129,8 +2134,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     if (h.sleepMinX != null && h.sleepMinX > 0 && h.sleepMinX <= 1200) { d.sleepMin = Math.round(h.sleepMinX); done.push('sommeil (' + fmtDur(d.sleepMin) + ')'); }
     else if (h.sleep != null && h.sleep > 0) { d.sleepMin = Math.round(h.sleep > 1440 ? h.sleep / 60 : h.sleep > 24 ? h.sleep : h.sleep * 60); done.push('sommeil'); }
-    if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); done.push('FC repos'); }
-    if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); done.push('VFC'); }
+    if (okHr(h.hrRest) != null) { d.hrRest = Math.round(h.hrRest); done.push('FC repos'); }
+    if (okHrv(h.hrv) != null) { d.hrv = Math.round(h.hrv); done.push('VFC'); }
     if (h.water != null && h.water > 0) { d.water = Math.round((h.water > 20 ? h.water / 1000 : h.water) * 100) / 100; done.push('eau'); }
     if (done.length) { touch(date); cur = date; }
     return done;
@@ -2213,8 +2218,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       if (h.musclePct != null) { d.musclePct = Math.round((h.musclePct <= 1 ? h.musclePct * 100 : h.musclePct) * 10) / 10; any = true; }
       if ((h.kcalA != null || h.kcalR != null) && date < today) { d.kcalOut = Math.round((h.kcalA || 0) + (h.kcalR || 0)); any = true; }
       if (h.kcalIn != null && h.kcalIn > 0 && date < today) { d.kcal = Math.round(h.kcalIn); any = true; }
-      if (h.hrRest != null && h.hrRest > 0) { d.hrRest = Math.round(h.hrRest); any = true; }
-      if (h.hrv != null && h.hrv > 0) { d.hrv = Math.round(h.hrv); any = true; }
+      if (date >= WATCH_START && okHr(h.hrRest) != null) { d.hrRest = Math.round(h.hrRest); any = true; }
+      if (date >= WATCH_START && okHrv(h.hrv) != null) { d.hrv = Math.round(h.hrv); any = true; }
       if (h.sleepSum != null && h.sleepSum > 0 && h.sleepSum <= 1200) { d.sleepMin = Math.round(h.sleepSum); any = true; }
       if (any) { cnt++; ok.push(date); touch(date); }
     });
@@ -2403,7 +2408,29 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function chronoField(id, label, sec) {
     var h = sec == null ? '' : Math.floor(sec / 3600), m = sec == null ? '' : Math.floor(sec % 3600 / 60), x = sec == null ? '' : Math.round(sec % 60);
     function f(part, v, max, u) { return '<label class="field mini"><span class="sr">' + label + ' ' + u + '</span><input id="' + id + '-' + part + '" type="number" inputmode="numeric" min="0" max="' + max + '" step="1" placeholder="' + (part === 'h' ? '0' : '00') + '" value="' + v + '"><span class="unit">' + u + '</span></label>'; }
-    return '<div><div class="sub" style="margin-bottom:4px">' + label + '</div><div class="m-row">' + f('h', h, 23, 'h') + f('m', m === '' ? '' : pad(m), 59, 'min') + f('s', x === '' ? '' : pad(x), 59, 's') + '</div></div>';
+    var km = raceEdit ? raceKm(raceEdit) : null, pc = sec && km ? sec / km : null;
+    var pm = pc ? Math.floor(pc / 60) : '', ps = pc ? pad(Math.round(pc % 60) % 60) : '';
+    if (pc && Math.round(pc % 60) === 60) pm += 1;
+    return '<div data-chrono="' + id + '"><div class="sub" style="margin-bottom:4px">' + label + '</div><div class="m-row">' + f('h', h, 23, 'h') + f('m', m === '' ? '' : pad(m), 59, 'min') + f('s', x === '' ? '' : pad(x), 59, 's') + '</div>' +
+      '<div class="m-row" style="margin-top:4px"><span class="unit">soit</span><label class="field mini"><span class="sr">' + label + ' allure minutes</span><input id="' + id + '-pm" data-pace="' + id + '" type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="' + pm + '"><span class="unit">:</span></label>' +
+      '<label class="field mini"><span class="sr">' + label + ' allure secondes</span><input id="' + id + '-ps" data-pace="' + id + '" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="00" value="' + ps + '"><span class="unit">/km</span></label></div></div>';
+  }
+  /* Chrono ⇄ allure : on remplit l'un, l'autre se calcule avec la distance choisie. */
+  function syncChrono(el) {
+    if (!raceEdit) return;
+    var box = el.closest('[data-chrono]'); if (!box) return;
+    var id = box.dataset.chrono, kmEl = $('#rf-km'), km = raceEdit.dist === 'autre' ? (kmEl ? num(kmEl.value) : raceEdit.km) : raceKm(raceEdit);
+    if (!km) return;
+    if (el.dataset.pace) {
+      var pm = num($('#' + id + '-pm').value), ps = num($('#' + id + '-ps').value);
+      if (pm == null && ps == null) return;
+      var t = Math.round(((pm || 0) * 60 + (ps || 0)) * km);
+      $('#' + id + '-h').value = Math.floor(t / 3600); $('#' + id + '-m').value = pad(Math.floor(t % 3600 / 60)); $('#' + id + '-s').value = pad(t % 60);
+    } else {
+      var sec = readChrono(id); if (!sec) return;
+      var pc = Math.round(sec / km);
+      $('#' + id + '-pm').value = Math.floor(pc / 60); $('#' + id + '-ps').value = pad(pc % 60);
+    }
   }
   function readChrono(id) {
     var h = num($('#' + id + '-h').value), m = num($('#' + id + '-m').value), x = num($('#' + id + '-s').value);
@@ -2642,6 +2669,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   /* ---------- événements ---------- */
   function combine(h, m) { if (h === '' && m === '') return null; return Math.round((num(h) || 0) * 60 + (num(m) || 0)); }
   content.addEventListener('input', function (e) {
+    if (e.target.closest && e.target.closest('[data-chrono]')) { syncChrono(e.target); return; }
     var wf = e.target.dataset.field;
     if (wf === 'wod' || wf === 'wodMv') {
       var wt = wodTarget(e.target); if (!wt) return;
@@ -2673,7 +2701,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     else if (f === 'sleepH' || f === 'sleepM') d.sleepMin = combine($('#in-sleepH').value, $('#in-sleepM').value);
     else if (f === 'screenH' || f === 'screenM') d.screenMin = combine($('#in-screenH').value, $('#in-screenM').value);
     else if (f.indexOf('body-') === 0) { d[f.slice(5)] = num(el.value); refreshBody(d); }
-    else if (f === 'hrRest' || f === 'hrv') { d[f] = num(el.value); refreshReco(d); }
+    else if (f === 'hrRest' || f === 'hrv') { d[f] = f === 'hrRest' ? okHr(num(el.value)) : okHrv(num(el.value)); refreshReco(d); }
     else if (f === 'sportMin' && s) s.min = num(el.value);
     else if (f === 'sportKm' && s) s.km = num(el.value);
     else if (f === 'sportHr' && s) s.hr = num(el.value);

@@ -140,7 +140,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   function pmode(p) { return p.mode || (p.fixe === false ? 'decimal' : 'fixe'); }
   function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
-  var pendingAll = null, view = 'semaine', offset = 0, openDays = {}, edit = null, pendingDel = null, pendingClear = false, msgTxt = '';
+  var diagOpen = true, pendingAll = null, view = 'semaine', offset = 0, openDays = {}, edit = null, pendingDel = null, pendingClear = false, msgTxt = '';
   var main = document.getElementById('main');
   function $(q) { return document.querySelector(q); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -250,7 +250,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
             if (lines.some(function (l) { return l.pid === pl.id; })) continue;
             var m = mult(pl, e.si);
             k += pl.kcal * m; p += (pl.prot || 0) * m; lines.push({ pid: pl.id, mult: m });
-            pen += (used[pl.id] || 0) * 0.012 + (seen[pl.id] ? 0.04 : 0); seen[pl.id] = (seen[pl.id] || 0) + 1; pen += 0 + (pmode(pl) === 'decimal' ? Math.abs(m - 1) * 0.01 : (m - 1) * 0.006);
+            pen += (used[pl.id] || 0) * (prole(pl) === 'principal' ? 0.03 : 0.012) + (seen[pl.id] ? 0.06 : 0); seen[pl.id] = (seen[pl.id] || 0) + 1; pen += 0 + (pmode(pl) === 'decimal' ? Math.abs(m - 1) * 0.01 : (m - 1) * 0.006);
           }
           if (lines.length > 1) pen += 0.006;
           pick.push({ si: e.si, lines: lines });
@@ -303,6 +303,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
         return '<div class="ing"><input type="text" data-ing="nom" data-i="' + i + '" value="' + esc(g.nom) + '" placeholder="Ingrédient"><input type="number" inputmode="decimal" data-ing="qty" data-i="' + i + '" value="' + esc(g.qty) + '" placeholder="Qté"><select data-ing="unit" data-i="' + i + '">' + ['g', 'ml', 'unité'].map(function (u) { return '<option' + (g.unit === u ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select><button class="x" data-a="ingdel" data-i="' + i + '" aria-label="Retirer">✕</button></div>';
       }).join('') + '<button class="add" data-a="ingadd">+ Ingrédient</button><p class="msg">' + esc(msgTxt) + '</p>' +
       '<button class="btn" data-a="psave">Enregistrer</button>' + (edit ? '<button class="btn ghost" data-a="pcancel">Annuler</button>' : '') + '</div></section>';
+    h = diagCard() + h;
     h += '<section class="card" style="--ic:#A08CFF"><div class="head"><div class="t"><h2>Mes objectifs</h2><small>Pour les totaux de chaque jour</small></div></div><div class="two"><label class="f">Calories / jour<input type="number" inputmode="numeric" id="g-kcal" value="' + esc(S.goals.kcal) + '"></label><label class="f">Protéines / jour<input type="number" inputmode="numeric" id="g-prot" value="' + esc(S.goals.prot || '') + '" placeholder="g"></label></div></section>';
     h += '<section class="card plain"><div class="head"><div class="t"><h2>Mes plats</h2><small>' + S.plats.length + ' plats</small></div></div>' + SLOTS.map(function (s, si) {
       if (si === 3) return '';
@@ -311,6 +312,38 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       return '<div class="sub">' + (si === 1 ? 'Collations' : si === 2 ? 'Déjeuner / dîner' : s[0]) + '</div>' + items.map(platCard).join('');
     }).join('') + S.plats.filter(function (p) { return !p.slots || !p.slots.length; }).map(platCard).join('') + '</section>';
     return h;
+  }
+  /* Bilan de la bibliothèque : ce qui empêche la génération de tomber juste ou de varier. */
+  function diagCard() {
+    var out = [], gk = S.goals.kcal || 1950, gp = S.goals.prot || 0;
+    var wk = S.weeks[wkKey()] || {}, places = { 0: 0, 24: 0 };
+    dates(offset).forEach(function (d) { var di = iso(d); [0, 2, 4].forEach(function (si) { var x = (wk[di] || {})[si]; if (!x || !x.etat || x.etat === 'repas') places[si === 0 ? 0 : 24]++; }); });
+    function cap(test) { return S.plats.filter(function (p) { return p.kcal && prole(p) === 'principal' && (p.slots || []).some(test); }).reduce(function (n, p) { return n + (p.max || 99); }, 0); }
+    var cMain = cap(function (x) { return x === 2 || x === 4; }), cBk = cap(function (x) { return x === 0; });
+    var nMain = S.plats.filter(function (p) { return p.kcal && prole(p) === 'principal' && (p.slots || []).some(function (x) { return x === 2 || x === 4; }); }).length;
+    if (places[24]) {
+      if (cMain < places[24]) out.push(['bad', 'Déjeuners et dîners : ' + (cMain >= 99 ? 'plats illimités' : cMain + ' repas possibles') + ' pour ' + places[24] + ' places cette semaine. Augmente les « max par semaine » ou ajoute des plats principaux.']);
+      else if (nMain < 6) out.push(['warn', 'Seulement ' + nMain + ' plats principaux pour le midi et le soir : attends-toi à des répétitions. 6 à 8 plats donnent une semaine variée.']);
+      else out.push(['good', nMain + ' plats principaux pour le midi et le soir : assez pour varier.']);
+    }
+    if (places[0] && cBk < 99 && cBk < places[0]) out.push(['bad', 'Petit-déjeuner : ' + cBk + ' possibles pour ' + places[0] + ' jours.']);
+    var adj = S.plats.filter(function (p) { return p.kcal && p.prot && pmode(p) !== 'fixe'; });
+    var bestAdj = adj.reduce(function (m, p) { var dn = p.prot / p.kcal * 100; return !m || dn > m.dn ? { p: p, dn: dn } : m; }, null);
+    if (gp) {
+      if (!bestAdj || bestAdj.dn < 10) out.push(['bad', 'Aucun aliment ajustable vraiment protéiné' + (bestAdj ? ' (le meilleur : ' + esc(bestAdj.p.nom) + ', ' + fmtQ(bestAdj.dn) + ' g/100 kcal)' : '') + '. Passe le skyr, le fromage blanc ou un shaker en portion « Décimale » pour que l\'app puisse viser ' + gp + ' g.']);
+      else out.push(['good', 'Levier protéines : ' + esc(bestAdj.p.nom) + ' (' + fmtQ(bestAdj.dn) + ' g de protéines pour 100 kcal), ajustable.']);
+      var fixHigh = S.plats.filter(function (p) { return p.kcal && p.prot && pmode(p) === 'fixe' && prole(p) === 'complement' && p.prot / p.kcal * 100 >= 10; });
+      if (fixHigh.length) out.push(['warn', fixHigh.map(function (p) { return esc(p.nom); }).join(', ') + ' : très protéiné mais en portion fixe. En « Décimale », l\'app pourrait mieux doser.']);
+    }
+    S.plats.filter(function (p) { return p.kcal && p.prot != null && prole(p) === 'principal' && p.prot / p.kcal * 100 < 5; }).forEach(function (p) {
+      out.push(['warn', esc(p.nom) + ' : ' + fmtN(p.prot) + ' g de protéines pour ' + fmtN(p.kcal) + ' kcal, c\'est peu. Vérifie le chiffre.']);
+    });
+    var noK = S.plats.filter(function (p) { return !p.kcal; });
+    if (noK.length) out.push(['warn', noK.map(function (p) { return esc(p.nom); }).join(', ') + ' : pas de calories, donc jamais utilisé par la génération.']);
+    S.plats.filter(function (p) { return p.kcal > gk * 0.5; }).forEach(function (p) { out.push(['warn', esc(p.nom) + ' : ' + fmtN(p.kcal) + ' kcal, plus de la moitié de ta journée. Il ne pourra sortir que les jours très légers à côté.']); });
+    var bad = out.filter(function (x) { return x[0] !== 'good'; }).length;
+    return '<section class="card ' + (diagOpen ? 'open' : '') + '" style="--ic:' + (bad ? '#FF6B8B' : '#5BD893') + '"><div class="head" data-a="diag"><div class="t"><h2>Bilan de ma bibliothèque</h2><small>' + (bad ? plural(bad, 'point') + ' à améliorer pour des menus justes et variés' : 'Tout est prêt pour bien générer') + '</small></div><span class="pill ' + (bad ? 'bad' : 'good') + '">' + (bad ? bad + ' ⚠️' : '✓') + '</span><span class="chev"></span></div>' +
+      '<div class="body">' + out.map(function (x) { return '<div class="plat" style="flex-direction:row;gap:8px;align-items:flex-start"><span>' + (x[0] === 'good' ? '✅' : x[0] === 'bad' ? '🔴' : '🟠') + '</span><span style="font-size:14px">' + x[1] + '</span></div>'; }).join('') + '</div></section>';
   }
   function platCard(p) {
     return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', (prole(p) === 'principal' ? 'plat principal' : 'complément'), p.max ? 'max ' + p.max + '×/sem.' : '', ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
@@ -358,6 +391,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
         msgTxt = '';
       }
     }
+    else if (a === 'diag') diagOpen = !diagOpen;
     else if (a === 'gen') generer();
     else if (a === 'copy') {
       var ds = dates(offset), L = ['Menus — semaine du ' + $('#wk').textContent, ''];

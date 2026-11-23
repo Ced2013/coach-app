@@ -2595,7 +2595,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var hs = $('#health-slot'); if (hs) { hs.innerHTML = view === 'settings' && settings.health ? healthCard() : ''; hs.hidden = !hs.innerHTML; }
     if (view === 'day') refreshDay();
   }
-  var openCards = {};
+  /* Choix ouvert/fermé des objectifs, mémorisé pour de bon (même après fermeture de l'app). */
+  function saveFold() { try { localStorage.setItem(LS_FOLD, JSON.stringify(foldState)); } catch (x) {} }
   function refreshDay() {
     if (!$('#score-num')) return;
     var d = get(cur), ev = evalDay(d), score = 0, dots = document.querySelectorAll('#dots i');
@@ -2612,7 +2613,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       var rg = $('#ring-' + k);
       if (rg) { rg.className = 'ring ' + e.s; var fg0 = rg.querySelector('.fg'); fg0.style.opacity = (e.s === 'good' || e.p > 0) ? 1 : 0; fg0.setAttribute('stroke-dashoffset', (131.95 * (1 - Math.min(1, Math.max(e.s === 'good' ? 1 : 0, e.p || 0)))).toFixed(1)); }
       var mc = $('#m-' + k);
-      if (mc) { mc.classList.add('fold'); mc.classList.toggle('done', e.s === 'good'); if (!mc.contains(document.activeElement)) { var ov = openCards[cur + k]; mc.classList.toggle('shut', ov ? ov === 'shut' : e.s === 'good'); } }
+      if (mc) { mc.classList.add('fold'); mc.classList.toggle('done', e.s === 'good'); if (!mc.contains(document.activeElement)) { var ov = foldState['obj-' + k]; mc.classList.toggle('shut', ov ? ov === 'shut' : e.s === 'good'); } }
     });
     $('#score-num').textContent = score + '/5';
     $('#blue-yes').setAttribute('aria-pressed', d.blue);
@@ -2743,11 +2744,11 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     }
     var fc = settings.style !== 'classic' && e.target.closest('.card.fold');
     if (fc && fc.id && fc.id.indexOf('m-') === 0 && (fc.classList.contains('shut') || (!e.target.closest('input,button,select,label') && e.target.closest('.card.fold > .m-head')))) {
-      var shut = !fc.classList.contains('shut'); fc.classList.toggle('shut', shut); openCards[cur + fc.id.slice(2)] = shut ? 'shut' : 'open'; return;
+      var shut = !fc.classList.contains('shut'); fc.classList.toggle('shut', shut); foldState['obj-' + fc.id.slice(2)] = shut ? 'shut' : 'open'; saveFold(); return;
     }
     var b = e.target.closest('[data-action]');
     if (!b) return;
-    if (b.dataset.action === 'ring') { var tg = $('#m-' + b.dataset.k); if (tg) { if (tg.classList.contains('shut')) { openCards[cur + b.dataset.k] = 'open'; tg.classList.remove('shut'); } tg.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
+    if (b.dataset.action === 'ring') { var tg = $('#m-' + b.dataset.k); if (tg) { if (tg.classList.contains('shut')) { foldState['obj-' + b.dataset.k] = 'open'; saveFold(); tg.classList.remove('shut'); } tg.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
     var a = b.dataset.action, d, s, ex;
     if (a === 'prev' || a === 'next' || a === 'tab' || a === 'goto' || a === 'today') { planEdit = null; raceEdit = null; objEdit = null; }
     if (a === 'prev' || a === 'next') {

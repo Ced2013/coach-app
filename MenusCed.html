@@ -135,6 +135,8 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   if (!S.plats) S.plats = SEED.slice();
   if (S.goals.prot == null) S.goals.prot = 150;
   S.plats.forEach(function (p) { if (p.mode) return; if (p.fixe == null) p.fixe = (p.slots || []).some(function (x) { return x === 2 || x === 4; }) || ['e2', 'e4'].indexOf(p.id) >= 0 || ((p.ing || []).length > 0 && (p.ing || []).every(function (g) { return g.unit === 'unité'; })); p.mode = p.fixe ? 'fixe' : 'decimal'; });
+  S.plats.forEach(function (p) { if (!p.role) p.role = (p.slots || []).some(function (x) { return x === 2 || x === 4; }) || p.id === 'e2' ? 'principal' : 'complement'; });
+  function prole(p) { return p.role || 'principal'; }
   function pmode(p) { return p.mode || (p.fixe === false ? 'decimal' : 'fixe'); }
   function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
@@ -186,6 +188,8 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
         '<button class="x" data-a="delline" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '" aria-label="Retirer">✕</button></div>';
     }).join('');
     var has = (s.lines || []).some(function (l) { return plat(l.pid); });
+    var mains = (s.lines || []).filter(function (l) { return plat(l.pid) && prole(plat(l.pid)) === 'principal'; }).length;
+    if (mains > 1) h += '<span class="muted" style="color:var(--bad);font-size:12.5px">⚠️ Deux plats principaux dans la même prise : garde-en un seul.</span>';
     return h + '<div class="two"><button class="add" data-a="addline" data-di="' + di + '" data-si="' + si + '">+ Ajouter un plat</button>' +
       (has ? '<button class="add" style="border-style:solid" data-a="alldays" data-di="' + di + '" data-si="' + si + '">' + (pendingAll === di + '|' + si ? 'Confirmer ?' : '⧉ Tous les jours') + '</button>' : '') + '</div></div>';
   }
@@ -221,7 +225,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
         var s = slot(di, si); if (s.etat && s.etat !== 'repas') return;
         if ((s.lines || []).some(function (l) { return plat(l.pid); })) return;
         var ok = S.plats.filter(function (p) { return (!p.slots || !p.slots.length || p.slots.indexOf(si) >= 0) && p.kcal; });
-        if (ok.length) empty.push({ si: si, ok: ok });
+        if (ok.length) empty.push({ si: si, ok: ok, hasMain: false });
       });
       if (!empty.length) return;
       var best = null;
@@ -238,7 +242,10 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
           /* 1 plat, parfois 2 (ex. egg muffin + fromage blanc) */
           var n = e.ok.length > 1 && Math.random() < 0.4 ? 2 : 1, lines = [];
           for (var q = 0; q < n; q++) {
-            var pl = e.ok[Math.floor(Math.random() * e.ok.length)];
+            var pool = e.ok;
+            if (q > 0 || e.hasMain) pool = e.ok.filter(function (x) { return prole(x) === 'complement' || (q > 0 && !lines.some(function (l) { return prole(plat(l.pid)) === 'principal'; }) && !e.hasMain); });
+            if (!pool.length) break;
+            var pl = pool[Math.floor(Math.random() * pool.length)];
             if (lines.some(function (l) { return l.pid === pl.id; })) continue;
             var m = mult(pl, e.si);
             k += pl.kcal * m; p += (pl.prot || 0) * m; lines.push({ pid: pl.id, mult: m });
@@ -279,10 +286,12 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
 
   /* ---------- Plats ---------- */
   function platsView() {
-    var e = edit || { nom: '', slots: [], mode: 'fixe', kcal: '', prot: '', ing: [{ nom: '', qty: '', unit: 'g' }] };
+    var e = edit || { nom: '', slots: [], role: 'principal', mode: 'fixe', kcal: '', prot: '', ing: [{ nom: '', qty: '', unit: 'g' }] };
     var h = '<section class="card open" style="--ic:#FF8A3D"><div class="head"><div class="t"><h2>' + (edit && edit.id ? 'Modifier le plat' : 'Nouveau plat') + '</h2><small>Quantités pour 1 portion</small></div></div><div class="body">' +
       '<label class="f">Nom<input type="text" id="p-nom" value="' + esc(e.nom) + '" placeholder="Ex. Poulet, riz et légumes"></label>' +
       '<div class="sub">Pour quelles prises</div><div class="chips">' + SLOTS.map(function (s, si) { return '<button class="chip" data-a="pslot" data-si="' + si + '" aria-pressed="' + (e.slots.indexOf(si) >= 0) + '">' + s[0] + (si === 1 || si === 3 ? ' ' + s[1] : '') + '</button>'; }).join('') + '</div>' +
+      '<div class="sub">Rôle</div><div class="seg" style="align-self:flex-start">' + [['principal', 'Plat principal'], ['complement', 'Complément']].map(function (o) { return '<button data-a="prole" data-v="' + o[0] + '" aria-pressed="' + ((e.role || 'principal') === o[0]) + '" style="padding:8px 12px">' + o[1] + '</button>'; }).join('') + '</div>' +
+      '<span class="muted" style="font-size:12.5px;margin-top:-6px">Un seul plat principal par prise. Les compléments (skyr, fruit, fromage blanc…) peuvent s\'ajouter à côté.</span>' +
       '<div class="sub">Portion</div><div class="seg" style="align-self:flex-start">' + [['fixe', 'Fixe'], ['entier', 'Entière'], ['decimal', 'Décimale']].map(function (o) { return '<button data-a="pmode" data-v="' + o[0] + '" aria-pressed="' + ((e.mode || 'fixe') === o[0]) + '" style="padding:8px 12px">' + o[1] + '</button>'; }).join('') + '</div>' +
       '<span class="muted" style="font-size:12.5px;margin-top:-6px">' + ({ fixe: 'Fixe : toujours 1 portion (plat préparé à l\'avance).', entier: 'Entière : 1, 2 ou 3 (egg muffins, œufs, barres…).', decimal: 'Décimale : ×0,75 à ×2 (skyr, fromage blanc, flocons…).' })[e.mode || 'fixe'] + '</span>' +
       '<div class="two"><label class="f">Calories / portion<input type="number" inputmode="numeric" id="p-kcal" value="' + esc(e.kcal) + '" placeholder="kcal"></label><label class="f">Protéines / portion<input type="number" inputmode="numeric" id="p-prot" value="' + esc(e.prot) + '" placeholder="g"></label></div>' +
@@ -300,12 +309,12 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     return h;
   }
   function platCard(p) {
-    return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
+    return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', (prole(p) === 'principal' ? 'plat principal' : 'complément'), ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
       '<span class="muted" style="font-size:12.5px">' + ((p.ing || []).map(function (g) { return fmtQ(g.qty) + ' ' + g.unit + ' ' + esc(g.nom); }).join(' · ') || 'Aucun ingrédient') + '</span>' +
       '<div class="btns"><button data-a="pedit" data-id="' + p.id + '">✏️ Modifier</button><button class="del" data-a="pdel" data-id="' + p.id + '">' + (pendingDel === p.id ? 'Confirmer ✕' : '✕ Supprimer') + '</button></div></div>';
   }
   function readForm() {
-    if (!edit) edit = { nom: '', slots: [], mode: 'fixe', kcal: '', prot: '', ing: [] };
+    if (!edit) edit = { nom: '', slots: [], role: 'principal', mode: 'fixe', kcal: '', prot: '', ing: [] };
     var n = $('#p-nom'); if (!n) return;
     edit.nom = n.value; edit.kcal = $('#p-kcal').value; edit.prot = $('#p-prot').value;
     edit.ing = [].map.call(document.querySelectorAll('.ing'), function (r) { return { nom: r.querySelector('[data-ing=nom]').value, qty: r.querySelector('[data-ing=qty]').value, unit: r.querySelector('[data-ing=unit]').value }; });
@@ -358,6 +367,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     else if (a === 'check') { var ck = S.checked[wkKey()] = S.checked[wkKey()] || {}; if (ck[b.dataset.k]) delete ck[b.dataset.k]; else ck[b.dataset.k] = 1; save(); }
     else if (a === 'copyc') { var ck2 = S.checked[wkKey()] || {}; copyText(courses().filter(function (g) { return !ck2[g.k]; }).map(function (g) { return '• ' + g.nom + ' : ' + fmtQ(g.qty) + ' ' + g.unit; }).join('\n'), b); return; }
     else if (a === 'pslot') { readForm(); var k = edit.slots.indexOf(si); if (k >= 0) edit.slots.splice(k, 1); else edit.slots.push(si); edit.slots.sort(); }
+    else if (a === 'prole') { readForm(); edit.role = b.dataset.v; }
     else if (a === 'pmode') { readForm(); edit.mode = b.dataset.v; }
     else if (a === 'ingadd') { readForm(); edit.ing.push({ nom: '', qty: '', unit: 'g' }); }
     else if (a === 'ingdel') { readForm(); edit.ing.splice(+b.dataset.i, 1); }
@@ -366,11 +376,11 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       readForm();
       if (!edit.nom.trim()) { msgTxt = 'Donne un nom au plat.'; render(); return; }
       if (!edit.slots.length) { msgTxt = 'Choisis au moins une prise.'; render(); return; }
-      var obj = { id: edit.id || 'p' + Date.now().toString(36), nom: edit.nom.trim(), slots: edit.slots.slice(), mode: edit.mode || 'fixe', fixe: (edit.mode || 'fixe') === 'fixe', kcal: num(edit.kcal), prot: num(edit.prot), ing: edit.ing.filter(function (g) { return g.nom.trim(); }).map(function (g) { return { nom: g.nom.trim(), qty: num(g.qty) || 0, unit: g.unit }; }) };
+      var obj = { id: edit.id || 'p' + Date.now().toString(36), nom: edit.nom.trim(), slots: edit.slots.slice(), role: edit.role || 'principal', mode: edit.mode || 'fixe', fixe: (edit.mode || 'fixe') === 'fixe', kcal: num(edit.kcal), prot: num(edit.prot), ing: edit.ing.filter(function (g) { return g.nom.trim(); }).map(function (g) { return { nom: g.nom.trim(), qty: num(g.qty) || 0, unit: g.unit }; }) };
       var ex = plat(obj.id); if (ex) Object.assign(ex, obj); else S.plats.push(obj);
       edit = null; save();
     }
-    else if (a === 'pedit') { var p = plat(b.dataset.id); if (p) { edit = JSON.parse(JSON.stringify(p)); edit.slots = edit.slots || []; edit.mode = pmode(p); if (!edit.ing.length) edit.ing = [{ nom: '', qty: '', unit: 'g' }]; window.scrollTo(0, 0); } }
+    else if (a === 'pedit') { var p = plat(b.dataset.id); if (p) { edit = JSON.parse(JSON.stringify(p)); edit.slots = edit.slots || []; edit.mode = pmode(p); edit.role = prole(p); if (!edit.ing.length) edit.ing = [{ nom: '', qty: '', unit: 'g' }]; window.scrollTo(0, 0); } }
     else if (a === 'pdel') {
       var id = b.dataset.id;
       if (pendingDel !== id) { pendingDel = id; setTimeout(function () { if (pendingDel === id) { pendingDel = null; render(); } }, 4000); }

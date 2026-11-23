@@ -147,7 +147,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   if (S.goals.prot == null) S.goals.prot = 150;
   S.plats.forEach(function (p) { if (p.mode) return; if (p.fixe == null) p.fixe = (p.slots || []).some(function (x) { return x === 2 || x === 4; }) || ['e2', 'e4'].indexOf(p.id) >= 0 || ((p.ing || []).length > 0 && (p.ing || []).every(function (g) { return g.unit === 'unité'; })); p.mode = p.fixe ? 'fixe' : 'decimal'; });
   var PACK = [
-    { nom: 'Œuf à la coque + pain de campagne (30 g)', slots: [0, 4], role: 'principal', mode: 'entier', kcal: 150, prot: 9, max: 5, gluc: 15.5, lip: 5.4, ing: [{ nom: 'œufs', qty: 1, unit: 'unité' }, { nom: 'pain de campagne', qty: 30, unit: 'g' }] },
+    { nom: 'Œuf à la coque + pain de campagne (30 g)', slots: [0, 4], role: 'principal', mode: 'entier', maxQ: 3, kcal: 150, prot: 9, max: 5, gluc: 15.5, lip: 5.4, ing: [{ nom: 'œufs', qty: 1, unit: 'unité' }, { nom: 'pain de campagne', qty: 30, unit: 'g' }] },
     { nom: 'Egg Muffin', slots: [0, 4], role: 'principal', mode: 'entier', kcal: 325, prot: 19, max: 5, gluc: 20, lip: 18, ing: [{ nom: 'œufs', qty: 1, unit: 'unité' }, { nom: 'tranches de cheddar', qty: 1, unit: 'unité' }, { nom: 'pains muffin', qty: 1, unit: 'unité' }] },
     { nom: 'Fromage blanc', slots: [0, 4], role: 'complement', mode: 'decimal', kcal: 72, prot: 7, typ: 100, gluc: 4, lip: 3, ing: [{ nom: 'fromage blanc', qty: 100, unit: 'g' }] },
     { nom: 'Poulet', slots: [2, 4], role: 'proteine', mode: 'decimal', kcal: 110, prot: 23, typ: 150, gluc: 0, lip: 1.8, ing: [{ nom: 'blanc de poulet', qty: 100, unit: 'g' }] },
@@ -179,6 +179,15 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       Object.keys(S.weeks || {}).forEach(function (w) { var W = S.weeks[w]; Object.keys(W).forEach(function (d) { Object.keys(W[d]).forEach(function (k) { (W[d][k].lines || []).forEach(function (l) { if (l.pid === p.id) l.mult = 1; }); }); }); }); }
     if (p.gluc == null) { var src = PACK.filter(function (x) { return x.nom.toLowerCase() === (p.nom || '').toLowerCase(); })[0]; if (src && src.kcal === p.kcal) { p.gluc = src.gluc; p.lip = src.lip; mig = true; } }
   });
+  var eg = S.plats.filter(function (p) { return p.duo === 'coque' && prole(p) === 'proteine'; })[0], pn = S.plats.filter(function (p) { return p.duo === 'coque' && prole(p) === 'feculent'; })[0];
+  if (eg) {
+    var c = JSON.parse(JSON.stringify(PACK[0])); Object.keys(eg).forEach(function (k) { if (k !== 'id') delete eg[k]; }); Object.assign(eg, c); mig = true;
+    if (pn) {
+      S.plats.splice(S.plats.indexOf(pn), 1);
+      Object.keys(S.weeks || {}).forEach(function (w) { var W = S.weeks[w]; Object.keys(W).forEach(function (d) { Object.keys(W[d]).forEach(function (k) { if (W[d][k].lines) W[d][k].lines = W[d][k].lines.filter(function (l) { return l.pid !== pn.id; }); }); }); });
+    }
+  }
+  S.plats.forEach(function (p) { if (/^(œ|oe)uf à la coque \+ pain/i.test(p.nom || '') && !p.maxQ) { p.maxQ = 3; mig = true; } });
   if (mig) setTimeout(function () { try { save(); } catch (e) {} }, 0);
   S.plats.forEach(function (p) { if (!p.role) p.role = (p.slots || []).some(function (x) { return x === 2 || x === 4; }) || p.id === 'e2' ? 'principal' : 'complement'; });
   function prole(p) { return p.role || 'principal'; }
@@ -286,7 +295,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       function mult(pl, si) {
         var md = pmode(pl);
         if (md === 'fixe') return 1;
-        if (md === 'entier') return Math.random() < 0.6 ? 1 : 2;
+        if (md === 'entier') return pl.maxQ ? 1 + Math.floor(Math.random() * pl.maxQ) : (Math.random() < 0.6 ? 1 : 2);
         var m = MULTS[Math.floor(Math.random() * MULTS.length)];
         if (isGr(pl) && (prole(pl) === 'proteine' || prole(pl) === 'feculent') && m < 0.75) m = 0.75;
         if (isGr(pl)) { var g = Math.round((pl.typ || 100) * m / 10) * 10; return Math.max(10, g) / 100; }

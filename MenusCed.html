@@ -54,7 +54,8 @@ main { display: flex; flex-direction: column; gap: 12px; }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: #fff; }
 .seg button { border: 0; background: none; padding: 5px 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: var(--marine); color: var(--creme); }
-.line { display: grid; grid-template-columns: minmax(0,1fr) 3.6em 32px; gap: 6px; align-items: center; }
+.gin { position: relative; } .gin input { width: 100%; padding-right: 1.4em; } .gin i { position: absolute; right: .6em; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 13px; opacity: .6; pointer-events: none; }
+.line { display: grid; grid-template-columns: minmax(0,1fr) 5em 32px; gap: 6px; align-items: center; }
 select, input[type=text], input[type=number] { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 9px; }
 input[type=number] { text-align: center; }
 .x { min-height: 32px; border: 0; background: none; color: var(--bad); font-size: 18px; }
@@ -135,12 +136,23 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   if (!S.plats) S.plats = SEED.slice();
   if (S.goals.prot == null) S.goals.prot = 150;
   S.plats.forEach(function (p) { if (p.mode) return; if (p.fixe == null) p.fixe = (p.slots || []).some(function (x) { return x === 2 || x === 4; }) || ['e2', 'e4'].indexOf(p.id) >= 0 || ((p.ing || []).length > 0 && (p.ing || []).every(function (g) { return g.unit === 'unité'; })); p.mode = p.fixe ? 'fixe' : 'decimal'; });
+  /* Passage « tout pour 100 g » : un aliment au poids défini sur une autre base est ramené à 100 g. */
+  var mig = false;
+  S.plats.forEach(function (p) {
+    if ((p.mode || '') !== 'decimal' || (p.ing || []).length !== 1 || p.ing[0].unit !== 'g') return;
+    var q = +p.ing[0].qty; if (!q || q === 100) return;
+    var f = 100 / q; p.kcal = Math.round(p.kcal * f); p.prot = Math.round(p.prot * f * 10) / 10; p.typ = p.typ || q; p.ing[0].qty = 100; mig = true;
+    Object.keys(S.weeks || {}).forEach(function (w) { var W = S.weeks[w]; Object.keys(W).forEach(function (d) { Object.keys(W[d]).forEach(function (k) { (W[d][k].lines || []).forEach(function (l) { if (l.pid === p.id) l.mult = Math.round((l.mult || 1) * q) / 100; }); }); }); });
+  });
+  if (mig) setTimeout(function () { try { save(); } catch (e) {} }, 0);
   S.plats.forEach(function (p) { if (!p.role) p.role = (p.slots || []).some(function (x) { return x === 2 || x === 4; }) || p.id === 'e2' ? 'principal' : 'complement'; });
   function prole(p) { return p.role || 'principal'; }
+  /* Aliment au poids : valeurs pour 100 g, portion saisie directement en grammes */
+  function isGr(p) { return p && pmode(p) === 'decimal' && (p.ing || []).length === 1 && p.ing[0].unit === 'g' && +p.ing[0].qty === 100; }
   function pmode(p) { return p.mode || (p.fixe === false ? 'decimal' : 'fixe'); }
   function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
-  var diagOpen = true, pendingAll = null, view = 'semaine', offset = 0, openDays = {}, edit = null, pendingDel = null, pendingClear = false, msgTxt = '';
+  var pendingPack = false, diagOpen = true, pendingAll = null, view = 'semaine', offset = 0, openDays = {}, edit = null, pendingDel = null, pendingClear = false, msgTxt = '';
   var main = document.getElementById('main');
   function $(q) { return document.querySelector(q); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -185,8 +197,11 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       var opts = S.plats.filter(function (p) { return !p.slots || !p.slots.length || p.slots.indexOf(si) >= 0 || p.id === l.pid; });
       return '<div class="line"><select data-f="pid" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '"><option value="">— choisir —</option>' +
         opts.map(function (p) { return '<option value="' + p.id + '"' + (p.id === l.pid ? ' selected' : '') + '>' + esc(p.nom) + '</option>'; }).join('') + '</select>' +
-        '<input type="number" step="' + (plat(l.pid) && pmode(plat(l.pid)) !== 'decimal' ? 1 : 0.25) + '" min="0.25" inputmode="decimal" title="Portion" data-f="mult" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '" value="' + (l.mult || 1) + '">' +
-        '<button class="x" data-a="delline" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '" aria-label="Retirer">✕</button></div>';
+        (isGr(plat(l.pid))
+          ? '<div class="gin"><input type="number" step="10" min="5" inputmode="numeric" title="Grammes" data-f="grams" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '" value="' + Math.round((l.mult || 1) * 100) + '"><i>g</i></div>'
+          : '<input type="number" step="' + (plat(l.pid) && pmode(plat(l.pid)) !== 'decimal' ? 1 : 0.25) + '" min="0.25" inputmode="decimal" title="Portion" data-f="mult" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '" value="' + (l.mult || 1) + '">') +
+        '<button class="x" data-a="delline" data-di="' + di + '" data-si="' + si + '" data-li="' + li + '" aria-label="Retirer">✕</button>' +
+        (plat(l.pid) && plat(l.pid).kcal ? '<span class="muted" style="grid-column:1/-1;margin-top:-4px;font-size:12.5px">' + fmtN(plat(l.pid).kcal * (l.mult || 1)) + ' kcal · ' + fmtQ((plat(l.pid).prot || 0) * (l.mult || 1)) + ' g prot.</span>' : '') + '</div>';
     }).join('');
     var has = (s.lines || []).some(function (l) { return plat(l.pid); });
     var mains = (s.lines || []).filter(function (l) { return plat(l.pid) && prole(plat(l.pid)) === 'principal'; }).length;
@@ -215,13 +230,15 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
   }
   /* Génération : pour chaque jour, on cherche la combinaison de plats et de portions
      la plus proche de l'objectif kcal ET protéines, en tenant compte de ce qui est déjà rempli. */
-  var MULTS = [0.75, 1, 1.25, 1.5, 2];
+  var MULTS = [0.5, 0.75, 1, 1.25, 1.5];
+  var COMP = { proteine: 1, feculent: 1, legume: 1 };
   function generer() {
     var skipped = 0, ds = dates(offset), used = {}, added = 0, gk = S.goals.kcal || 1950, gp = S.goals.prot || 0;
     ds.forEach(function (d) { SLOTS.forEach(function (_, si) { (slot(iso(d), si).lines || []).forEach(function (l) { used[l.pid] = (used[l.pid] || 0) + 1; }); }); });
     var report = [];
     ds.forEach(function (d) {
-      var di = iso(d), base = dayTotals(di), empty = [];
+      var di = iso(d), base = dayTotals(di), empty = [], dayUsed = {};
+      SLOTS.forEach(function (_, sj) { (slot(di, sj).lines || []).forEach(function (l) { dayUsed[l.pid] = (dayUsed[l.pid] || 0) + 1; }); });
       SLOTS.forEach(function (_, si) {
         var s = slot(di, si); if (s.etat && s.etat !== 'repas') return;
         if ((s.lines || []).some(function (l) { return plat(l.pid); })) return;
@@ -233,26 +250,36 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       function mult(pl, si) {
         var md = pmode(pl);
         if (md === 'fixe') return 1;
-        if (md === 'entier') return 1 + Math.floor(Math.random() * 3);
+        if (md === 'entier') return Math.random() < 0.6 ? 1 : 2;
         var m = MULTS[Math.floor(Math.random() * MULTS.length)];
-        return (si === 1 || si === 3) ? Math.min(m, 1.5) : m;
+        if (isGr(pl) && (prole(pl) === 'proteine' || prole(pl) === 'feculent') && m < 0.75) m = 0.75;
+        if (isGr(pl)) { var g = Math.round((pl.typ || 100) * m / 10) * 10; return Math.max(10, g) / 100; }
+        return m;
       }
       for (var t = 0; t < 12000; t++) {
         var k = base.kcal, p = base.prot, pick = [], pen = 0, seen = {};
         empty.forEach(function (e) {
-          /* 1 plat, parfois 2 (ex. egg muffin + fromage blanc) */
-          var n = e.ok.length > 1 && Math.random() < 0.4 ? 2 : 1, lines = [];
-          for (var q = 0; q < n; q++) {
-            var pool = e.ok.filter(function (x) { return !x.max || (used[x.id] || 0) + (seen[x.id] || 0) < x.max; });
-            if (q > 0 || e.hasMain) pool = pool.filter(function (x) { return prole(x) === 'complement' || (q > 0 && !lines.some(function (l) { return prole(plat(l.pid)) === 'principal'; }) && !e.hasMain); });
-            if (!pool.length) break;
-            var pl = pool[Math.floor(Math.random() * pool.length)];
-            if (lines.some(function (l) { return l.pid === pl.id; })) continue;
-            var m = mult(pl, e.si);
+          var lines = [];
+          function avail(role) { return e.ok.filter(function (x) { return prole(x) === role && (!x.max || (used[x.id] || 0) + (seen[x.id] || 0) < x.max) && (seen[x.id] || 0) + (dayUsed[x.id] || 0) < (x.maxJour || (COMP[prole(x)] ? 2 : 1)); }); }
+          function take(role) {
+            var pool = avail(role).filter(function (x) { return !lines.some(function (l) { return l.pid === x.id; }); });
+            if (!pool.length) return false;
+            var pl = pool[Math.floor(Math.random() * pool.length)], m = mult(pl, e.si);
             k += pl.kcal * m; p += (pl.prot || 0) * m; lines.push({ pid: pl.id, mult: m });
-            pen += (used[pl.id] || 0) * (prole(pl) === 'principal' ? 0.03 : 0.012) + (seen[pl.id] ? 0.06 : 0); seen[pl.id] = (seen[pl.id] || 0) + 1; pen += 0 + (pmode(pl) === 'decimal' ? Math.abs(m - 1) * 0.01 : (m - 1) * 0.006);
+            pen += (used[pl.id] || 0) * (role === 'principal' ? 0.03 : 0.02) + (seen[pl.id] ? 0.05 : 0) + (pmode(pl) === 'decimal' ? Math.abs(m * (isGr(pl) ? 100 / (pl.typ || 100) : 1) - 1) * 0.01 : (m - 1) * 0.006);
+            seen[pl.id] = (seen[pl.id] || 0) + 1; return true;
           }
-          if (lines.length > 1) pen += 0.006;
+          /* Midi / soir : plat complet OU assiette composée protéine + féculent + légume */
+          var canCombo = avail('proteine').length && avail('feculent').length, hasMainP = avail('principal').length;
+          if (canCombo && (!hasMainP || Math.random() < 0.7)) {
+            take('proteine'); take('feculent'); take('legume');
+            if (Math.random() < 0.35) take('complement');
+          } else if (hasMainP) {
+            take('principal'); if (Math.random() < 0.4) take('complement');
+          } else {
+            take('complement'); if (Math.random() < 0.4) take('complement');
+          }
+          if (lines.length > 3) pen += 0.004;
           pick.push({ si: e.si, lines: lines });
         });
         if (k > gk) continue; /* jamais au-dessus de l'objectif kcal */
@@ -293,11 +320,11 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     var h = '<section class="card open" style="--ic:#FF8A3D"><div class="head"><div class="t"><h2>' + (edit && edit.id ? 'Modifier le plat' : 'Nouveau plat') + '</h2><small>Quantités pour 1 portion</small></div></div><div class="body">' +
       '<label class="f">Nom<input type="text" id="p-nom" value="' + esc(e.nom) + '" placeholder="Ex. Poulet, riz et légumes"></label>' +
       '<div class="sub">Pour quelles prises</div><div class="chips">' + SLOTS.map(function (s, si) { return '<button class="chip" data-a="pslot" data-si="' + si + '" aria-pressed="' + (e.slots.indexOf(si) >= 0) + '">' + s[0] + (si === 1 || si === 3 ? ' ' + s[1] : '') + '</button>'; }).join('') + '</div>' +
-      '<div class="sub">Rôle</div><div class="seg" style="align-self:flex-start">' + [['principal', 'Plat principal'], ['complement', 'Complément']].map(function (o) { return '<button data-a="prole" data-v="' + o[0] + '" aria-pressed="' + ((e.role || 'principal') === o[0]) + '" style="padding:8px 12px">' + o[1] + '</button>'; }).join('') + '</div>' +
-      '<span class="muted" style="font-size:12.5px;margin-top:-6px">Un seul plat principal par prise. Les compléments (skyr, fruit, fromage blanc…) peuvent s\'ajouter à côté.</span>' +
+      '<div class="sub">Rôle</div><div class="seg" style="align-self:flex-start">' + [['principal', 'Plat complet'], ['proteine', 'Protéine'], ['feculent', 'Féculent'], ['legume', 'Légume'], ['complement', 'Complément']].map(function (o) { return '<button data-a="prole" data-v="' + o[0] + '" aria-pressed="' + ((e.role || 'principal') === o[0]) + '" style="padding:8px 12px">' + o[1] + '</button>'; }).join('') + '</div>' +
+      '<span class="muted" style="font-size:12.5px;margin-top:-6px">Midi et soir, l\'app compose une assiette protéine + féculent + légume, ou prend un plat complet. Les compléments (skyr, fruit…) s\'ajoutent à côté.</span>' +
       '<div class="sub">Portion</div><div class="seg" style="align-self:flex-start">' + [['fixe', 'Fixe'], ['entier', 'Entière'], ['decimal', 'Décimale']].map(function (o) { return '<button data-a="pmode" data-v="' + o[0] + '" aria-pressed="' + ((e.mode || 'fixe') === o[0]) + '" style="padding:8px 12px">' + o[1] + '</button>'; }).join('') + '</div>' +
       '<span class="muted" style="font-size:12.5px;margin-top:-6px">' + ({ fixe: 'Fixe : toujours 1 portion (plat préparé à l\'avance).', entier: 'Entière : 1, 2 ou 3 (egg muffins, œufs, barres…).', decimal: 'Décimale : ×0,75 à ×2 (skyr, fromage blanc, flocons…).' })[e.mode || 'fixe'] + '</span>' +
-      '<label class="f">Maximum par semaine<input type="number" inputmode="numeric" min="1" id="p-max" value="' + esc(e.max || '') + '" placeholder="Illimité (ex. 1 pour le camembert rôti)"></label>' +
+      '<div class="two"><label class="f">Max par jour<input type="number" inputmode="numeric" min="1" id="p-maxj" value="' + esc(e.maxJour || '') + '" placeholder="1"></label><label class="f">Max par semaine<input type="number" inputmode="numeric" min="1" id="p-max" value="' + esc(e.max || '') + '" placeholder="Illimité"></label></div>' +
       '<div class="two"><label class="f">Calories / portion<input type="number" inputmode="numeric" id="p-kcal" value="' + esc(e.kcal) + '" placeholder="kcal"></label><label class="f">Protéines / portion<input type="number" inputmode="numeric" id="p-prot" value="' + esc(e.prot) + '" placeholder="g"></label></div>' +
       '<div class="sub">Ingrédients</div>' + e.ing.map(function (g, i) {
         return '<div class="ing"><input type="text" data-ing="nom" data-i="' + i + '" value="' + esc(g.nom) + '" placeholder="Ingrédient"><input type="number" inputmode="decimal" data-ing="qty" data-i="' + i + '" value="' + esc(g.qty) + '" placeholder="Qté"><select data-ing="unit" data-i="' + i + '">' + ['g', 'ml', 'unité'].map(function (u) { return '<option' + (g.unit === u ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select><button class="x" data-a="ingdel" data-i="' + i + '" aria-label="Retirer">✕</button></div>';
@@ -313,24 +340,53 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     }).join('') + S.plats.filter(function (p) { return !p.slots || !p.slots.length; }).map(platCard).join('') + '</section>';
     return h;
   }
+
+  /* Pack d'idées : valeurs moyennes indicatives, à ajuster. */
+  var PACK = [
+    { nom: 'Œuf à la coque + pain de campagne (30 g)', slots: [0, 4], role: 'principal', mode: 'entier', kcal: 150, prot: 9, max: 5, ing: [{ nom: 'œufs', qty: 1, unit: 'unité' }, { nom: 'pain de campagne', qty: 30, unit: 'g' }] },
+    { nom: 'Egg Muffin', slots: [0, 4], role: 'principal', mode: 'entier', kcal: 325, prot: 19, max: 5, ing: [{ nom: 'œufs', qty: 1, unit: 'unité' }, { nom: 'tranches de cheddar', qty: 1, unit: 'unité' }, { nom: 'pains muffin', qty: 1, unit: 'unité' }] },
+    { nom: 'Fromage blanc', slots: [0, 4], role: 'complement', mode: 'decimal', kcal: 72, prot: 6, typ: 100, ing: [{ nom: 'fromage blanc', qty: 100, unit: 'g' }] },
+    { nom: 'Poulet', slots: [2, 4], role: 'proteine', mode: 'decimal', kcal: 110, prot: 23, typ: 150, ing: [{ nom: 'blanc de poulet', qty: 100, unit: 'g' }] },
+    { nom: 'Saumon', slots: [4], role: 'proteine', mode: 'decimal', kcal: 200, prot: 20, typ: 125, ing: [{ nom: 'saumon', qty: 100, unit: 'g' }] },
+    { nom: 'Riz', slots: [2, 4], role: 'feculent', mode: 'decimal', kcal: 355, prot: 7.5, typ: 60, ing: [{ nom: 'riz (cru)', qty: 100, unit: 'g' }] },
+    { nom: 'Pâtes', slots: [2, 4], role: 'feculent', mode: 'decimal', kcal: 357, prot: 12.5, typ: 70, ing: [{ nom: 'pâtes (crues)', qty: 100, unit: 'g' }] },
+    { nom: 'Boulgour', slots: [2, 4], role: 'feculent', mode: 'decimal', kcal: 342, prot: 12, typ: 60, ing: [{ nom: 'boulgour (cru)', qty: 100, unit: 'g' }] },
+    { nom: 'Quinoa', slots: [2, 4], role: 'feculent', mode: 'decimal', kcal: 368, prot: 14, typ: 60, ing: [{ nom: 'quinoa (cru)', qty: 100, unit: 'g' }] },
+    { nom: 'Lentilles quinoa', slots: [2, 4], role: 'feculent', mode: 'decimal', kcal: 249, prot: 11, typ: 100, ing: [{ nom: 'lentilles quinoa', qty: 100, unit: 'g' }] },
+    { nom: 'Patates douces', slots: [2, 4], role: 'feculent', mode: 'decimal', kcal: 86, prot: 1.6, typ: 200, ing: [{ nom: 'patates douces', qty: 100, unit: 'g' }] },
+    { nom: 'Courgettes', slots: [2, 4], role: 'legume', mode: 'decimal', kcal: 17, prot: 1.2, typ: 200, ing: [{ nom: 'courgettes', qty: 100, unit: 'g' }] },
+    { nom: 'Wrap poulet', slots: [2, 4], role: 'principal', mode: 'entier', kcal: 220, prot: 17, max: 2, ing: [{ nom: 'wraps', qty: 1, unit: 'unité' }, { nom: 'blanc de poulet', qty: 50, unit: 'g' }] },
+    { nom: 'Skyr', slots: [1, 2, 3], role: 'complement', mode: 'decimal', kcal: 57, prot: 9, typ: 100, ing: [{ nom: 'skyr', qty: 100, unit: 'g' }] },
+    { nom: 'Banane', slots: [1, 3], role: 'complement', mode: 'entier', kcal: 107, prot: 1, ing: [{ nom: 'bananes', qty: 1, unit: 'unité' }] },
+    { nom: 'Pomme', slots: [1, 3], role: 'complement', mode: 'entier', kcal: 95, prot: 0, ing: [{ nom: 'pommes', qty: 1, unit: 'unité' }] },
+    { nom: 'Amandes', slots: [1, 3], role: 'complement', mode: 'decimal', kcal: 600, prot: 21, typ: 20, ing: [{ nom: 'amandes', qty: 100, unit: 'g' }] }
+  ];
+
+  /* Remplace la bibliothèque par la liste d'aliments à combiner (les menus déjà faits restent affichés tels quels). */
+  function addPack() {
+    S.plats = PACK.map(function (x, i) { var o = JSON.parse(JSON.stringify(x)); o.id = 'b' + i + Date.now().toString(36); o.fixe = o.mode === 'fixe'; return o; });
+    save(); return S.plats.length;
+  }
   /* Bilan de la bibliothèque : ce qui empêche la génération de tomber juste ou de varier. */
   function diagCard() {
     var out = [], gk = S.goals.kcal || 1950, gp = S.goals.prot || 0;
     var wk = S.weeks[wkKey()] || {}, places = { 0: 0, 24: 0 };
     dates(offset).forEach(function (d) { var di = iso(d); [0, 2, 4].forEach(function (si) { var x = (wk[di] || {})[si]; if (!x || !x.etat || x.etat === 'repas') places[si === 0 ? 0 : 24]++; }); });
     function cap(test) { return S.plats.filter(function (p) { return p.kcal && prole(p) === 'principal' && (p.slots || []).some(test); }).reduce(function (n, p) { return n + (p.max || 99); }, 0); }
-    var cMain = cap(function (x) { return x === 2 || x === 4; }), cBk = cap(function (x) { return x === 0; });
-    var nMain = S.plats.filter(function (p) { return p.kcal && prole(p) === 'principal' && (p.slots || []).some(function (x) { return x === 2 || x === 4; }); }).length;
+    var hasCombo = S.plats.some(function (p) { return prole(p) === 'proteine'; }) && S.plats.some(function (p) { return prole(p) === 'feculent'; });
+    var cMain = hasCombo ? 999 : cap(function (x) { return x === 2 || x === 4; }), cBk = cap(function (x) { return x === 0; });
+    var nMain = hasCombo ? S.plats.filter(function (p) { return prole(p) === 'proteine'; }).length * S.plats.filter(function (p) { return prole(p) === 'feculent'; }).length : S.plats.filter(function (p) { return p.kcal && prole(p) === 'principal' && (p.slots || []).some(function (x) { return x === 2 || x === 4; }); }).length;
     if (places[24]) {
       if (cMain < places[24]) out.push(['bad', 'Déjeuners et dîners : ' + (cMain >= 99 ? 'plats illimités' : cMain + ' repas possibles') + ' pour ' + places[24] + ' places cette semaine. Augmente les « max par semaine » ou ajoute des plats principaux.']);
       else if (nMain < 6) out.push(['warn', 'Seulement ' + nMain + ' plats principaux pour le midi et le soir : attends-toi à des répétitions. 6 à 8 plats donnent une semaine variée.']);
-      else out.push(['good', nMain + ' plats principaux pour le midi et le soir : assez pour varier.']);
+      else out.push(['good', (hasCombo ? nMain + ' assiettes protéine + féculent possibles' : nMain + ' plats principaux') + ' pour le midi et le soir : assez pour varier.']);
     }
     if (places[0] && cBk < 99 && cBk < places[0]) out.push(['bad', 'Petit-déjeuner : ' + cBk + ' possibles pour ' + places[0] + ' jours.']);
     var adj = S.plats.filter(function (p) { return p.kcal && p.prot && pmode(p) !== 'fixe'; });
     var bestAdj = adj.reduce(function (m, p) { var dn = p.prot / p.kcal * 100; return !m || dn > m.dn ? { p: p, dn: dn } : m; }, null);
     if (gp) {
       if (!bestAdj || bestAdj.dn < 10) out.push(['bad', 'Aucun aliment ajustable vraiment protéiné' + (bestAdj ? ' (le meilleur : ' + esc(bestAdj.p.nom) + ', ' + fmtQ(bestAdj.dn) + ' g/100 kcal)' : '') + '. Passe le skyr, le fromage blanc ou un shaker en portion « Décimale » pour que l\'app puisse viser ' + gp + ' g.']);
+      else if (adj.filter(function (p) { return p.prot / p.kcal * 100 >= 10; }).length < 2) out.push(['warn', 'Un seul levier protéiné ajustable (' + esc(bestAdj.p.nom) + ') : il va revenir souvent. Ajoute-en un 2ᵉ (shaker, thon, blanc de poulet, cottage cheese…) en portion Décimale.']);
       else out.push(['good', 'Levier protéines : ' + esc(bestAdj.p.nom) + ' (' + fmtQ(bestAdj.dn) + ' g de protéines pour 100 kcal), ajustable.']);
       var fixHigh = S.plats.filter(function (p) { return p.kcal && p.prot && pmode(p) === 'fixe' && prole(p) === 'complement' && p.prot / p.kcal * 100 >= 10; });
       if (fixHigh.length) out.push(['warn', fixHigh.map(function (p) { return esc(p.nom); }).join(', ') + ' : très protéiné mais en portion fixe. En « Décimale », l\'app pourrait mieux doser.']);
@@ -343,17 +399,17 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     S.plats.filter(function (p) { return p.kcal > gk * 0.5; }).forEach(function (p) { out.push(['warn', esc(p.nom) + ' : ' + fmtN(p.kcal) + ' kcal, plus de la moitié de ta journée. Il ne pourra sortir que les jours très légers à côté.']); });
     var bad = out.filter(function (x) { return x[0] !== 'good'; }).length;
     return '<section class="card ' + (diagOpen ? 'open' : '') + '" style="--ic:' + (bad ? '#FF6B8B' : '#5BD893') + '"><div class="head" data-a="diag"><div class="t"><h2>Bilan de ma bibliothèque</h2><small>' + (bad ? plural(bad, 'point') + ' à améliorer pour des menus justes et variés' : 'Tout est prêt pour bien générer') + '</small></div><span class="pill ' + (bad ? 'bad' : 'good') + '">' + (bad ? bad + ' ⚠️' : '✓') + '</span><span class="chev"></span></div>' +
-      '<div class="body">' + out.map(function (x) { return '<div class="plat" style="flex-direction:row;gap:8px;align-items:flex-start"><span>' + (x[0] === 'good' ? '✅' : x[0] === 'bad' ? '🔴' : '🟠') + '</span><span style="font-size:14px">' + x[1] + '</span></div>'; }).join('') + '</div></section>';
+      '<div class="body"><button class="btn gold" data-a="pack">' + (pendingPack ? 'Confirmer : remplacer mes plats' : '⟳ Charger mes aliments à combiner') + '</button><span class="muted" style="font-size:12.5px;margin-top:-4px">Œuf coque, egg muffin, poulet, saumon, riz, pâtes, boulgour, quinoa, lentilles quinoa, patate douce, courgettes, wrap, skyr, fromage blanc, fruits, amandes. Remplace ta liste actuelle.</span>' + out.map(function (x) { return '<div class="plat" style="flex-direction:row;gap:8px;align-items:flex-start"><span>' + (x[0] === 'good' ? '✅' : x[0] === 'bad' ? '🔴' : '🟠') + '</span><span style="font-size:14px">' + x[1] + '</span></div>'; }).join('') + '</div></section>';
   }
   function platCard(p) {
-    return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', (prole(p) === 'principal' ? 'plat principal' : 'complément'), p.max ? 'max ' + p.max + '×/sem.' : '', ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
+    return '<div class="plat"><b>' + esc(p.nom) + '</b><span class="muted">' + [p.kcal ? fmtN(p.kcal) + ' kcal' + (isGr(p) ? ' /100 g' : '') : '', p.prot ? fmtN(p.prot) + ' g prot.' : '', ({ principal: 'plat complet', complement: 'complément', proteine: 'protéine', feculent: 'féculent', legume: 'légume' })[prole(p)], (p.maxJour > 1 ? 'max ' + p.maxJour + '×/jour' : ''), p.max ? 'max ' + p.max + '×/sem.' : '', ({ fixe: 'portion fixe', entier: 'portion entière', decimal: 'portion décimale' })[pmode(p)]].filter(Boolean).join(' · ') + '</span>' +
       '<span class="muted" style="font-size:12.5px">' + ((p.ing || []).map(function (g) { return fmtQ(g.qty) + ' ' + g.unit + ' ' + esc(g.nom); }).join(' · ') || 'Aucun ingrédient') + '</span>' +
       '<div class="btns"><button data-a="pedit" data-id="' + p.id + '">✏️ Modifier</button><button class="del" data-a="pdel" data-id="' + p.id + '">' + (pendingDel === p.id ? 'Confirmer ✕' : '✕ Supprimer') + '</button></div></div>';
   }
   function readForm() {
     if (!edit) edit = { nom: '', slots: [], role: 'principal', mode: 'fixe', kcal: '', prot: '', ing: [] };
     var n = $('#p-nom'); if (!n) return;
-    edit.nom = n.value; edit.max = $('#p-max').value; edit.kcal = $('#p-kcal').value; edit.prot = $('#p-prot').value;
+    edit.nom = n.value; edit.max = $('#p-max').value; edit.maxJour = $('#p-maxj').value; edit.kcal = $('#p-kcal').value; edit.prot = $('#p-prot').value;
     edit.ing = [].map.call(document.querySelectorAll('.ing'), function (r) { return { nom: r.querySelector('[data-ing=nom]').value, qty: r.querySelector('[data-ing=qty]').value, unit: r.querySelector('[data-ing=unit]').value }; });
   }
 
@@ -392,6 +448,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       }
     }
     else if (a === 'diag') diagOpen = !diagOpen;
+    else if (a === 'pack') { if (!pendingPack) { pendingPack = true; setTimeout(function () { pendingPack = false; render(); }, 4000); } else { pendingPack = false; addPack(); } }
     else if (a === 'gen') generer();
     else if (a === 'copy') {
       var ds = dates(offset), L = ['Menus — semaine du ' + $('#wk').textContent, ''];
@@ -414,7 +471,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
       readForm();
       if (!edit.nom.trim()) { msgTxt = 'Donne un nom au plat.'; render(); return; }
       if (!edit.slots.length) { msgTxt = 'Choisis au moins une prise.'; render(); return; }
-      var obj = { id: edit.id || 'p' + Date.now().toString(36), nom: edit.nom.trim(), slots: edit.slots.slice(), max: num(edit.max) ? Math.max(1, Math.round(num(edit.max))) : null, role: edit.role || 'principal', mode: edit.mode || 'fixe', fixe: (edit.mode || 'fixe') === 'fixe', kcal: num(edit.kcal), prot: num(edit.prot), ing: edit.ing.filter(function (g) { return g.nom.trim(); }).map(function (g) { return { nom: g.nom.trim(), qty: num(g.qty) || 0, unit: g.unit }; }) };
+      var obj = { id: edit.id || 'p' + Date.now().toString(36), nom: edit.nom.trim(), slots: edit.slots.slice(), max: num(edit.max) ? Math.max(1, Math.round(num(edit.max))) : null, maxJour: num(edit.maxJour) ? Math.max(1, Math.round(num(edit.maxJour))) : null, role: edit.role || 'principal', mode: edit.mode || 'fixe', fixe: (edit.mode || 'fixe') === 'fixe', kcal: num(edit.kcal), prot: num(edit.prot), ing: edit.ing.filter(function (g) { return g.nom.trim(); }).map(function (g) { return { nom: g.nom.trim(), qty: num(g.qty) || 0, unit: g.unit }; }) };
       var ex = plat(obj.id); if (ex) Object.assign(ex, obj); else S.plats.push(obj);
       edit = null; save();
     }
@@ -435,7 +492,7 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; co
     if (f === 'dk' || f === 'dp') { var pt = {}; pt[f === 'dk' ? 'kcal' : 'prot'] = num(el.value); setSlot(di, si, pt); render(); return; }
     var ls = (slot(di, si).lines || []).map(function (x) { return Object.assign({}, x); }), li = +el.dataset.li;
     if (!ls[li]) return;
-    if (f === 'pid') ls[li].pid = el.value; else ls[li].mult = num(el.value) || 1;
+    if (f === 'pid') { ls[li].pid = el.value; var np = plat(el.value); ls[li].mult = isGr(np) ? (np.typ || 100) / 100 : 1; } else if (f === 'grams') ls[li].mult = (num(el.value) || 100) / 100; else ls[li].mult = num(el.value) || 1;
     setSlot(di, si, { lines: ls }); render();
   });
   render();

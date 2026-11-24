@@ -33,6 +33,31 @@
     color-scheme: dark;
   }
 }
+
+.pw { background: linear-gradient(140deg, #1A1B2E 0%, #2B2450 70%, #3A2A1A 100%) !important; color: #F4F0EA !important; border: 0 !important; position: relative; overflow: hidden; }
+.pw::before { content: ''; position: absolute; inset: -40% -20% auto auto; width: 70%; height: 140%; background: radial-gradient(closest-side, rgba(255,179,71,.35), transparent); pointer-events: none; }
+.pw-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; position: relative; }
+.pw-sub { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #FFB347; font-weight: 700; }
+.pw-num { font: 400 52px/1 'Bebas Neue', var(--font-display); letter-spacing: .02em; color: #FFD27A; text-shadow: 0 0 18px rgba(255,179,71,.55); margin-top: 4px; }
+.pw-lvl { font-weight: 700; font-size: 16px; }
+.pw-today { text-align: right; font-size: 13px; line-height: 1.5; color: #D8CFC0; } .pw-today b { color: #7CF0B4; }
+.pw-bar { height: 10px; border-radius: 6px; background: rgba(255,255,255,.12); overflow: hidden; position: relative; } .pw-bar i { display: block; height: 100%; background: linear-gradient(90deg, #FFB347, #FFE08A); box-shadow: 0 0 12px #FFB347; }
+.pw-note { margin: 0; font-size: 13.5px; color: #E6DED1; position: relative; } .pw-note b { color: #FFD27A; }
+.pw-how { font-size: 13.5px; color: #E6DED1; position: relative; } .pw-how summary { cursor: pointer; color: #FFB347; font-weight: 600; } .pw-how ul { margin: 8px 0 0; padding-left: 18px; } .pw-how li { margin: 3px 0; }
+.pw-rw { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 12px; position: relative; }
+.pw-r { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.07); border-radius: 12px; padding: 8px 10px; }
+.pw-r.ok:not(.got) { background: rgba(255,179,71,.22); box-shadow: inset 0 0 0 1px rgba(255,179,71,.6); } .pw-r.got { opacity: .6; }
+.pw-rn { flex: 1; min-width: 0; font-weight: 600; } .pw-rn small { display: block; font-weight: 400; font-size: 12.5px; color: #CFC3AE; }
+.pw-b { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 0; background: #FFB347; color: #1A1B2E; font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+.pw-x { width: 30px; height: 30px; border: 0; background: transparent; color: #CFC3AE; font-size: 15px; }
+.pw-add { display: grid; grid-template-columns: minmax(0,1fr) 5em auto; gap: 6px; } .pw-add input { min-height: 38px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; background: rgba(255,255,255,.08); color: #fff; padding: 0 10px; font: 15px var(--font-body); width: 100%; min-width: 0; } .pw-add input::placeholder { color: #9C93A8; }
+.pw-mini { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; padding: 12px 16px; border: 0; border-radius: 14px; background: linear-gradient(120deg, #1A1B2E, #2B2450); color: #F4F0EA; }
+.pw-mini b { font: 400 26px/1 'Bebas Neue', var(--font-display); color: #FFD27A; letter-spacing: .03em; white-space: nowrap; } .pw-mini span { font-size: 13px; text-align: right; color: #D8CFC0; } .pw-mini em { font-style: normal; color: #7CF0B4; font-weight: 700; }
+.pw-ov { position: fixed; inset: 0; z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(10,10,24,.9); color: #fff; text-align: center; padding: 24px; animation: pwIn .35s ease; }
+.pw-aura { position: absolute; width: 120vmin; height: 120vmin; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,102,.75), rgba(255,140,40,.25) 55%, transparent 72%); animation: pwPulse 1.2s ease-in-out infinite alternate; pointer-events: none; }
+.pw-ov-t { position: relative; display: flex; flex-direction: column; } .pw-ov-t small { font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: #FFE7A8; } .pw-ov-t b { font: 400 54px/1.05 'Bebas Neue', var(--font-display); letter-spacing: .03em; color: #FFF6D8; text-shadow: 0 0 24px #FFB347, 0 0 48px #FF8A3D; }
+.pw-ov p { position: relative; font-size: 13px; color: #E6DED1; margin: 0; }
+@keyframes pwIn { from { opacity: 0; transform: scale(.96); } } @keyframes pwPulse { from { transform: scale(.85); opacity: .7; } to { transform: scale(1.05); opacity: 1; } }
 * { box-sizing: border-box; }
 body {
   margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font-body);
@@ -1015,7 +1040,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var ch = false;
     Object.keys(stored || {}).forEach(function (k) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !stored[k]) return;
-      var su = num(stored[k]._u) || 0, cu = days[k] ? (days[k]._u || 0) : -1;
+      var su = num(stored[k]._u) || 0, cu = days[k] ? (days[k]._u || (hasData(days[k]) ? 0 : -1)) : -1;
       if (su > cu && !timers[k]) { days[k] = normalize(stored[k], k); ch = true; }
     });
     return ch;
@@ -1578,6 +1603,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     races.filter(function (r) { return r.date === cur; }).forEach(function (r) {
       html += '<section class="card next-race"><div class="m-head"><div><div class="sub">Jour de course</div><h2 style="font:600 19px/1.2 var(--font-display);margin-top:4px">' + esc(r.name) + '</h2><span class="goal">' + distLabel(r) + (r.goal ? ' · objectif ' + fmtChrono(r.goal) : '') + (r.result ? ' · réalisé ' + fmtChrono(r.result) : '') + '</span></div><button class="today-btn" data-action="goto-race">' + (r.result || cur < todayStr() ? 'Voir' : 'Saisir le chrono') + '</button></div></section>';
     });
+    html += '<div id="pw-mini">' + powerMini() + '</div>';
     html += '<section class="card score"><div><div class="score-num" id="score-num">0/5</div><div class="score-lbl">objectifs tenus aujourd\'hui</div></div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div>' +
       '<div class="rings">' + [['kcal', 'Calories'], ['water', 'Eau'], ['sleep', 'Sommeil'], ['screen', 'Écran'], ['blue', 'Blue']].map(function (r) {
         return '<button class="ring" id="ring-' + r[0] + '" data-action="ring" data-k="' + r[0] + '" aria-label="' + r[1] + '"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="21"/><circle class="fg" cx="26" cy="26" r="21" stroke-dasharray="131.95" stroke-dashoffset="131.95"/></svg><span>' + r[1] + '</span></button>';
@@ -1773,6 +1799,82 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return { cls: cls, txt: txt0 };
   }
   function sportGreen(ds) { var td = todayStr(); return ds <= td && sportCell(ds, days[ds], td).cls === 'good' ? 1 : 0; }
+
+  /* ===== Niveau de puissance : points gagnés chaque jour, jamais perdus. Relance x2 le lendemain d'un mauvais jour. ===== */
+  var POWER_START = '2026-11-30', LS_REWARDS = 'ced-routines-rewards', LS_LEVEL = 'ced-routines-level';
+  var LEVELS = [[0, 'Saiyan'], [400, "Saiyan d'élite"], [1000, 'Super Saiyan'], [2000, 'Super Saiyan 2'], [3300, 'Super Saiyan 3'], [5000, 'Super Saiyan God'], [7200, 'Super Saiyan Blue'], [10000, 'Ultra Instinct']];
+  function cleanRewards(a) { return (Array.isArray(a) ? a : []).filter(function (r) { return r && r.name; }).map(function (r) { return { id: String(r.id || uid('w')), name: String(r.name).slice(0, 60), pts: Math.max(0, Math.round(num(r.pts) || 0)), got: r.got === true, seen: r.seen === true }; }).sort(function (x, y) { return x.pts - y.pts; }); }
+  var rewards = []; try { rewards = cleanRewards(JSON.parse(localStorage.getItem(LS_REWARDS) || '[]')); } catch (e) {}
+  function saveRewards() { rewards = cleanRewards(rewards); try { localStorage.setItem(LS_REWARDS, JSON.stringify(rewards)); } catch (e) {} }
+  function dayRaw(ds) {
+    var d = days[ds], log = !!(d && hasLog(d)), sg = sportGreen(ds), g = log ? dayScore(d) : 0;
+    var nS = d ? d.sports.filter(function (x) { return sportDef(x.type).fam !== 'off'; }).length : 0, meals = d ? d.meals.length : 0;
+    var ec = d ? (d.cheats || []).length + (d.extras || []).length : 0, green = g + sg;
+    var pts = g * 10 + sg * 15 + Math.min(2, nS) * 10 + meals * 2 + (green >= 4 ? 10 : 0);
+    return { pts: pts, green: green, ec: ec, any: log || sg > 0 || nS > 0 || meals > 0 || ec > 0 };
+  }
+  function powerState() {
+    var td = todayStr(), tot = 0, prevBad = false, today = { pts: 0, mult: 1 }, relance = false, week = 0, wsNow = weekStart(td), waistBase = null, waistMin = null;
+    for (var ds = POWER_START; ds <= td; ds = addDays(ds, 1)) {
+      var r = dayRaw(ds), mult = prevBad && r.green >= 4 ? 2 : 1, p = r.pts * mult;
+      if (ds === td) { today = { pts: p, mult: mult }; relance = prevBad; }
+      tot += p; if (ds >= wsNow) week += p;
+      prevBad = r.any && (r.green < 3 || r.ec >= 2);
+      var dd = days[ds]; if (dd && dd.waist) { if (waistBase == null) waistBase = dd.waist; waistMin = waistMin == null ? dd.waist : Math.min(waistMin, dd.waist); }
+      if (parse(ds).getDay() === 0 && ds < td) {
+        var ws = addDays(ds, -6), wg = weekGreens(ws), wm = weekMeals(ws), wb = 0;
+        if (wm.f && wm.tot <= wm.allowed) wb += 50;
+        if (wg.g >= 42) wb += 100; else if (wg.g >= 35) wb += 40;
+        tot += wb;
+      }
+    }
+    var cm = waistBase != null ? Math.max(0, Math.floor(waistBase - waistMin)) : 0; tot += cm * 25;
+    var li = 0; LEVELS.forEach(function (l, i) { if (tot >= l[0]) li = i; });
+    return { tot: tot, today: today, relance: relance, week: week, li: li, cm: cm, started: td >= POWER_START };
+  }
+  function powerMini() {
+    var ps = powerState();
+    if (!ps.started) return '<button class="pw-mini" data-action="tab" data-view="prog"><b>⚡ Niveau de puissance</b><span>Démarre le lundi 30/11</span></button>';
+    return '<button class="pw-mini" data-action="tab" data-view="prog"><b>⚡ ' + fmtN(ps.tot) + '</b><span>' + LEVELS[ps.li][1] + ' · +' + fmtN(ps.today.pts) + " aujourd'hui" + (ps.relance ? ' · <em>relance x2</em>' : '') + '</span></button>';
+  }
+  function powerCard() {
+    var ps = powerState(), lv = LEVELS[ps.li], nx = LEVELS[ps.li + 1];
+    var pc = nx ? Math.round((ps.tot - lv[0]) / (nx[0] - lv[0]) * 100) : 100;
+    var h = '<section class="card pw"><div class="pw-top"><div><div class="pw-sub">Niveau de puissance</div><div class="pw-num">' + fmtN(ps.tot) + '</div><div class="pw-lvl">' + lv[1] + '</div></div>' +
+      '<div class="pw-today">' + (ps.started ? '+' + fmtN(ps.today.pts) + " aujourd'hui<br>+" + fmtN(ps.week) + ' cette semaine' : 'Démarre le<br>lundi 30/11') + (ps.relance ? '<br><b>Relance x2 active</b>' : '') + '</div></div>' +
+      '<div class="pw-bar"><i style="width:' + pc + '%"></i></div>' +
+      '<p class="pw-note">' + (nx ? 'Encore ' + fmtN(nx[0] - ps.tot) + ' pts avant <b>' + nx[1] + '</b>' : 'Niveau maximal atteint 🔥') + '</p>' +
+      (ps.relance ? '<p class="pw-note">Hier a été compliqué : si tu fais au moins 4 cases vertes aujourd\'hui, tes points comptent double.</p>' : '') +
+      '<details class="pw-how"><summary>Comment gagner des points</summary><ul>' +
+      '<li>Case verte (kcal, eau, sommeil, écran, Blue) : 10</li><li>Case Sport verte : 15 · séance faite : +10 (2 max/jour)</li><li>Repas respecté : 2 · journée à 4 cases vertes ou plus : +10</li>' +
+      '<li>Semaine sous 7 écarts : +50 · semaine à 35/42 : +40, à 42/42 : +100</li><li>Chaque cm de tour de taille perdu : +25</li>' +
+      '<li><b>Relance</b> : le lendemain d\'un mauvais jour (moins de 3 cases vertes ou 2 écarts), une journée à 4 cases vertes ou plus compte double.</li><li>Les points ne se perdent jamais.</li></ul></details>';
+    h += '<div class="pw-rw"><div class="pw-sub">Mes récompenses</div>';
+    rewards.forEach(function (r) {
+      var ok = ps.tot >= r.pts;
+      h += '<div class="pw-r' + (ok ? ' ok' : '') + (r.got ? ' got' : '') + '"><span class="pw-rn">' + (r.got ? '✅ ' : ok ? '🎁 ' : '🔒 ') + esc(r.name) + '<small>' + fmtN(r.pts) + ' pts' + (!ok ? ' · encore ' + fmtN(r.pts - ps.tot) : r.got ? ' · récupérée' : ' · débloquée !') + '</small></span>' +
+        (ok && !r.got ? '<button class="pw-b" data-action="rw-got" data-id="' + r.id + '">Je la prends</button>' : '') +
+        '<button class="pw-x" data-action="rw-del" data-id="' + r.id + '" aria-label="Supprimer">✕</button></div>';
+    });
+    if (!rewards.length) h += '<p class="pw-note">Choisis ce que tu t\'offres, et à combien de points. Repère : une bonne semaine rapporte 400 à 500 pts.</p>';
+    h += '<div class="pw-add"><input class="txt" id="rw-name" type="text" maxlength="60" placeholder="Ex. Nouvelles chaussures"><input class="txt" id="rw-pts" type="number" inputmode="numeric" min="0" placeholder="pts"><button class="pw-b" data-action="rw-add">Ajouter</button></div>' +
+      '<p class="pw-note" style="opacity:.7">Paliers : ' + LEVELS.slice(1).map(function (l) { return l[1] + ' ' + fmtN(l[0]); }).join(' · ') + '</p></div></section>';
+    return h;
+  }
+  var pwShown = false;
+  function powerCheck() {
+    var ps = powerState(), stored = null; try { stored = localStorage.getItem(LS_LEVEL); } catch (e) {}
+    var msgs = [];
+    if (stored == null) { try { localStorage.setItem(LS_LEVEL, String(ps.li)); } catch (e) {} }
+    else if (ps.li > +stored) { msgs.push(['Niveau atteint', LEVELS[ps.li][1]]); try { localStorage.setItem(LS_LEVEL, String(ps.li)); } catch (e) {} }
+    var ch = false; rewards.forEach(function (r) { if (!r.seen && ps.tot >= r.pts) { r.seen = true; ch = true; msgs.push(['Récompense débloquée 🎁', r.name]); } }); if (ch) saveRewards();
+    if (!msgs.length || pwShown) return;
+    pwShown = true;
+    var ov = document.createElement('div'); ov.className = 'pw-ov';
+    ov.innerHTML = '<div class="pw-aura"></div>' + msgs.map(function (m) { return '<div class="pw-ov-t"><small>' + m[0] + '</small><b>' + esc(m[1]) + '</b></div>'; }).join('') + '<p>Touche pour continuer</p>';
+    ov.addEventListener('click', function () { ov.remove(); pwShown = false; });
+    document.body.appendChild(ov);
+  }
   function weekGreens(ws) {
     var g = 0, f = 0;
     for (var i = 0; i < 7; i++) { var ds = addDays(ws, i), d = days[ds], sg = sportGreen(ds); if ((d && hasLog(d)) || sg) { f++; g += (d && hasLog(d) ? dayScore(d) : 0) + sg; } }
@@ -2041,6 +2143,10 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return html;
   }
   function progView() {
+    var pwc = powerCard();
+    return pwc + progView0();
+  }
+  function progView0() {
     if (progTab === 'body') return bodyView();
     if (progTab === 'volume') return volumeView();
     if (progTab === 'photos') return photosView();
@@ -2660,7 +2766,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     content.hidden = view === 'settings';
     $('#settings').hidden = view !== 'settings'; $('#backup').hidden = view !== 'settings';
     var hs = $('#health-slot'); if (hs) { hs.innerHTML = view === 'settings' && settings.health ? healthCard() : ''; hs.hidden = !hs.innerHTML; }
-    if (view === 'day') refreshDay();
+    if (view === 'day') refreshDay(); else powerCheck();
   }
   /* Choix ouvert/fermé des objectifs, mémorisé pour de bon (même après fermeture de l'app). */
   function saveFold() { try { localStorage.setItem(LS_FOLD, JSON.stringify(foldState)); } catch (x) {} }
@@ -2683,6 +2789,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       if (mc) { mc.classList.add('fold'); mc.classList.toggle('done', e.s === 'good'); if (!mc.contains(document.activeElement)) { var ov = foldState['obj-' + k]; mc.classList.toggle('shut', ov ? ov === 'shut' : e.s === 'good'); } }
     });
     $('#score-num').textContent = score + '/5';
+    var pwm = $('#pw-mini'); if (pwm) pwm.innerHTML = powerMini(); powerCheck();
     $('#blue-yes').setAttribute('aria-pressed', d.blue);
     $('#blue-no').setAttribute('aria-pressed', !d.blue);
     var sd = $('#sport-day');
@@ -3083,6 +3190,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         navigator.clipboard.writeText(txt).then(function () { msg.textContent = 'Bilan copié.'; }, function () { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; });
       } catch (err) { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; }
     }
+    else if (a === 'rw-add') {
+      var rn = ($('#rw-name').value || '').trim(), rp = num($('#rw-pts').value);
+      if (!rn || !rp) { $(rn ? '#rw-pts' : '#rw-name').focus(); return; }
+      rewards.push({ id: uid('w'), name: rn, pts: rp, seen: powerState().tot >= rp }); saveRewards(); render();
+    }
+    else if (a === 'rw-got') { rewards.forEach(function (r) { if (r.id === b.dataset.id) r.got = true; }); saveRewards(); render(); }
+    else if (a === 'rw-del') { rewards = rewards.filter(function (r) { return r.id !== b.dataset.id; }); saveRewards(); render(); }
     else if (a === 'prog-tab') { progTab = b.dataset.tab; if (progTab === 'photos') photoLoad().then(function () { if (view === 'prog') render(); }); render(); }
     else if (a === 'ph-pose') { photoDate = $('#ph-date').value || null; photoPose = b.dataset.p; render(); }
     else if (a === 'ph-pick') {
@@ -3239,7 +3353,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   $('#btn-export').addEventListener('click', function () {
     var out = snapshot();
     var name = 'routines-' + todayStr() + '.json';
-    var text = JSON.stringify({ app: 'routines', version: 2, exported: new Date().toISOString(), moves: customMoves, goals: bodyGoals, settings: settings, races: races, days: out }, null, 2);
+    var text = JSON.stringify({ app: 'routines', version: 2, exported: new Date().toISOString(), moves: customMoves, rewards: rewards, goals: bodyGoals, settings: settings, races: races, days: out }, null, 2);
     var file = null;
     try { file = new File([text], name, { type: 'application/json' }); } catch (e) {}
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3274,6 +3388,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         if (o && Array.isArray(o.moves)) { o.moves.forEach(function (m) { if (typeof m === 'string' && customMoves.indexOf(m) < 0) customMoves.push(m); }); saveCustomMoves(); }
         /* Objectifs : on ajoute ceux qui manquent. Réglages et objectifs de forme actuels gardés (sauf appli vierge). */
         if (o && Array.isArray(o.races)) { var rid = {}; races.forEach(function (x) { rid[x.id] = 1; }); var nr0 = cleanRaces(o.races).filter(function (x) { return !rid[x.id]; }); if (nr0.length) { races = races.concat(nr0); saveRaces(); } }
+        if (o && Array.isArray(o.rewards)) { var wid = {}; rewards.forEach(function (x) { wid[x.id] = 1; }); cleanRewards(o.rewards).forEach(function (x) { if (!wid[x.id]) rewards.push(x); }); saveRewards(); }
         var fresh = !Object.keys(days).some(function (k) { return hasData(days[k]); });
         if (fresh && o && o.settings && typeof o.settings === 'object') { settings = cleanSettings(o.settings); applyGoals(); }
         if (fresh && o && o.goals && typeof o.goals === 'object') { bodyGoals = cleanGoals(o.goals); }

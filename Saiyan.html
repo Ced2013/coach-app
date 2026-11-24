@@ -1713,13 +1713,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function bilanText() {
     var ws = weekStart(cur), we = addDays(ws, 6), st = weekStats(cur), good = 0, filled = 0, pDone = 0, pTot = 0;
     weekDates(cur).forEach(function (ds, i) {
-      var d = days[ds]; if (d && hasLog(d)) { filled++; good += dayScore(d); }
+      var d = days[ds], sg = sportGreen(ds); if ((d && hasLog(d)) || sg) { filled++; good += (d && hasLog(d) ? dayScore(d) : 0) + sg; }
       plannedFor(ds).forEach(function (pl) { var st0 = planItemStatus(ds, pl); if (st0.s === 'off') return; pTot++; if (st0.s === 'good') pDone++; });
     });
     var L = ['Bilan de la semaine du ' + dm(ws) + ' au ' + dm(we), ''];
     L.push('Sport : ' + plural(st.n, 'séance') + (st.min ? ' · ' + fmtDur(st.min) : '') + (st.km ? ' · ' + fmtD(st.km, 1) + ' km de course' : '') + (st.ton ? ' · ' + fmtTon(st.ton) + ' soulevés (' + plural(st.sets, 'série') + ')' : ''));
     if (pTot) L.push('Plan : ' + pDone + '/' + pTot + ' séances prévues faites');
-    if (filled) { var pg0 = weekGreens(addDays(ws, -7)); L.push('Objectifs du jour tenus : ' + good + '/' + filled * 5 + (pg0.f ? ' (semaine précédente : ' + pg0.g + ')' : '')); }
+    if (filled) { var pg0 = weekGreens(addDays(ws, -7)); L.push('Objectifs du jour tenus : ' + good + '/' + filled * 6 + (pg0.f ? ' (semaine précédente : ' + pg0.g + ')' : '')); }
     var wm = weekMeals(ws); if (wm.pct != null) L.push('Écarts : ' + wm.tot + '/7 sur 35 repas → ' + wm.pct + ' % / ' + (100 - wm.pct) + ' %' + (wm.tot <= 7 ? ' (80/20 tenu)' : ' (au-delà des 20 %)'));
     var lr = loadRange(ws, we); if (lr.load) L.push('Charge d\'entraînement : ' + fmtN(lr.load) + (acwr(we < todayStr() ? we : todayStr()).ratio != null ? ' (ratio ' + fmtD(acwr(we < todayStr() ? we : todayStr()).ratio, 2) + ')' : ''));
     var ki = avgOver('kcal', ws, we), ko = avgOver('kcalOut', ws, we);
@@ -1737,9 +1737,26 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var mg = mainGoal(); if (mg) L.push('', mg.name + ' : ' + mg.txt);
     return L.join('\n');
   }
+  /* Case Sport de la grille : vert si le prévu est tenu (séance faite, repos/récup prévus), rouge si une séance prévue est ratée. */
+  function sportCell(ds, d, today) {
+    var allPl = plannedFor(ds), offP = allPl.filter(function (q) { return isOff(q.type); }), pl0 = allPl.filter(function (q) { return !isOff(q.type); }), past = ds < today;
+    var sick = offP.some(function (q) { return q.type === 'malade'; });
+    var doneL = ((d ? d.sports : []) || []).map(function (q) { return famLetter(q.type); });
+    var missL = pl0.filter(function (q) { return planItemStatus(ds, q).s !== 'good'; }).map(function (q) { return famLetter(q.type); });
+    var cls, txt0;
+    if (sick && !doneL.length) { cls = 'sick'; txt0 = 'Ma'; }
+    else if (doneL.length && !(past && missL.length)) { cls = 'good'; txt0 = uniqL(doneL); }
+    else if (past && missL.length) { cls = 'bad'; txt0 = uniqL(missL.concat(doneL)); }
+    else if (missL.length) { cls = 'fut'; txt0 = uniqL(missL); }
+    else if (offP.length) { cls = ds <= today ? 'good' : 'fut'; txt0 = offP[0].type === 'recup' ? 'Rc' : 'Rp'; }
+    else if (ds <= today) { cls = 'rp'; txt0 = 'Rp'; }
+    else { cls = 'fut'; txt0 = ''; }
+    return { cls: cls, txt: txt0 };
+  }
+  function sportGreen(ds) { var td = todayStr(); return ds <= td && sportCell(ds, days[ds], td).cls === 'good' ? 1 : 0; }
   function weekGreens(ws) {
     var g = 0, f = 0;
-    for (var i = 0; i < 7; i++) { var ds = addDays(ws, i), d = days[ds]; if (d && hasLog(d)) { f++; g += dayScore(d); } }
+    for (var i = 0; i < 7; i++) { var ds = addDays(ws, i), d = days[ds], sg = sportGreen(ds); if ((d && hasLog(d)) || sg) { f++; g += (d && hasLog(d) ? dayScore(d) : 0) + sg; } }
     return { g: g, f: f };
   }
   function weekMeals(ws) {
@@ -1757,7 +1774,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var best = past.length ? Math.max.apply(null, past) : null, diff = p.f ? c.g - p.g : null;
     var msg = diff == null ? 'Première semaine suivie.' : diff > 0 ? '+' + diff + ' par rapport à la semaine dernière 👊' : diff < 0 ? diff + ' par rapport à la semaine dernière' : 'Autant que la semaine dernière';
     if (best != null && c.g > best) msg += ' · record';
-    return '<section class="card"><div class="m-head"><div><h3>Cases vertes</h3><span class="goal">Objectifs tenus par semaine (35 max)</span></div><span class="pill ' + (diff == null ? 'idle' : diff >= 0 ? 'good' : 'bad') + '">' + c.g + '/35</span></div>' +
+    return '<section class="card"><div class="m-head"><div><h3>Cases vertes</h3><span class="goal">Objectifs tenus par semaine, sport compris (42 max)</span></div><span class="pill ' + (diff == null ? 'idle' : diff >= 0 ? 'good' : 'bad') + '">' + c.g + '/42</span></div>' +
       '<p class="note" style="margin:0">' + msg + '</p>' + bars(vals, lab, 'var(--good)', function (v) { return String(v); }) + '</section>';
   }
   function mealsWeekCard() {
@@ -1772,11 +1789,11 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function weekView() {
     var dates = weekDates(cur), st = weekStats(cur), today = todayStr();
     var totalGood = 0, daysFilled = 0;
-    dates.forEach(function (ds) { var d = days[ds]; if (d && hasLog(d)) { daysFilled++; totalGood += dayScore(d); } });
+    dates.forEach(function (ds) { var d = days[ds], sg = sportGreen(ds); if ((d && hasLog(d)) || sg) { daysFilled++; totalGood += (d && hasLog(d) ? dayScore(d) : 0) + sg; } });
     var html = !shown('tiles') ? '' : '<section id="fd-tiles" class="card sec' + (foldState.tiles ? ' shut' : '') + '"><div class="m-head fh"><div><h3>Chiffres de la semaine</h3></div><span class="sum">' + plural(st.n, 'séance') + (st.min ? ' · ' + fmtDurC(st.min) : '') + '</span></div><div class="tiles">' +
       '<div class="tile"><b>' + st.n + '</b><span>' + (st.n > 1 ? 'séances' : 'séance') + ' de sport</span></div>' +
       '<div class="tile"><b>' + (st.min ? fmtDurC(st.min) : '0') + '</b><span>temps total</span></div>' +
-      '<div class="tile"><b>' + (daysFilled ? totalGood + '/' + daysFilled * 5 : '–') + '</b><span>objectifs tenus</span></div>' +
+      '<div class="tile"><b>' + (daysFilled ? totalGood + '/' + daysFilled * 6 : '–') + '</b><span>objectifs tenus</span></div>' +
       '<div class="tile"><b>' + (st.km ? fmtD(st.km, 1) : '0') + '</b><span>km de course</span></div>' +
       '<div class="tile"><b>' + (st.ton ? fmtTon(st.ton) : '0') + '</b><span>tonnage muscu</span></div>' +
       '<div class="tile"><b>' + st.sets + '</b><span>séries muscu</span></div>' +
@@ -1843,18 +1860,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     h += '<div class="lbl">Sport</div>' + ev.map(function (x, i) {
       /* Séance faite = orange · séance prévue ratée = rouge · repos (rien de prévu) = gris « R » · à venir = pointillés. */
       /* Lettres : M muscu · R running · C CrossFit · V vélo · Rc récup (mobilité) · Rp repos. Vert = fait, rouge = prévu non fait. */
-      var allPl = plannedFor(dates[i]), offP = allPl.filter(function (q) { return isOff(q.type); }), pl0 = allPl.filter(function (q) { return !isOff(q.type); }), past = dates[i] < today;
-      var sick = offP.some(function (q) { return q.type === 'malade'; });
-      var doneL = (x.d.sports || []).map(function (q) { return famLetter(q.type); });
-      var missL = pl0.filter(function (q) { return planItemStatus(dates[i], q).s !== 'good'; }).map(function (q) { return famLetter(q.type); });
-      var cls, txt0;
-      if (sick && !doneL.length) { cls = 'sick'; txt0 = 'Ma'; }
-      else if (doneL.length && !(past && missL.length)) { cls = 'good'; txt0 = uniqL(doneL); }
-      else if (past && missL.length) { cls = 'bad'; txt0 = uniqL(missL.concat(doneL)); }
-      else if (missL.length) { cls = 'fut'; txt0 = uniqL(missL); }
-      else if (offP.length) { cls = dates[i] <= today ? 'good' : 'fut'; txt0 = offP[0].type === 'recup' ? 'Rc' : 'Rp'; }
-      else if (dates[i] <= today) { cls = 'rp'; txt0 = 'Rp'; }
-      else { cls = 'fut'; txt0 = ''; }
+      var sc = sportCell(dates[i], x.d, today), cls = sc.cls, txt0 = sc.txt;
       return '<button class="c ' + cls + '" data-action="goto" data-date="' + dates[i] + '" aria-label="Sport ' + dates[i] + '">' + txt0 + '</button>';
     }).join('');
     return '<section class="card"><div class="m-head"><div><h3>Ta semaine en un coup d\'œil</h3><span class="goal">Vert tenu · rouge raté · touche une case pour ouvrir le jour. Un repos ou une récup prévus passent en vert.</span><span class="goal">Sport : M muscu · R running · C CrossFit · V vélo · Mo mobilité · Rc récup · Rp repos · Ma maladie</span></div></div><div class="wgrid">' + h + '</div></section>';

@@ -1272,8 +1272,27 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       return { id: String(r.id || uid('r')), name: String(r.name).slice(0, 80), date: r.date, dist: String(r.dist || 'autre'), km: num(r.km), goal: num(r.goal), result: num(r.result), place: String(r.place || '').slice(0, 60), rank: String(r.rank || '').slice(0, 40), notes: String(r.notes || '').slice(0, 300), main: r.main === true };
     }).sort(function (x, y) { return x.date < y.date ? -1 : 1; });
   }
+  /* Chaque course à venir des Objectifs apparaît aussi dans le planning (séance « Course » liée, id race-…). */
+  function syncRacePlans() {
+    if (!races) return;
+    var td = todayStr(), want = {}, ch = {};
+    races.forEach(function (r) { if (r.date >= td) want['race-' + r.id] = r; });
+    Object.keys(days).forEach(function (k) {
+      if (k < td) return;
+      var d = days[k], n0 = d.plan.length;
+      d.plan = d.plan.filter(function (x) { return !/^race-/.test(x.id) || (want[x.id] && want[x.id].date === k); });
+      if (d.plan.length !== n0) ch[k] = 1;
+    });
+    Object.keys(want).forEach(function (id) {
+      var r = want[id], d = get(r.date), it = d.plan.filter(function (x) { return x.id === id; })[0], note = r.name + (r.goal ? ' · objectif ' + fmtChrono(r.goal) : '');
+      if (!it) { d.plan.push(normPlanItem({ id: id, type: 'course', km: r.km, note: note })); ch[r.date] = 1; }
+      else if (it.km !== num(r.km) || it.note !== note.slice(0, 120)) { it.km = num(r.km); it.note = note.slice(0, 120); ch[r.date] = 1; }
+    });
+    Object.keys(ch).forEach(function (k) { touch(k); });
+  }
   function saveRaces() {
     races = cleanRaces(races);
+    setTimeout(function () { syncRacePlans(); if (!isTyping()) render(); }, 0);
     try { localStorage.setItem(LS_RACES, JSON.stringify(races)); } catch (e) {}
     if (db) db.collection('days').doc('races').set({ list: races }).then(function () {}, function () { setSync('error'); });
   }
@@ -3284,6 +3303,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   /* ---------- démarrage ---------- */
   loadLocal();
   renderSettings();
+  syncRacePlans();
   render();
   setSync('local');
   backupInfo();

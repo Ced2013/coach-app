@@ -796,7 +796,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function normalize(o, date) {
     var e = emptyDay(date);
     e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); if (e.sleepMin != null && e.sleepMin > 1200) e.sleepMin = null; e.screenMin = num(o.screenMin);
-    e.blue = !!o.blue; e.blueMin = num(o.blueMin);
+    e.blue = !!o.blue; e.blueMin = num(o.blueMin); if (num(o._u)) e._u = num(o._u);
     e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.musclePct = num(o.musclePct); e.waist = num(o.waist); e.kcalOut = num(o.kcalOut);
     e.hrRest = date >= WATCH_START ? okHr(num(o.hrRest)) : null; e.hrv = date >= WATCH_START ? okHrv(num(o.hrv)) : null; e.coffee = num(o.coffee);
     if (Array.isArray(o.plan)) e.plan = o.plan.filter(function (x) { return x && x.type; }).map(normPlanItem);
@@ -1008,8 +1008,22 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     Object.keys(days).forEach(function (k) { if (hasData(days[k])) out[k] = JSON.parse(JSON.stringify(days[k])); });
     return out;
   }
+  /* Plusieurs fenêtres de l'app peuvent rester ouvertes en mémoire : chaque jour porte sa date de modification (_u)
+     et, avant d'écrire, on reprend les jours plus récents enregistrés par une autre fenêtre au lieu de les écraser. */
+  function readStored() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function adoptNewer(stored) {
+    var ch = false;
+    Object.keys(stored || {}).forEach(function (k) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !stored[k]) return;
+      var su = num(stored[k]._u) || 0, cu = days[k] ? (days[k]._u || 0) : -1;
+      if (su > cu && !timers[k]) { days[k] = normalize(stored[k], k); ch = true; }
+    });
+    return ch;
+  }
   function persistLocal() {
+    var adopted = adoptNewer(readStored());
     var out = snapshot(), okLs = false;
+    if (adopted && !isTyping()) setTimeout(render, 0);
     try { localStorage.setItem(LS_KEY, JSON.stringify(out)); okLs = true; } catch (e) {}
     idbPut(out).then(function (okIdb) {
       if (okIdb || okLs) { lastSave = new Date(); if (!db) setSync('local'); }
@@ -1040,6 +1054,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   var timers = {}, inflight = {}, dirty = {};
   function touch(date) {
+    if (days[date]) days[date]._u = Date.now();
     persistLocal();
     backupInfo();
     if (!db) { setSync('local'); return; }
@@ -3190,7 +3205,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function backupInfo() {
     var n = Object.keys(days).filter(function (k) { return hasData(days[k]); }).length, last = null;
     try { last = localStorage.getItem(LS_EXPORT); } catch (e) {}
-    var t = plural(n, 'jour') + (n > 1 ? ' enregistrés' : ' enregistré');
+    var np = 0, td = todayStr(); Object.keys(days).forEach(function (k) { if (k >= td) np += days[k].plan.length; });
+    var t = plural(n, 'jour') + (n > 1 ? ' enregistrés' : ' enregistré') + ' · ' + plural(np, 'séance') + ' à venir';
     if (last) t += ' · dernière copie le ' + parse(last).toLocaleDateString('fr-FR');
     backupMsg(t);
   }
@@ -3261,12 +3277,19 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var changed = false;
     Object.keys(stored).forEach(function (k) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
-      if (!days[k] || !hasData(days[k])) { days[k] = normalize(stored[k], k); changed = true; }
+      if (!days[k] || !hasData(days[k]) || (num(stored[k]._u) || 0) > (days[k]._u || 0)) { days[k] = normalize(stored[k], k); changed = true; return; }
+      /* Rattrapage : séances prévues présentes dans la 2e copie de sauvegarde mais absentes ici. */
+      var have = {}; (days[k].plan || []).forEach(function (x) { have[x.id] = 1; });
+      (Array.isArray(stored[k].plan) ? stored[k].plan : []).forEach(function (x) { if (x && x.type && !have[x.id]) { days[k].plan.push(normPlanItem(x)); changed = true; } });
     });
     if (changed) { if (isTyping()) needsRender = true; else render(); backupInfo(); }
     persistLocal();
   });
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') persistLocal(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') persistLocal();
+    else if (adoptNewer(readStored())) { if (isTyping()) needsRender = true; else render(); backupInfo(); }
+  });
+  window.addEventListener('storage', function (ev) { if (ev.key === LS_KEY && adoptNewer(readStored())) { if (isTyping()) needsRender = true; else render(); } });
   window.addEventListener('pagehide', persistLocal);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (e) {}
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.claude) {

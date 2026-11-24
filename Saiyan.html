@@ -1802,7 +1802,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
 
   /* ===== Niveau de puissance : points gagnés chaque jour, jamais perdus. Relance x2 le lendemain d'un mauvais jour. ===== */
   var POWER_START = '2026-11-30', LS_REWARDS = 'ced-routines-rewards', LS_LEVEL = 'ced-routines-level';
-  var LEVELS = [[0, 'Saiyan'], [400, "Saiyan d'élite"], [1000, 'Super Saiyan'], [2000, 'Super Saiyan 2'], [3300, 'Super Saiyan 3'], [5000, 'Super Saiyan God'], [7200, 'Super Saiyan Blue'], [10000, 'Ultra Instinct']];
+  var LEVELS = [[0, 'Saiyan'], [600, "Saiyan d'élite"], [1500, 'Super Saiyan'], [3000, 'Super Saiyan 2'], [5000, 'Super Saiyan 3'], [7500, 'Super Saiyan God'], [10500, 'Super Saiyan Blue'], [15000, 'Ultra Instinct']];
   function cleanRewards(a) { return (Array.isArray(a) ? a : []).filter(function (r) { return r && r.name; }).map(function (r) { return { id: String(r.id || uid('w')), name: String(r.name).slice(0, 60), pts: Math.max(0, Math.round(num(r.pts) || 0)), got: r.got === true, seen: r.seen === true }; }).sort(function (x, y) { return x.pts - y.pts; }); }
   var rewards = []; try { rewards = cleanRewards(JSON.parse(localStorage.getItem(LS_REWARDS) || '[]')); } catch (e) {}
   function saveRewards() { rewards = cleanRewards(rewards); try { localStorage.setItem(LS_REWARDS, JSON.stringify(rewards)); } catch (e) {} }

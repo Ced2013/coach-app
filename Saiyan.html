@@ -3247,18 +3247,25 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       try {
         var o = JSON.parse(r.result), src = o && o.days ? o.days : o, n = 0;
         if (o && Array.isArray(o.moves)) { o.moves.forEach(function (m) { if (typeof m === 'string' && customMoves.indexOf(m) < 0) customMoves.push(m); }); saveCustomMoves(); }
-        if (o && Array.isArray(o.races)) { races = cleanRaces(o.races); saveRaces(); }
-        if (o && o.settings && typeof o.settings === 'object') { settings = cleanSettings(o.settings); applyGoals(); }
-        if (o && o.goals && typeof o.goals === 'object') { bodyGoals = cleanGoals(o.goals); }
+        /* Objectifs : on ajoute ceux qui manquent. Réglages et objectifs de forme actuels gardés (sauf appli vierge). */
+        if (o && Array.isArray(o.races)) { var rid = {}; races.forEach(function (x) { rid[x.id] = 1; }); var nr0 = cleanRaces(o.races).filter(function (x) { return !rid[x.id]; }); if (nr0.length) { races = races.concat(nr0); saveRaces(); } }
+        var fresh = !Object.keys(days).some(function (k) { return hasData(days[k]); });
+        if (fresh && o && o.settings && typeof o.settings === 'object') { settings = cleanSettings(o.settings); applyGoals(); }
+        if (fresh && o && o.goals && typeof o.goals === 'object') { bodyGoals = cleanGoals(o.goals); }
         saveGoals(); renderSettings();
         Object.keys(src).forEach(function (k) {
           if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !src[k] || typeof src[k] !== 'object') return;
-          days[k] = normalize(src[k], k); n++;
-          if (db) touch(k);
+          /* Import = on complète sans écraser : séances prévues/faites manquantes, valeurs vides. */
+          var inc = normalize(src[k], k), cur0 = days[k];
+          if (!cur0 || !hasData(cur0)) { days[k] = inc; n++; days[k]._u = Date.now(); if (db) touch(k); return; }
+          var add = false, ids = {};
+          cur0.plan.forEach(function (x) { ids[x.id] = 1; }); inc.plan.forEach(function (x) { if (!ids[x.id]) { cur0.plan.push(x); add = true; } });
+          ids = {}; cur0.sports.forEach(function (x) { ids[x.id] = 1; }); inc.sports.forEach(function (x) { if (!ids[x.id]) { cur0.sports.push(x); add = true; } });
+          ['kcal', 'water', 'sleepMin', 'screenMin', 'blueMin', 'weight', 'fat', 'muscle', 'musclePct', 'waist', 'kcalOut', 'hrRest', 'hrv', 'coffee'].forEach(function (f) { if (cur0[f] == null && inc[f] != null) { cur0[f] = inc[f]; add = true; } });
+          if (add) { n++; cur0._u = Date.now(); if (db) touch(k); }
         });
-        if (!n) { backupMsg("Ce fichier ne contient aucune journée."); return; }
         persistLocal(); render();
-        backupMsg(plural(n, 'jour') + (n > 1 ? ' importés.' : ' importé.'));
+        backupMsg(n ? plural(n, 'jour') + (n > 1 ? ' complétés' : ' complété') + ' depuis la copie (rien d\'écrasé).' : 'Rien à compléter : tout est déjà là.');
       } catch (err) { backupMsg("Fichier illisible : choisis une copie exportée depuis cette appli."); }
     };
     r.onerror = function () { backupMsg("Impossible de lire ce fichier."); };

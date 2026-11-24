@@ -3267,6 +3267,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
           var add = false, ids = {};
           cur0.plan.forEach(function (x) { ids[x.id] = 1; }); inc.plan.forEach(function (x) { if (!ids[x.id]) { cur0.plan.push(x); add = true; } });
           ids = {}; cur0.sports.forEach(function (x) { ids[x.id] = 1; }); inc.sports.forEach(function (x) { if (!ids[x.id]) { cur0.sports.push(x); add = true; } });
+          ['meals', 'cheats', 'extras'].forEach(function (f) { if (!(cur0[f] || []).length && (inc[f] || []).length) { cur0[f] = inc[f].slice(); add = true; } });
+          if (!cur0.blue && inc.blue) { cur0.blue = true; add = true; }
           ['kcal', 'water', 'sleepMin', 'screenMin', 'blueMin', 'weight', 'fat', 'muscle', 'musclePct', 'waist', 'kcalOut', 'hrRest', 'hrv', 'coffee'].forEach(function (f) { if (cur0[f] == null && inc[f] != null) { cur0[f] = inc[f]; add = true; } });
           if (add) { n++; cur0._u = Date.now(); if (db) touch(k); }
         });

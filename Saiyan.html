@@ -58,6 +58,7 @@
 .pw-ov-t { position: relative; display: flex; flex-direction: column; } .pw-ov-t small { font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: #FFE7A8; } .pw-ov-t b { font: 400 54px/1.05 'Bebas Neue', var(--font-display); letter-spacing: .03em; color: #FFF6D8; text-shadow: 0 0 24px #FFB347, 0 0 48px #FF8A3D; }
 .pw-ov p { position: relative; font-size: 13px; color: #E6DED1; margin: 0; }
 @keyframes pwIn { from { opacity: 0; transform: scale(.96); } } @keyframes pwPulse { from { transform: scale(.85); opacity: .7; } to { transform: scale(1.05); opacity: 1; } }
+.snap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(127,127,127,.1); font-size: 14px; } .snap small { display: block; opacity: .75; font-size: 12.5px; } .snap button { min-height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid currentColor; background: transparent; color: inherit; font-weight: 600; }
 * { box-sizing: border-box; }
 body {
   margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font-body);
@@ -644,6 +645,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     <div class="quick"><button type="button" id="btn-export">Exporter une copie</button><button type="button" id="btn-import">Importer une copie</button></div>
     <input type="file" id="file-import" accept=".json,application/json" hidden>
     <p class="note" id="backup-msg" role="status"></p>
+    <div class="quick"><button type="button" id="btn-snaps">Copies automatiques</button><button type="button" id="btn-log">Copier le journal</button></div>
+    <div id="snap-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    <pre id="log-box" hidden style="white-space:pre-wrap;font-size:11.5px;max-height:240px;overflow:auto;margin:0"></pre>
   </section>
   <p class="foot" id="sync"></p>
 </div>
@@ -1045,11 +1049,60 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     });
     return ch;
   }
+
+  /* ---------- Filet de sécurité : journal des enregistrements + copies automatiques (IndexedDB, 7 jours) ---------- */
+  var APP_VER = '2026-11-25', LS_LOG = 'ced-routines-log';
+  function countState() { var nd = 0, np = 0, nm = 0, td = todayStr(); Object.keys(days).forEach(function (k) { var d = days[k]; if (hasData(d)) nd++; if (k >= td) np += d.plan.length; if (d.musclePct != null || d.muscle != null) nm++; }); return { d: nd, p: np, m: nm }; }
+  function logEvt(src) {
+    try {
+      var L = JSON.parse(localStorage.getItem(LS_LOG) || '[]'), c = countState(), last = L[L.length - 1];
+      if (last && last.v === APP_VER && last.s === src && last.d === c.d && last.p === c.p && last.m === c.m) return;
+      L.push({ t: Date.now(), v: APP_VER, s: src, d: c.d, p: c.p, m: c.m, w: (window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) ? 'app' : 'web' });
+      if (L.length > 120) L = L.slice(-120);
+      localStorage.setItem(LS_LOG, JSON.stringify(L));
+    } catch (e) {}
+  }
+  function snapAll(cb) { openIdb().then(function (d) { if (!d) return cb([]); try { var r = d.transaction('kv', 'readonly').objectStore('kv').get('snaps'); r.onsuccess = function () { cb(Array.isArray(r.result) ? r.result : []); }; r.onerror = function () { cb([]); }; } catch (e) { cb([]); } }); }
+  function snapMaybe(out) {
+    snapAll(function (arr) {
+      var last = arr[arr.length - 1], c = countState(), now = Date.now(), snap = { t: now, v: APP_VER, d: c.d, p: c.p, m: c.m, data: out };
+      var more = !last || c.p > last.p || c.d > last.d || c.m > last.m, less = last && (c.p < last.p || c.d < last.d || c.m < last.m);
+      /* On garde toujours la meilleure version récente : une baisse soudaine n'écrase jamais la dernière copie (elle est seulement journalisée). */
+      if (less) logEvt('baisse');
+      if (more && !less && last && now - last.t < 10 * 60e3) arr[arr.length - 1] = snap;
+      else if (more && !less) arr.push(snap);
+      else if (!last || now - last.t >= 4 * 3600e3) arr.push(snap);
+      else return;
+      if (arr.length > 42) arr = arr.slice(-42);
+      openIdb().then(function (d) { if (!d) return; try { d.transaction('kv', 'readwrite').objectStore('kv').put(arr, 'snaps'); } catch (e) {} });
+    });
+  }
+  function showSnaps() {
+    var box = $('#snap-list'); if (!box) return;
+    snapAll(function (arr) {
+      if (!arr.length) { box.innerHTML = '<p class="note">Aucune copie automatique pour l\'instant : la première se fait au prochain enregistrement.</p>'; return; }
+      box.innerHTML = arr.slice().reverse().map(function (x, i) {
+        var dt = new Date(x.t);
+        return '<div class="snap"><span><b>' + dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'numeric' }) + ' ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + '</b><small>' + plural(x.d, 'jour') + ' · ' + plural(x.p, 'séance') + ' à venir · masse musc. ' + x.m + ' j</small></span><button type="button" data-snap="' + x.t + '">Compléter</button></div>';
+      }).join('');
+      box.querySelectorAll('[data-snap]').forEach(function (b) {
+        b.addEventListener('click', function () { var t = +b.dataset.snap, x = arr.filter(function (y) { return y.t === t; })[0]; if (x) { mergeData({ days: x.data }); showSnaps(); } });
+      });
+    });
+  }
+  function showLog() {
+    var box = $('#log-box'); if (!box) return;
+    var L = []; try { L = JSON.parse(localStorage.getItem(LS_LOG) || '[]'); } catch (e) {}
+    var txt = L.slice(-40).map(function (x) { var d = new Date(x.t); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ' · ' + x.v + ' · ' + x.w + ' · ' + x.s + ' · ' + x.d + 'j ' + x.p + 'p ' + x.m + 'm'; }).join('\n');
+    box.hidden = false; box.textContent = txt || 'Journal vide.';
+    try { navigator.clipboard.writeText(txt).then(function () { backupMsg('Journal copié : colle-le à Claude.'); }, function () {}); } catch (e) {}
+  }
   function persistLocal() {
     var adopted = adoptNewer(readStored());
     var out = snapshot(), okLs = false;
     if (adopted && !isTyping()) setTimeout(render, 0);
     try { localStorage.setItem(LS_KEY, JSON.stringify(out)); okLs = true; } catch (e) {}
+    logEvt(adopted ? 'save+adopt' : 'save'); snapMaybe(out);
     idbPut(out).then(function (okIdb) {
       if (okIdb || okLs) { lastSave = new Date(); if (!db) setSync('local'); }
       else setSync('fail');
@@ -3377,14 +3430,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       markExported();
     }
   });
-  $('#btn-import').addEventListener('click', function () { $('#file-import').click(); });
-  $('#file-import').addEventListener('change', function (e) {
-    var f = e.target.files && e.target.files[0];
-    if (!f) return;
-    var r = new FileReader();
-    r.onload = function () {
-      try {
-        var o = JSON.parse(r.result), src = o && o.days ? o.days : o, n = 0;
+  function mergeData(o) {
+        var src = o && o.days ? o.days : o, n = 0;
         if (o && Array.isArray(o.moves)) { o.moves.forEach(function (m) { if (typeof m === 'string' && customMoves.indexOf(m) < 0) customMoves.push(m); }); saveCustomMoves(); }
         /* Objectifs : on ajoute ceux qui manquent. Réglages et objectifs de forme actuels gardés (sauf appli vierge). */
         if (o && Array.isArray(o.races)) { var rid = {}; races.forEach(function (x) { rid[x.id] = 1; }); var nr0 = cleanRaces(o.races).filter(function (x) { return !rid[x.id]; }); if (nr0.length) { races = races.concat(nr0); saveRaces(); } }
@@ -3393,6 +3440,17 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         if (fresh && o && o.settings && typeof o.settings === 'object') { settings = cleanSettings(o.settings); applyGoals(); }
         if (fresh && o && o.goals && typeof o.goals === 'object') { bodyGoals = cleanGoals(o.goals); }
         saveGoals(); renderSettings();
+        /* Un plan peut en remplacer un autre : séances prévues à venir dont l'id commence par un préfixe listé dans removePlan. */
+        var nRm = 0;
+        if (o && Array.isArray(o.removePlan)) {
+          var pre = o.removePlan.map(String).filter(function (x) { return x.length >= 3; }), tdR = todayStr();
+          Object.keys(days).forEach(function (k) {
+            if (k < tdR) return;
+            var d0 = days[k], n0 = d0.plan.length;
+            d0.plan = d0.plan.filter(function (x) { return !pre.some(function (p0) { return String(x.id).indexOf(p0) === 0; }); });
+            if (d0.plan.length !== n0) { nRm += n0 - d0.plan.length; d0._u = Date.now(); if (db) touch(k); }
+          });
+        }
         Object.keys(src).forEach(function (k) {
           if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !src[k] || typeof src[k] !== 'object') return;
           /* Import = on complète sans écraser : séances prévues/faites manquantes, valeurs vides. */
@@ -3407,7 +3465,18 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
           if (add) { n++; cur0._u = Date.now(); if (db) touch(k); }
         });
         persistLocal(); render();
-        backupMsg(n ? plural(n, 'jour') + (n > 1 ? ' complétés' : ' complété') + ' depuis la copie (rien d\'écrasé).' : 'Rien à compléter : tout est déjà là.');
+        backupMsg((nRm ? nRm + (nRm > 1 ? ' anciennes séances prévues remplacées. ' : ' ancienne séance prévue remplacée. ') : '') + (n ? plural(n, 'jour') + (n > 1 ? ' complétés' : ' complété') + ' depuis la copie (rien d\'écrasé).' : 'Rien à compléter : tout est déjà là.'));
+  }
+  $('#btn-import').addEventListener('click', function () { $('#file-import').click(); });
+  $('#btn-snaps').addEventListener('click', showSnaps);
+  $('#btn-log').addEventListener('click', showLog);
+  $('#file-import').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        mergeData(JSON.parse(r.result));
       } catch (err) { backupMsg("Fichier illisible : choisis une copie exportée depuis cette appli."); }
     };
     r.onerror = function () { backupMsg("Impossible de lire ce fichier."); };
@@ -3417,6 +3486,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
 
   /* ---------- démarrage ---------- */
   loadLocal();
+  logEvt('start');
   renderSettings();
   syncRacePlans();
   render();

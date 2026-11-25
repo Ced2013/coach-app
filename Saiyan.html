@@ -2315,7 +2315,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return out;
   }
   function applyHealth(h) {
-    var date = h.date || cur, d = get(date), done = [];
+    /* Les données du raccourci sont celles du moment où il tourne : on les range à aujourd'hui, quel que soit le jour affiché. */
+    var date = h.date || todayStr(), d = get(date), done = [];
     if (h.weight != null && h.weight > 20) { d.weight = Math.round(h.weight * 10) / 10; done.push('poids'); }
     if (h.fat != null) { d.fat = Math.round((h.fat <= 1 ? h.fat * 100 : h.fat) * 10) / 10; done.push('masse grasse'); }
     if (h.musclePct != null) { d.musclePct = Math.round((h.musclePct <= 1 ? h.musclePct * 100 : h.musclePct) * 10) / 10; done.push('masse musculaire'); }
@@ -2497,7 +2498,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       return;
     }
     var h = parseHealth(txt), done = applyHealth(h);
-    healthMsg = done.length ? 'Importé pour le ' + dm(h.date || cur) + ' : ' + done.join(', ') + '.' : 'Aucune donnée reconnue. Texte reçu : « ' + esc(String(txt || '').slice(0, 120)) + ' »';
+    healthMsg = done.length ? 'Importé pour le ' + dm(h.date || todayStr()) + ' : ' + done.join(', ') + '.' : 'Aucune donnée reconnue. Texte reçu : « ' + esc(String(txt || '').slice(0, 120)) + ' »';
     healthPaste = !done.length; render(); refreshDay();
   }
   /* ---------- volume sur 12 semaines ---------- */

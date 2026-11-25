@@ -647,6 +647,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     <p class="note" id="backup-msg" role="status"></p>
     <div class="quick"><button type="button" id="btn-snaps">Copies automatiques</button><button type="button" id="btn-log">Copier le journal</button></div>
     <div id="snap-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    <h3 style="margin:10px 0 0;font-size:16px">Synchronisation GitHub</h3>
+    <div id="gh-box" style="display:flex;flex-direction:column;gap:6px"></div>
+    <p class="note" id="gh-status" role="status"></p>
     <pre id="log-box" hidden style="white-space:pre-wrap;font-size:11.5px;max-height:240px;overflow:auto;margin:0"></pre>
   </section>
   <p class="foot" id="sync"></p>
@@ -1051,7 +1054,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
 
   /* ---------- Filet de sécurité : journal des enregistrements + copies automatiques (IndexedDB, 7 jours) ---------- */
-  var APP_VER = '2026-11-25', LS_LOG = 'ced-routines-log';
+  var APP_VER = '2026-11-25b', LS_LOG = 'ced-routines-log';
   function countState() { var nd = 0, np = 0, nm = 0, td = todayStr(); Object.keys(days).forEach(function (k) { var d = days[k]; if (hasData(d)) nd++; if (k >= td) np += d.plan.length; if (d.musclePct != null || d.muscle != null) nm++; }); return { d: nd, p: np, m: nm }; }
   function logEvt(src) {
     try {
@@ -1063,12 +1066,13 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     } catch (e) {}
   }
   function snapAll(cb) { openIdb().then(function (d) { if (!d) return cb([]); try { var r = d.transaction('kv', 'readonly').objectStore('kv').get('snaps'); r.onsuccess = function () { cb(Array.isArray(r.result) ? r.result : []); }; r.onerror = function () { cb([]); }; } catch (e) { cb([]); } }); }
+  var snapLessKey = '';
   function snapMaybe(out) {
     snapAll(function (arr) {
       var last = arr[arr.length - 1], c = countState(), now = Date.now(), snap = { t: now, v: APP_VER, d: c.d, p: c.p, m: c.m, data: out };
       var more = !last || c.p > last.p || c.d > last.d || c.m > last.m, less = last && (c.p < last.p || c.d < last.d || c.m < last.m);
       /* On garde toujours la meilleure version récente : une baisse soudaine n'écrase jamais la dernière copie (elle est seulement journalisée). */
-      if (less) logEvt('baisse');
+      var lk = c.d + '/' + c.p + '/' + c.m; if (less && lk !== snapLessKey) logEvt('baisse'); snapLessKey = less ? lk : '';
       if (more && !less && last && now - last.t < 10 * 60e3) arr[arr.length - 1] = snap;
       else if (more && !less) arr.push(snap);
       else if (!last || now - last.t >= 4 * 3600e3) arr.push(snap);
@@ -1097,12 +1101,92 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     box.hidden = false; box.textContent = txt || 'Journal vide.';
     try { navigator.clipboard.writeText(txt).then(function () { backupMsg('Journal copié : colle-le à Claude.'); }, function () {}); } catch (e) {}
   }
+
+  /* ---------- Synchronisation GitHub : copie en ligne dans un dépôt privé, fusion jour par jour (le plus récent gagne) ---------- */
+  var LS_GH = 'ced-routines-gh', gh = {}; try { gh = JSON.parse(localStorage.getItem(LS_GH) || '{}') || {}; } catch (e) { gh = {}; }
+  var ghSha = null, ghTimer = null, ghBusy = false, ghLastSent = '', ghState = '', ghPulled = false, ghRemoteDays = 0;
+  function ghOn() { return !!(gh.repo && gh.token); }
+  function ghUrl() { return 'https://api.github.com/repos/' + gh.repo + '/contents/' + (gh.path || 'saiyan-data.json'); }
+  function ghHead() { return { 'Authorization': 'Bearer ' + gh.token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }; }
+  function b64e(str) { var bytes = new TextEncoder().encode(str), bin = ''; for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); }
+  function b64d(b) { var bin = atob(String(b).replace(/\s/g, '')), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
+  function ghStatus(t) { ghState = t; var el = $('#gh-status'); if (el) el.textContent = t; }
+  function ghPayload() { return JSON.stringify({ app: 'routines', version: 2, synced: new Date().toISOString(), moves: customMoves, rewards: rewards, goals: bodyGoals, settings: settings, races: races, days: snapshot() }); }
+  function mergeRemote(o) {
+    var src = (o && o.days) || {}, ch = false; ghRemoteDays = Object.keys(src).length;
+    Object.keys(src).forEach(function (k) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !src[k] || typeof src[k] !== 'object') return;
+      var su = num(src[k]._u) || 0, d = days[k], cu = d ? (d._u || (hasData(d) ? 0 : -1)) : -1;
+      if (su > cu && !timers[k]) { days[k] = normalize(src[k], k); ch = true; }
+    });
+    if (o && Array.isArray(o.races)) { var rid = {}; races.forEach(function (x) { rid[x.id] = 1; }); var nr = cleanRaces(o.races).filter(function (x) { return !rid[x.id]; }); if (nr.length) { races = races.concat(nr); saveRaces(); ch = true; } }
+    if (o && Array.isArray(o.rewards)) { var wid = {}; rewards.forEach(function (x) { wid[x.id] = 1; }); cleanRewards(o.rewards).forEach(function (x) { if (!wid[x.id]) { rewards.push(x); ch = true; } }); saveRewards(); }
+    if (o && Array.isArray(o.moves)) o.moves.forEach(function (m) { if (typeof m === 'string' && customMoves.indexOf(m) < 0) { customMoves.push(m); ch = true; } });
+    return ch;
+  }
+  function ghPull() {
+    if (!ghOn()) return Promise.resolve(false);
+    return fetch(ghUrl() + '?t=' + Date.now(), { headers: ghHead(), cache: 'no-store' }).then(function (r) {
+      if (r.status === 404) { ghSha = null; ghPulled = true; ghRemoteDays = 0; return null; }
+      if (r.status === 401 || r.status === 403) throw new Error('auth');
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      if (!j) return false;
+      ghSha = j.sha; ghPulled = true;
+      var txt = j.content ? b64d(j.content) : null;
+      if (!txt && j.download_url) return fetch(j.download_url, { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) { return mergeRemote(JSON.parse(t)); });
+      return txt ? mergeRemote(JSON.parse(txt)) : false;
+    });
+  }
+  function ghPush(force, merged) {
+    /* Jamais d'envoi avant d'avoir lu la copie en ligne, ni d'envoi qui ferait fondre la copie en ligne (appli vidée) */
+    if (!ghOn() || ghBusy || !ghPulled) return Promise.resolve();
+    if (!merged && ghRemoteDays > 10 && Object.keys(snapshot()).length < ghRemoteDays * 0.7) { logEvt('github-bloque'); return ghSync(); }
+    var body = ghPayload(), cmp = body.replace(/"synced":"[^"]*",/, '');
+    if (!force && cmp === ghLastSent) return Promise.resolve();
+    ghBusy = true;
+    var req = { message: 'Saiyan ' + new Date().toLocaleString('fr-FR'), content: b64e(body) }; if (ghSha) req.sha = ghSha;
+    return fetch(ghUrl(), { method: 'PUT', headers: ghHead(), body: JSON.stringify(req), keepalive: body.length < 60000 }).then(function (r) {
+      if (r.status === 409 || r.status === 422) { ghBusy = false; return ghSync(); }
+      if (r.status === 401 || r.status === 403) throw new Error('auth');
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json().then(function (j) { ghSha = j.content && j.content.sha; ghLastSent = cmp; ghBusy = false; ghStatus('Synchronisé avec GitHub à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })); logEvt('github'); });
+    }).catch(function (e) { ghBusy = false; ghStatus(e.message === 'auth' ? 'GitHub refuse l\'accès : vérifie le jeton et le dépôt.' : 'GitHub injoignable, nouvel essai plus tard.'); });
+  }
+  function ghSync() {
+    if (!ghOn()) return Promise.resolve();
+    ghStatus('Synchronisation…');
+    return ghPull().then(function (ch) {
+      if (ch) { persistLocal(); if (!isTyping()) render(); backupInfo(); }
+      return ghPush(true, true);
+    }).catch(function (e) { ghBusy = false; ghStatus(e.message === 'auth' ? 'GitHub refuse l\'accès : vérifie le jeton et le dépôt.' : 'GitHub injoignable, nouvel essai plus tard.'); });
+  }
+  function ghSchedule() { if (!ghOn()) return; clearTimeout(ghTimer); ghTimer = setTimeout(function () { ghPush(false); }, 15000); }
+  function ghRender() {
+    var box = $('#gh-box'); if (!box) return;
+    box.innerHTML = ghOn()
+      ? '<p class="note">Dépôt : <b>' + esc(gh.repo) + '</b></p><div class="quick"><button type="button" id="gh-now">Synchroniser maintenant</button><button type="button" id="gh-off">Désactiver</button></div>'
+      : '<p class="note">Copie en ligne dans un dépôt GitHub privé : tes données ne dépendent plus seulement du téléphone.</p>' +
+        '<input class="txt" id="gh-repo" placeholder="ced2013/saiyan-data" autocapitalize="off" autocorrect="off" spellcheck="false" style="min-height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:15px var(--font-body);width:100%">' +
+        '<input class="txt" id="gh-token" type="password" placeholder="Jeton GitHub (github_pat_…)" autocapitalize="off" autocorrect="off" spellcheck="false" style="min-height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:15px var(--font-body);width:100%">' +
+        '<div class="quick"><button type="button" id="gh-save">Activer la synchronisation</button></div>';
+    var sv = $('#gh-save'); if (sv) sv.addEventListener('click', function () {
+      var rp = ($('#gh-repo').value || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, ''), tk = ($('#gh-token').value || '').trim();
+      if (!/^[\w.-]+\/[\w.-]+$/.test(rp) || tk.length < 20) { ghStatus('Indique le dépôt sous la forme pseudo/nom et colle le jeton complet.'); return; }
+      gh = { repo: rp, token: tk, path: 'saiyan-data.json' }; try { localStorage.setItem(LS_GH, JSON.stringify(gh)); } catch (e) {}
+      ghRender(); ghSync();
+    });
+    var nw = $('#gh-now'); if (nw) nw.addEventListener('click', function () { ghSync(); });
+    var of = $('#gh-off'); if (of) of.addEventListener('click', function () { gh = {}; try { localStorage.removeItem(LS_GH); } catch (e) {} ghStatus(''); ghRender(); });
+    ghStatus(ghState);
+  }
   function persistLocal() {
     var adopted = adoptNewer(readStored());
     var out = snapshot(), okLs = false;
     if (adopted && !isTyping()) setTimeout(render, 0);
     try { localStorage.setItem(LS_KEY, JSON.stringify(out)); okLs = true; } catch (e) {}
-    logEvt(adopted ? 'save+adopt' : 'save'); snapMaybe(out);
+    logEvt(adopted ? 'save+adopt' : 'save'); snapMaybe(out); ghSchedule();
     idbPut(out).then(function (okIdb) {
       if (okIdb || okLs) { lastSave = new Date(); if (!db) setSync('local'); }
       else setSync('fail');
@@ -3470,6 +3554,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
   $('#btn-import').addEventListener('click', function () { $('#file-import').click(); });
   $('#btn-snaps').addEventListener('click', showSnaps);
+  ghRender();
   $('#btn-log').addEventListener('click', showLog);
   $('#file-import').addEventListener('change', function (e) {
     var f = e.target.files && e.target.files[0];
@@ -3488,6 +3573,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   /* ---------- démarrage ---------- */
   loadLocal();
   logEvt('start');
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  setTimeout(function () { ghRender(); ghSync(); }, 800);
   renderSettings();
   syncRacePlans();
   render();
@@ -3507,8 +3594,8 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     persistLocal();
   });
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') persistLocal();
-    else if (adoptNewer(readStored())) { if (isTyping()) needsRender = true; else render(); backupInfo(); }
+    if (document.visibilityState === 'hidden') { persistLocal(); clearTimeout(ghTimer); ghPush(false); }
+    else { if (adoptNewer(readStored())) { if (isTyping()) needsRender = true; else render(); backupInfo(); } ghSync(); }
   });
   window.addEventListener('storage', function (ev) { if (ev.key === LS_KEY && adoptNewer(readStored())) { if (isTyping()) needsRender = true; else render(); } });
   window.addEventListener('pagehide', persistLocal);

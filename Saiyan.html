@@ -1054,7 +1054,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
 
   /* ---------- Filet de sécurité : journal des enregistrements + copies automatiques (IndexedDB, 7 jours) ---------- */
-  var APP_VER = '2026-11-25b', LS_LOG = 'ced-routines-log';
+  var APP_VER = '2026-11-25c', LS_LOG = 'ced-routines-log';
   function countState() { var nd = 0, np = 0, nm = 0, td = todayStr(); Object.keys(days).forEach(function (k) { var d = days[k]; if (hasData(d)) nd++; if (k >= td) np += d.plan.length; if (d.musclePct != null || d.muscle != null) nm++; }); return { d: nd, p: np, m: nm }; }
   function logEvt(src) {
     try {
@@ -2234,8 +2234,96 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       (a.tips.length ? '<div class="sub">Pistes</div>' + a.tips.map(function (t) { return '<p class="tip" style="font-size:13.5px">' + t + '</p>'; }).join('') : '') +
       '<p class="note" style="font-size:12px">Repères généraux, à valider avec ton diététicien. La dépense de la montre est une estimation : c\'est la tendance du poids sur plusieurs semaines qui fait foi.</p></section>';
   }
+
+  /* ===== Cap sur l'objectif de poids : tendance lissée, rythme, projection avec ralentissement ===== */
+  var LS_WDATE = 'ced-routines-wdate', wGoalDate = ''; try { wGoalDate = localStorage.getItem(LS_WDATE) || '2027-06-30'; } catch (e) { wGoalDate = '2027-06-30'; }
+  function daysBetween(a, b) { return Math.round((parse(b) - parse(a)) / 864e5); }
+  function weightTrend() {
+    var sr = bodySeries('weight'); if (sr.length < 5) return null;
+    var T = null, tr = [];
+    sr.forEach(function (p) { T = T == null ? p.y : T + 0.15 * (p.y - T); tr.push({ x: p.x, y: T }); });
+    /* rythme = pente de la tendance sur les 28 derniers jours (régression linéaire) */
+    var td = todayStr(), win = tr.filter(function (p) { return daysBetween(p.x, td) <= 28; });
+    if (win.length < 4 || daysBetween(win[0].x, win[win.length - 1].x) < 10) return { sr: sr, tr: tr, T: T, rate: null };
+    var n = win.length, xs = win.map(function (p) { return daysBetween(win[0].x, p.x); }), ys = win.map(function (p) { return p.y; });
+    var mx = xs.reduce(function (a, b) { return a + b; }, 0) / n, my = ys.reduce(function (a, b) { return a + b; }, 0) / n, sxy = 0, sxx = 0;
+    for (var i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) * (xs[i] - mx); }
+    return { sr: sr, tr: tr, T: T, rate: sxx ? sxy / sxx * 7 : null };
+  }
+  function projWeeks(rem, r, decay) {
+    /* rem = kg à perdre (>0), r = perte par semaine (>0). decay = ralentissement par semaine (0.03 = 3 %). */
+    if (r <= 0) return null;
+    if (!decay) return rem / r;
+    var arg = 1 - rem * decay / r; if (arg <= 0) return null;
+    return Math.log(arg) / Math.log(1 - decay);
+  }
+  function goalCard() {
+    var g = bodyGoals.weight, wt = weightTrend(), td = todayStr();
+    var h = '<section class="card"><div class="m-head"><div><h3>Cap sur l\'objectif</h3><span class="goal">Tendance lissée : les variations d\'eau et de digestion d\'un jour sur l\'autre sont gommées.</span></div></div>';
+    if (!wt) return h + '<p class="note">Il faut au moins 5 pesées pour calculer une tendance.</p></section>';
+    if (g == null) return h + '<p class="note">Fixe un objectif de poids plus bas dans cette page pour voir ta projection.</p></section>';
+    var rem = wt.T - g, r = wt.rate == null ? null : -wt.rate, wl = Math.max(0.1, daysBetween(td, wGoalDate) / 7), need = rem / wl;
+    var status = '', col = 'var(--muted)';
+    if (rem <= 0) { status = 'Objectif atteint 🎯'; col = 'var(--good)'; }
+    else if (r == null) status = 'Rythme calculable après 10 jours de pesées régulières.';
+    else if (r <= 0.02) { status = 'Ça stagne'; col = 'var(--bad)'; }
+    else if (r >= need * 1.15) { status = 'En avance'; col = 'var(--good)'; }
+    else if (r >= need * 0.9) { status = 'Dans le rythme ✅'; col = 'var(--good)'; }
+    else if (r >= need * 0.7) { status = 'Un peu juste'; col = 'var(--gold-2, #C8862A)'; }
+    else { status = 'En retard'; col = 'var(--bad)'; }
+    var w1 = r && rem > 0 ? projWeeks(rem, r, 0) : null, w2 = r && rem > 0 ? projWeeks(rem, r, 0.03) : null;
+    function dAt(w) { return w == null ? null : addDays(td, Math.round(w * 7)); }
+    function dTxt(d) { return d ? parse(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
+    var d1 = dAt(w1), d2 = dAt(w2), pct = r ? r / wt.T * 100 : 0, needPct = need / wt.T * 100;
+    h += '<div class="m-row" style="justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px"><div><div class="sub">Tendance</div><b style="font-size:26px">' + fmtD(wt.T) + ' kg</b></div>' +
+      '<div style="text-align:right"><div class="sub">Rythme (4 semaines)</div><b style="font-size:20px">' + (r == null ? '–' : (r > 0 ? '−' : '+') + fmtD(Math.abs(r), 2) + ' kg/sem') + '</b></div></div>' +
+      '<p style="margin:2px 0 0;font-weight:700;color:' + col + '">' + status + '</p>';
+    if (rem > 0) {
+      h += '<p class="note">Reste <b>' + fmtD(rem) + ' kg</b> jusqu\'à ' + fmtD(g) + ' kg. Pour y être le <b>' + dTxt(wGoalDate) + '</b>, il faut <b>−' + fmtD(need, 2) + ' kg/sem</b> (' + fmtD(needPct, 2) + ' % du poids).' +
+        (needPct > 1 ? ' C\'est plus de 1 % par semaine : trop rapide pour garder ton muscle, recule la date.' : needPct < 0.25 ? ' Rythme très confortable.' : '') + '</p>';
+      if (r && r > 0.02) h += '<p class="note">À ce rythme : <b>' + dTxt(d1) + '</b>. Avec le ralentissement normal d\'une sèche (le corps s\'adapte, environ 3 % de moins chaque semaine) : <b>' + (d2 ? dTxt(d2) : 'pas avant plus d\'un an, il faudra relancer') + '</b>.</p>';
+      if (r && pct > 1.1) h += '<p class="note" style="color:var(--bad)">Tu perds plus de 1 % par semaine : attention à ton muscle et à ta récupération.</p>';
+    }
+    h += weightProjChart(wt, g, r, w1, w2);
+    h += '<div class="m-row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:12px"><div><div class="sub">Date visée</div><span class="goal">Pour calculer le rythme à tenir</span></div>' +
+      '<input id="wdate" type="date" value="' + esc(wGoalDate) + '" style="min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:0 10px;font:15px var(--font-body)"></div></section>';
+    return h;
+  }
+  function weightProjChart(wt, g, r, w1, w2) {
+    var td = todayStr(), start = addDays(td, -84), pts = wt.sr.filter(function (p) { return p.x >= start; }), trp = wt.tr.filter(function (p) { return p.x >= start; });
+    if (!pts.length) return '';
+    var endD = wGoalDate > td ? wGoalDate : addDays(td, 60);
+    [w1, w2].forEach(function (w) { if (w != null) { var d = addDays(td, Math.round(w * 7)); if (d > endD) endD = d; } });
+    if (daysBetween(td, endD) > 400) endD = addDays(td, 400);
+    var x0 = pts[0].x, span = Math.max(1, daysBetween(x0, endD)), W = 340, H = 170, pl = 30, pr = 8, pt = 8, pb = 20;
+    var ys = pts.map(function (p) { return p.y; }).concat([wt.T, g == null ? wt.T : g]);
+    var lo = Math.floor(Math.min.apply(null, ys) - 0.5), hi = Math.ceil(Math.max.apply(null, ys) + 0.5);
+    function X(d) { return pl + (W - pl - pr) * daysBetween(x0, d) / span; }
+    function Y(v) { return pt + (H - pt - pb) * (hi - v) / (hi - lo || 1); }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="Poids, tendance et projection">';
+    for (var v = lo; v <= hi; v += Math.max(1, Math.round((hi - lo) / 4))) svg += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="currentColor" stroke-opacity=".08"/><text x="' + (pl - 4) + '" y="' + (Y(v) + 3) + '" font-size="9" text-anchor="end" fill="currentColor" opacity=".55">' + v + '</text>';
+    if (g != null) svg += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(g) + '" y2="' + Y(g) + '" stroke="var(--good)" stroke-dasharray="4 3"/><text x="' + (W - pr) + '" y="' + (Y(g) - 3) + '" font-size="9" text-anchor="end" fill="var(--good)">objectif ' + fmtD(g) + '</text>';
+    if (wGoalDate > td && wGoalDate <= endD) svg += '<line x1="' + X(wGoalDate) + '" x2="' + X(wGoalDate) + '" y1="' + pt + '" y2="' + (H - pb) + '" stroke="var(--good)" stroke-opacity=".5"/>';
+    svg += '<line x1="' + X(td) + '" x2="' + X(td) + '" y1="' + pt + '" y2="' + (H - pb) + '" stroke="currentColor" stroke-opacity=".25"/>';
+    pts.forEach(function (p) { svg += '<circle cx="' + X(p.x).toFixed(1) + '" cy="' + Y(p.y).toFixed(1) + '" r="2.2" fill="currentColor" opacity=".35"/>'; });
+    svg += '<polyline fill="none" stroke="var(--accent)" stroke-width="2.4" points="' + trp.map(function (p) { return X(p.x).toFixed(1) + ',' + Y(p.y).toFixed(1); }).join(' ') + '"/>';
+    if (r && r > 0.02) {
+      var lin = [], dec = [], weeks = Math.ceil(daysBetween(td, endD) / 7);
+      for (var k = 0; k <= weeks; k++) {
+        var d = addDays(td, k * 7); if (d > endD) d = endD;
+        var l1 = wt.T - r * k, l2 = wt.T - r * (1 - Math.pow(0.97, k)) / 0.03;
+        if (g != null) { l1 = Math.max(l1, g); l2 = Math.max(l2, g); }
+        lin.push(X(d).toFixed(1) + ',' + Y(l1).toFixed(1)); dec.push(X(d).toFixed(1) + ',' + Y(l2).toFixed(1));
+      }
+      svg += '<polygon fill="var(--accent)" fill-opacity=".10" points="' + lin.join(' ') + ' ' + dec.slice().reverse().join(' ') + '"/>';
+      svg += '<polyline fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4" points="' + lin.join(' ') + '"/>';
+      svg += '<polyline fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="2 3" stroke-opacity=".7" points="' + dec.join(' ') + '"/>';
+    }
+    svg += '<text x="' + pl + '" y="' + (H - 6) + '" font-size="9" fill="currentColor" opacity=".55">' + dm(x0) + '</text><text x="' + X(td) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="currentColor" opacity=".7">auj.</text><text x="' + (W - pr) + '" y="' + (H - 6) + '" font-size="9" text-anchor="end" fill="currentColor" opacity=".55">' + dm(endD) + '</text></svg>';
+    return svg + '<div class="legend"><span><i style="background:currentColor;opacity:.35"></i>Pesée</span><span><i style="background:var(--accent)"></i>Tendance</span><span><i style="background:var(--accent);opacity:.4"></i>Projection (rythme actuel → avec ralentissement)</span></div>';
+  }
   function bodyView() {
-    var html = progSeg() + fold('energyp', energyCard());
+    var html = progSeg() + goalCard() + fold('energyp', energyCard());
     var any = ALL_M.some(function (b) { return bodySeries(b.k).length; });
     if (!any) return html + '<section class="card"><p class="note">Aucune mesure pour l\'instant. Saisis ton poids, ta masse grasse et ta masse musculaire dans la carte « Composition corporelle » de l\'onglet Jour.</p></section>';
     html += '<div class="tiles" style="grid-template-columns:repeat(2,1fr)">' + ALL_M.map(function (b) {
@@ -3007,6 +3095,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     if (s) refreshSession(s, ex);
   });
   content.addEventListener('change', function (e) {
+    if (e.target.id === 'wdate') { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) { wGoalDate = e.target.value; try { localStorage.setItem(LS_WDATE, wGoalDate); } catch (er) {} render(); } return; }
     var el = e.target;
     if (el.id === 'ph-file') {
       var f0 = el.files && el.files[0]; if (!f0) return;

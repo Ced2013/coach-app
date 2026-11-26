@@ -740,7 +740,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   var WATCH_START = '2026-09-23';
   function okHr(v) { return v != null && v >= 30 && v <= 100 ? v : null; }
   function okHrv(v) { return v != null && v >= 5 && v <= 300 ? v : null; }
-  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, musclePct: null, waist: null, kcalOut: null, hrRest: null, hrv: null, coffee: null, note: '', meals: [], cheats: [], extras: [], plan: [], sports: [] }; }
+  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, musclePct: null, waist: null, kcalOut: null, hrRest: null, hrv: null, coffee: null, coffeeCut: null, note: '', meals: [], cheats: [], extras: [], plan: [], sports: [] }; }
   function normSet(x) { var o = { w: num(x && x.w), r: num(x && x.r) }; if (x && num(x.t)) o.t = num(x.t); return o; }
   function normExo(e) {
     var o = { id: String(e.id || uid('e')), move: String(e.move || ''), rir: num(e.rir), sets: Array.isArray(e.sets) ? e.sets.map(normSet) : [] };
@@ -830,7 +830,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); if (e.sleepMin != null && e.sleepMin > 1200) e.sleepMin = null; e.screenMin = num(o.screenMin);
     e.blue = !!o.blue; e.blueMin = num(o.blueMin); if (num(o._u)) e._u = num(o._u);
     e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.musclePct = num(o.musclePct); e.waist = num(o.waist); e.kcalOut = num(o.kcalOut);
-    e.hrRest = date >= WATCH_START ? okHr(num(o.hrRest)) : null; e.hrv = date >= WATCH_START ? okHrv(num(o.hrv)) : null; e.coffee = num(o.coffee); e.note = o.note ? String(o.note).slice(0, 3000) : '';
+    e.hrRest = date >= WATCH_START ? okHr(num(o.hrRest)) : null; e.hrv = date >= WATCH_START ? okHrv(num(o.hrv)) : null; e.coffee = num(o.coffee); e.coffeeCut = o.coffeeCut === true ? true : o.coffeeCut === false ? false : null; e.note = o.note ? String(o.note).slice(0, 3000) : '';
     if (Array.isArray(o.plan)) e.plan = o.plan.filter(function (x) { return x && x.type; }).map(normPlanItem);
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
     e.extras = Array.isArray(o.extras) ? o.extras.map(function (x) { return String(x).slice(0, 40); }).filter(Boolean) : [];
@@ -845,7 +845,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return e;
   }
   function hasData(d) { return hasLog(d) || d.plan.length > 0; }
-  function hasLog(d) { return !!d.note || d.kcalOut != null || d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || (d.cheats || []).length > 0 || (d.extras || []).length > 0 || d.sports.length > 0; }
+  function hasLog(d) { return !!d.note || d.coffeeCut != null || d.kcalOut != null || d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || (d.cheats || []).length > 0 || (d.extras || []).length > 0 || d.sports.length > 0; }
   function hasBody(d) { return d.weight != null || d.fat != null || d.muscle != null || d.musclePct != null || d.waist != null; }
   function get(date) { return days[date] || (days[date] = emptyDay(date)); }
   /* Journées sans séance qu'on peut prévoir : elles ne comptent ni comme séance ni comme raté. */
@@ -1054,7 +1054,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
 
   /* ---------- Filet de sécurité : journal des enregistrements + copies automatiques (IndexedDB, 7 jours) ---------- */
-  var APP_VER = '2026-11-26', LS_LOG = 'ced-routines-log';
+  var APP_VER = '2026-11-26b', LS_LOG = 'ced-routines-log';
   function countState() { var nd = 0, np = 0, nm = 0, td = todayStr(); Object.keys(days).forEach(function (k) { var d = days[k]; if (hasData(d)) nd++; if (k >= td) np += d.plan.length; if (d.musclePct != null || d.muscle != null) nm++; }); return { d: nd, p: np, m: nm }; }
   function logEvt(src) {
     try {
@@ -1694,7 +1694,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       })() +
       '<div class="m-head" style="align-items:center;border-top:1px solid var(--line);padding-top:12px"><div><h3>Cafés</h3></div>' +
       '<div class="count"><button class="icon-btn small" data-action="coffee" data-d="-1" aria-label="Un café de moins">−</button><b>' + c + '</b><button class="icon-btn small" data-action="coffee" data-d="1" aria-label="Un café de plus">+</button>' +
-      '<span class="pill ' + st + '">' + (c > GOALS.coffee ? '+' + (c - GOALS.coffee) + ' de trop' : st === 'good' ? 'OK' : 'Max ' + GOALS.coffee) + '</span></div></div></section>';
+      '<span class="pill ' + st + '">' + (c > GOALS.coffee ? '+' + (c - GOALS.coffee) + ' de trop' : st === 'good' ? 'OK' : 'Max ' + GOALS.coffee) + '</span></div></div>' +
+      '<div class="m-head" style="align-items:center"><div><h3 style="font-size:15px">Dernier café avant 14 h</h3><span class="goal">Après, la caféine allège le sommeil profond</span></div>' +
+      '<div class="seg" role="group" aria-label="Dernier café avant 14 h"><button data-action="ccut" data-val="1"' + (d.coffeeCut === true ? ' class="on" aria-pressed="true" style="background:var(--good);color:#fff"' : '') + '>Oui</button><button data-action="ccut" data-val="0"' + (d.coffeeCut === false ? ' class="on" aria-pressed="true" style="background:var(--bad);color:#fff"' : '') + '>Non</button></div></div></section>';
   }
   function bodyCard(d) {
     var fields = BODY.map(function (b) {
@@ -2018,33 +2020,38 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   function noteCard(d) {
     return '<section class="card"><div class="m-head"><div><h3>Note du jour</h3><span class="goal">' + (d.note ? esc(d.note.split('\n')[0].slice(0, 60)) : 'Ce qui s\'est passé, ressenti, douleurs, énergie…') + '</span></div></div>' +
       '<textarea data-field="note" rows="4" maxlength="3000" placeholder="Ex. grosse fatigue au boulot, genou qui tire sur la fin du run, très bonne énergie…" style="width:100%;min-height:96px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:10px 12px;font:15px/1.4 var(--font-body);resize:vertical">' + esc(d.note || '') + '</textarea>' +
-      '<div class="quick"><button type="button" data-action="cr" data-which="hier">Compte rendu d\'hier</button><button type="button" data-action="cr" data-which="jour">Compte rendu de ce jour</button></div>' +
+      '<div class="quick"><button type="button" data-action="cr" data-which="matin">Compte rendu du matin</button></div>' +
       '<p class="note" id="cr-msg" role="status"></p><pre id="cr-box" hidden style="white-space:pre-wrap;font-size:12px;margin:0;max-height:260px;overflow:auto"></pre></section>';
   }
+  /* Compte rendu du matin : la nuit et la pesée du jour J, le bilan de la veille (J-1). ds = le jour du matin. */
   function dayReport(ds) {
-    var d = days[ds] || emptyDay(ds), ev = evalDay(d), L = [], dt = parse(ds);
-    var mark = function (k) { return ev[k].s === 'good' ? '✅' : ev[k].s === 'bad' ? '❌' : '·'; };
-    L.push('📋 Compte rendu du ' + dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }));
+    var dj = days[ds] || emptyDay(ds), y = addDays(ds, -1), d = days[y] || emptyDay(y), ev = evalDay(d), evj = evalDay(dj), L = [];
+    var mark = function (e, k) { return e[k].s === 'good' ? '✅' : e[k].s === 'bad' ? '❌' : '·'; };
+    var fd = function (x) { return parse(x).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); };
+    L.push('☀️ Ce matin (' + fd(ds) + ')');
+    L.push((dj.sleepMin != null ? (dj.sleepMin >= GOALS.sleep ? '✅' : '❌') : '·') + ' Nuit : ' + (dj.sleepMin != null ? fmtDur(dj.sleepMin) : '—') + ' (objectif ' + fmtDur(GOALS.sleep) + ')');
+    var rec = []; if (dj.hrRest != null) rec.push('FC repos ' + dj.hrRest); if (dj.hrv != null) rec.push('VFC ' + Math.round(dj.hrv) + ' ms');
+    if (rec.length) L.push('❤️ ' + rec.join(' · '));
+    var body = []; if (dj.weight != null) body.push('poids ' + fmtD(dj.weight) + ' kg'); if (dj.fat != null) body.push('MG ' + fmtD(dj.fat) + ' %'); if (dj.musclePct != null) body.push('muscle ' + fmtD(dj.musclePct) + ' %'); if (dj.waist != null) body.push('taille ' + fmtD(dj.waist) + ' cm');
+    L.push('⚖️ ' + (body.length ? body.join(' · ') : 'pas de pesée'));
+    var wt = typeof weightTrend === 'function' ? weightTrend() : null; if (wt && wt.rate != null) L.push('📉 Tendance ' + fmtD(wt.T) + ' kg · ' + (wt.rate < 0 ? '−' : '+') + fmtD(Math.abs(wt.rate), 2) + ' kg/sem');
     L.push('');
-    L.push(mark('sleep') + ' Sommeil : ' + (d.sleepMin != null ? fmtDur(d.sleepMin) : '—') + ' (objectif ' + fmtDur(GOALS.sleep) + ')');
-    L.push(mark('kcal') + ' Calories mangées : ' + (d.kcal != null ? fmtN(d.kcal) + ' kcal' : '—') + ' (objectif ' + fmtN(GOALS.kcal) + ')' + (d.kcalOut != null ? ' · dépensées ' + fmtN(d.kcalOut) + ' kcal' + (d.kcal != null ? ' · bilan ' + (d.kcal - d.kcalOut > 0 ? '+' : '') + fmtN(d.kcal - d.kcalOut) : '') : ''));
-    L.push(mark('water') + ' Eau : ' + (d.water != null ? fmtL(d.water) : '—'));
-    L.push(mark('screen') + ' Écran : ' + (d.screenMin != null ? fmtDur(d.screenMin) : '—'));
-    L.push(mark('blue') + ' Sortie Blue : ' + (d.blue ? 'faite' + (d.blueMin ? ' (' + d.blueMin + ' min)' : '') : 'non'));
+    L.push('📋 Hier (' + fd(y) + ')');
+    L.push(mark(ev, 'kcal') + ' Calories mangées : ' + (d.kcal != null ? fmtN(d.kcal) + ' kcal' : '—') + ' (objectif ' + fmtN(GOALS.kcal) + ')' + (d.kcalOut != null ? ' · dépensées ' + fmtN(d.kcalOut) + ' kcal' + (d.kcal != null ? ' · bilan ' + (d.kcal - d.kcalOut > 0 ? '+' : '') + fmtN(d.kcal - d.kcalOut) : '') : ''));
+    L.push(mark(ev, 'water') + ' Eau : ' + (d.water != null ? fmtL(d.water) : '—'));
+    L.push(mark(ev, 'screen') + ' Écran : ' + (d.screenMin != null ? fmtDur(d.screenMin) : '—'));
+    L.push(mark(ev, 'blue') + ' Sortie Blue : ' + (d.blue ? 'faite' + (d.blueMin ? ' (' + d.blueMin + ' min)' : '') : 'non'));
     var meals = MEALS.map(function (m, i) { return (d.meals.indexOf(i) >= 0 ? '✓' : (d.cheats || []).indexOf(i) >= 0 ? '✗' : '–') + ' ' + m[0]; });
     L.push('🍽 Repas : ' + meals.join(' · '));
-    if ((d.extras || []).length) L.push('🍺 Écarts : ' + d.extras.join(', '));
-    if (d.coffee != null) L.push('☕ Cafés : ' + d.coffee);
-    var body = []; if (d.weight != null) body.push('poids ' + fmtD(d.weight) + ' kg'); if (d.fat != null) body.push('MG ' + fmtD(d.fat) + ' %'); if (d.musclePct != null) body.push('muscle ' + fmtD(d.musclePct) + ' %'); if (d.waist != null) body.push('taille ' + fmtD(d.waist) + ' cm');
-    if (body.length) L.push('⚖️ Corps : ' + body.join(' · '));
-    var rec = []; if (d.hrRest != null) rec.push('FC repos ' + d.hrRest); if (d.hrv != null) rec.push('VFC ' + Math.round(d.hrv) + ' ms');
-    if (rec.length) L.push('❤️ Récup : ' + rec.join(' · '));
-    var sc = sportCell(ds, d, todayStr());
+    L.push('🍺 Écarts : ' + ((d.extras || []).length ? d.extras.join(', ') : 'aucun'));
+    L.push((d.coffee != null && d.coffee > GOALS.coffee ? '❌' : '☕') + ' Cafés : ' + (d.coffee != null ? d.coffee : '—') + ' (max ' + GOALS.coffee + ')' +
+      (d.coffeeCut === true ? ' · ✅ dernier avant 14 h' : d.coffeeCut === false ? ' · ❌ café après 14 h' + (dj.sleepMin != null && dj.sleepMin < GOALS.sleep ? ' (a pu peser sur la nuit)' : '') : ' · heure du dernier café non notée'));
+    var sc = sportCell(y, d, todayStr());
     if (d.plan.length) L.push('🗓 Prévu : ' + d.plan.map(function (x) { var t = sportDef(x.type).label; if (x.km) t += ' ' + fmtD(x.km) + ' km'; if (x.min) t += ' ' + x.min + ' min'; return t; }).join(' · '));
     d.sports.forEach(function (x) {
-      var t = '🏃 ' + sportDef(x.type).label, bits = [];
+      var bits = [];
       if (x.min) bits.push(fmtDur(x.min)); if (x.km) bits.push(fmtD(x.km) + ' km'); if (x.hr) bits.push('FC ' + x.hr); if (x.rpe) bits.push('RPE ' + x.rpe + '/10'); if (x.kcal) bits.push(fmtN(x.kcal) + ' kcal'); if (x.shoe) bits.push(x.shoe);
-      L.push(t + (bits.length ? ' : ' + bits.join(' · ') : ''));
+      L.push('🏃 ' + sportDef(x.type).label + (bits.length ? ' : ' + bits.join(' · ') : ''));
       if (x.wod) L.push('   WOD ' + (x.wod.name || '') + ' ' + (wodResText(x.wod) || ''));
       (x.exos || []).forEach(function (e) {
         var ss = e.sets.filter(function (z) { return z.w != null || z.r != null || z.t; }).map(function (z) { return z.t ? z.t + ' s' : (z.w != null ? fmtD(z.w) + '×' : '') + (z.r != null ? z.r : ''); });
@@ -2052,10 +2059,9 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       });
     });
     if (!d.plan.length && !d.sports.length) L.push('🏃 Sport : rien');
-    L.push('');
-    var sg = sc.cls === 'good' ? 1 : 0;
-    L.push('🟩 Cases vertes : ' + (dayScore(d) + sg) + '/6' + (ds >= POWER_START ? ' · ⚡ ' + dayRaw(ds).pts + ' pts' : ''));
-    if (d.note) { L.push(''); L.push('📝 Note : ' + d.note); }
+    L.push('🟩 Cases vertes : ' + (dayScore(d) + (sc.cls === 'good' ? 1 : 0)) + '/6' + (y >= POWER_START ? ' · ⚡ ' + dayRaw(y).pts + ' pts' : ''));
+    if (d.note) { L.push(''); L.push('📝 Note d\'hier : ' + d.note); }
+    if (dj.note) { L.push(''); L.push('📝 Note de ce matin : ' + dj.note); }
     return L.join('\n');
   }
   function weekGreens(ws) {
@@ -3286,6 +3292,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       else d.meals.push(mi);
       d.meals.sort(); d.cheats.sort(); touch(cur); render();
     }
+    else if (a === 'ccut') { d = get(cur); var cv = b.dataset.val === '1'; d.coffeeCut = d.coffeeCut === cv ? null : cv; touch(cur); render(); }
     else if (a === 'coffee') { d = get(cur); d.coffee = Math.max(0, (d.coffee || 0) + +b.dataset.d); touch(cur); render(); }
     else if (a === 'rf-new') { raceEdit = { name: '', date: '', dist: 'semi', km: null, goal: null, result: null, place: '', rank: '', notes: '', past: b.dataset.past === '1' }; render(); window.scrollTo(0, 0); focusSel('#rf-name'); }
     else if (a === 'rf-edit') { var re0 = races.filter(function (x) { return x.id === b.dataset.id; })[0]; if (re0) { raceEdit = JSON.parse(JSON.stringify(re0)); render(); window.scrollTo(0, 0); } }
@@ -3466,7 +3473,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       } catch (err) { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; }
     }
     else if (a === 'cr') {
-      var cds = b.dataset.which === 'hier' ? addDays(todayStr(), -1) : cur, txt = dayReport(cds), box = $('#cr-box'), msg = $('#cr-msg');
+      var cds = cur, txt = dayReport(cds), box = $('#cr-box'), msg = $('#cr-msg');
       if (box) { box.hidden = false; box.textContent = txt; }
       try { navigator.clipboard.writeText(txt).then(function () { if (msg) msg.textContent = 'Copié ! Colle-le dans ta conversation avec Claude.'; }, function () { if (msg) msg.textContent = 'Sélectionne le texte ci-dessous pour le copier.'; }); } catch (er) { if (msg) msg.textContent = 'Sélectionne le texte ci-dessous pour le copier.'; }
     }
@@ -3689,6 +3696,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
           ['meals', 'cheats', 'extras'].forEach(function (f) { if (!(cur0[f] || []).length && (inc[f] || []).length) { cur0[f] = inc[f].slice(); add = true; } });
           if (!cur0.blue && inc.blue) { cur0.blue = true; add = true; }
           if (!cur0.note && inc.note) { cur0.note = inc.note; add = true; }
+          if (cur0.coffeeCut == null && inc.coffeeCut != null) { cur0.coffeeCut = inc.coffeeCut; add = true; }
           ['kcal', 'water', 'sleepMin', 'screenMin', 'blueMin', 'weight', 'fat', 'muscle', 'musclePct', 'waist', 'kcalOut', 'hrRest', 'hrv', 'coffee'].forEach(function (f) { if (cur0[f] == null && inc[f] != null) { cur0[f] = inc[f]; add = true; } });
           if (add) { n++; cur0._u = Date.now(); if (db) touch(k); }
         });

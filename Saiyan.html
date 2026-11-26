@@ -740,7 +740,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   var WATCH_START = '2026-09-23';
   function okHr(v) { return v != null && v >= 30 && v <= 100 ? v : null; }
   function okHrv(v) { return v != null && v >= 5 && v <= 300 ? v : null; }
-  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, musclePct: null, waist: null, kcalOut: null, hrRest: null, hrv: null, coffee: null, meals: [], cheats: [], extras: [], plan: [], sports: [] }; }
+  function emptyDay(date) { return { date: date, kcal: null, water: null, sleepMin: null, screenMin: null, blue: false, blueMin: null, weight: null, fat: null, muscle: null, musclePct: null, waist: null, kcalOut: null, hrRest: null, hrv: null, coffee: null, note: '', meals: [], cheats: [], extras: [], plan: [], sports: [] }; }
   function normSet(x) { var o = { w: num(x && x.w), r: num(x && x.r) }; if (x && num(x.t)) o.t = num(x.t); return o; }
   function normExo(e) {
     var o = { id: String(e.id || uid('e')), move: String(e.move || ''), rir: num(e.rir), sets: Array.isArray(e.sets) ? e.sets.map(normSet) : [] };
@@ -830,7 +830,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     e.kcal = num(o.kcal); e.water = num(o.water); e.sleepMin = num(o.sleepMin); if (e.sleepMin != null && e.sleepMin > 1200) e.sleepMin = null; e.screenMin = num(o.screenMin);
     e.blue = !!o.blue; e.blueMin = num(o.blueMin); if (num(o._u)) e._u = num(o._u);
     e.weight = num(o.weight); e.fat = num(o.fat); e.muscle = num(o.muscle); e.musclePct = num(o.musclePct); e.waist = num(o.waist); e.kcalOut = num(o.kcalOut);
-    e.hrRest = date >= WATCH_START ? okHr(num(o.hrRest)) : null; e.hrv = date >= WATCH_START ? okHrv(num(o.hrv)) : null; e.coffee = num(o.coffee);
+    e.hrRest = date >= WATCH_START ? okHr(num(o.hrRest)) : null; e.hrv = date >= WATCH_START ? okHrv(num(o.hrv)) : null; e.coffee = num(o.coffee); e.note = o.note ? String(o.note).slice(0, 3000) : '';
     if (Array.isArray(o.plan)) e.plan = o.plan.filter(function (x) { return x && x.type; }).map(normPlanItem);
     if (Array.isArray(o.meals)) e.meals = o.meals.map(Number).filter(function (i) { return i >= 0 && i < 5; });
     e.extras = Array.isArray(o.extras) ? o.extras.map(function (x) { return String(x).slice(0, 40); }).filter(Boolean) : [];
@@ -845,7 +845,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     return e;
   }
   function hasData(d) { return hasLog(d) || d.plan.length > 0; }
-  function hasLog(d) { return d.kcalOut != null || d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || (d.cheats || []).length > 0 || (d.extras || []).length > 0 || d.sports.length > 0; }
+  function hasLog(d) { return !!d.note || d.kcalOut != null || d.kcal != null || d.water != null || d.sleepMin != null || d.screenMin != null || d.blue || d.blueMin != null || hasBody(d) || d.hrRest != null || d.hrv != null || d.coffee != null || d.meals.length > 0 || (d.cheats || []).length > 0 || (d.extras || []).length > 0 || d.sports.length > 0; }
   function hasBody(d) { return d.weight != null || d.fat != null || d.muscle != null || d.musclePct != null || d.waist != null; }
   function get(date) { return days[date] || (days[date] = emptyDay(date)); }
   /* Journées sans séance qu'on peut prévoir : elles ne comptent ni comme séance ni comme raté. */
@@ -1054,7 +1054,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
   }
 
   /* ---------- Filet de sécurité : journal des enregistrements + copies automatiques (IndexedDB, 7 jours) ---------- */
-  var APP_VER = '2026-11-25c', LS_LOG = 'ced-routines-log';
+  var APP_VER = '2026-11-26', LS_LOG = 'ced-routines-log';
   function countState() { var nd = 0, np = 0, nm = 0, td = todayStr(); Object.keys(days).forEach(function (k) { var d = days[k]; if (hasData(d)) nd++; if (k >= td) np += d.plan.length; if (d.musclePct != null || d.muscle != null) nm++; }); return { d: nd, p: np, m: nm }; }
   function logEvt(src) {
     try {
@@ -1759,6 +1759,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
       '<label class="field mini"><span class="sr">Durée de la sortie en minutes</span><input id="in-blueMin" data-field="blueMin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" value="' + val(d.blueMin) + '"><span class="unit">min</span></label>');
     html += (shown('reco') ? fold('reco', recoCard(d)) : '') + (shown('nutri') ? fold('nutri', nutriCard(d)) : '') + (shown('body') ? fold('body', bodyCard(d)) : '');
     if (shown('sport')) html += fold('sport', sportSection(d));
+    html += fold('note', noteCard(d));
     return html;
   }
 
@@ -2011,6 +2012,51 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     ov.innerHTML = '<div class="pw-aura"></div>' + msgs.map(function (m) { return '<div class="pw-ov-t"><small>' + m[0] + '</small><b>' + esc(m[1]) + '</b></div>'; }).join('') + '<p>Touche pour continuer</p>';
     ov.addEventListener('click', function () { ov.remove(); pwShown = false; });
     document.body.appendChild(ov);
+  }
+
+  /* ---------- Note du jour + compte rendu à envoyer ---------- */
+  function noteCard(d) {
+    return '<section class="card"><div class="m-head"><div><h3>Note du jour</h3><span class="goal">' + (d.note ? esc(d.note.split('\n')[0].slice(0, 60)) : 'Ce qui s\'est passé, ressenti, douleurs, énergie…') + '</span></div></div>' +
+      '<textarea data-field="note" rows="4" maxlength="3000" placeholder="Ex. grosse fatigue au boulot, genou qui tire sur la fin du run, très bonne énergie…" style="width:100%;min-height:96px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:10px 12px;font:15px/1.4 var(--font-body);resize:vertical">' + esc(d.note || '') + '</textarea>' +
+      '<div class="quick"><button type="button" data-action="cr" data-which="hier">Compte rendu d\'hier</button><button type="button" data-action="cr" data-which="jour">Compte rendu de ce jour</button></div>' +
+      '<p class="note" id="cr-msg" role="status"></p><pre id="cr-box" hidden style="white-space:pre-wrap;font-size:12px;margin:0;max-height:260px;overflow:auto"></pre></section>';
+  }
+  function dayReport(ds) {
+    var d = days[ds] || emptyDay(ds), ev = evalDay(d), L = [], dt = parse(ds);
+    var mark = function (k) { return ev[k].s === 'good' ? '✅' : ev[k].s === 'bad' ? '❌' : '·'; };
+    L.push('📋 Compte rendu du ' + dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }));
+    L.push('');
+    L.push(mark('sleep') + ' Sommeil : ' + (d.sleepMin != null ? fmtDur(d.sleepMin) : '—') + ' (objectif ' + fmtDur(GOALS.sleep) + ')');
+    L.push(mark('kcal') + ' Calories mangées : ' + (d.kcal != null ? fmtN(d.kcal) + ' kcal' : '—') + ' (objectif ' + fmtN(GOALS.kcal) + ')' + (d.kcalOut != null ? ' · dépensées ' + fmtN(d.kcalOut) + ' kcal' + (d.kcal != null ? ' · bilan ' + (d.kcal - d.kcalOut > 0 ? '+' : '') + fmtN(d.kcal - d.kcalOut) : '') : ''));
+    L.push(mark('water') + ' Eau : ' + (d.water != null ? fmtL(d.water) : '—'));
+    L.push(mark('screen') + ' Écran : ' + (d.screenMin != null ? fmtDur(d.screenMin) : '—'));
+    L.push(mark('blue') + ' Sortie Blue : ' + (d.blue ? 'faite' + (d.blueMin ? ' (' + d.blueMin + ' min)' : '') : 'non'));
+    var meals = MEALS.map(function (m, i) { return (d.meals.indexOf(i) >= 0 ? '✓' : (d.cheats || []).indexOf(i) >= 0 ? '✗' : '–') + ' ' + m[0]; });
+    L.push('🍽 Repas : ' + meals.join(' · '));
+    if ((d.extras || []).length) L.push('🍺 Écarts : ' + d.extras.join(', '));
+    if (d.coffee != null) L.push('☕ Cafés : ' + d.coffee);
+    var body = []; if (d.weight != null) body.push('poids ' + fmtD(d.weight) + ' kg'); if (d.fat != null) body.push('MG ' + fmtD(d.fat) + ' %'); if (d.musclePct != null) body.push('muscle ' + fmtD(d.musclePct) + ' %'); if (d.waist != null) body.push('taille ' + fmtD(d.waist) + ' cm');
+    if (body.length) L.push('⚖️ Corps : ' + body.join(' · '));
+    var rec = []; if (d.hrRest != null) rec.push('FC repos ' + d.hrRest); if (d.hrv != null) rec.push('VFC ' + Math.round(d.hrv) + ' ms');
+    if (rec.length) L.push('❤️ Récup : ' + rec.join(' · '));
+    var sc = sportCell(ds, d, todayStr());
+    if (d.plan.length) L.push('🗓 Prévu : ' + d.plan.map(function (x) { var t = sportDef(x.type).label; if (x.km) t += ' ' + fmtD(x.km) + ' km'; if (x.min) t += ' ' + x.min + ' min'; return t; }).join(' · '));
+    d.sports.forEach(function (x) {
+      var t = '🏃 ' + sportDef(x.type).label, bits = [];
+      if (x.min) bits.push(fmtDur(x.min)); if (x.km) bits.push(fmtD(x.km) + ' km'); if (x.hr) bits.push('FC ' + x.hr); if (x.rpe) bits.push('RPE ' + x.rpe + '/10'); if (x.kcal) bits.push(fmtN(x.kcal) + ' kcal'); if (x.shoe) bits.push(x.shoe);
+      L.push(t + (bits.length ? ' : ' + bits.join(' · ') : ''));
+      if (x.wod) L.push('   WOD ' + (x.wod.name || '') + ' ' + (wodResText(x.wod) || ''));
+      (x.exos || []).forEach(function (e) {
+        var ss = e.sets.filter(function (z) { return z.w != null || z.r != null || z.t; }).map(function (z) { return z.t ? z.t + ' s' : (z.w != null ? fmtD(z.w) + '×' : '') + (z.r != null ? z.r : ''); });
+        if (ss.length) L.push('   • ' + e.move + ' : ' + ss.join(', ') + (e.rir != null ? ' (RIR ' + e.rir + ')' : ''));
+      });
+    });
+    if (!d.plan.length && !d.sports.length) L.push('🏃 Sport : rien');
+    L.push('');
+    var sg = sc.cls === 'good' ? 1 : 0;
+    L.push('🟩 Cases vertes : ' + (dayScore(d) + sg) + '/6' + (ds >= POWER_START ? ' · ⚡ ' + dayRaw(ds).pts + ' pts' : ''));
+    if (d.note) { L.push(''); L.push('📝 Note : ' + d.note); }
+    return L.join('\n');
   }
   function weekGreens(ws) {
     var g = 0, f = 0;
@@ -2266,6 +2312,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var status = '', col = 'var(--muted)';
     if (rem <= 0) { status = 'Objectif atteint 🎯'; col = 'var(--good)'; }
     else if (r == null) status = 'Rythme calculable après 10 jours de pesées régulières.';
+    else if (r < -0.05) { status = 'Ça remonte'; col = 'var(--bad)'; }
     else if (r <= 0.02) { status = 'Ça stagne'; col = 'var(--bad)'; }
     else if (r >= need * 1.15) { status = 'En avance'; col = 'var(--good)'; }
     else if (r >= need * 0.9) { status = 'Dans le rythme ✅'; col = 'var(--good)'; }
@@ -3070,6 +3117,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
     var d = get(cur), s = el.dataset.sid ? findSport(d, el.dataset.sid) : null, ex = findExo(s, el.dataset.eid);
     if (f === 'kcal' || f === 'kcalOut') { d[f] = num(el.value); var kb = $('#kbal'); if (kb) kb.innerHTML = balTxt(d); }
     else if (f === 'water') d.water = num(el.value);
+    else if (f === 'note') d.note = el.value.slice(0, 3000);
     else if (f === 'blueMin') { d.blueMin = num(el.value); if (d.blueMin > 0) d.blue = true; }
     else if (f === 'sleepH' || f === 'sleepM') d.sleepMin = combine($('#in-sleepH').value, $('#in-sleepM').value);
     else if (f === 'screenH' || f === 'screenM') d.screenMin = combine($('#in-screenH').value, $('#in-screenM').value);
@@ -3417,6 +3465,11 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
         navigator.clipboard.writeText(txt).then(function () { msg.textContent = 'Bilan copié.'; }, function () { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; });
       } catch (err) { msg.textContent = 'Copie impossible : sélectionne le texte et copie-le.'; }
     }
+    else if (a === 'cr') {
+      var cds = b.dataset.which === 'hier' ? addDays(todayStr(), -1) : cur, txt = dayReport(cds), box = $('#cr-box'), msg = $('#cr-msg');
+      if (box) { box.hidden = false; box.textContent = txt; }
+      try { navigator.clipboard.writeText(txt).then(function () { if (msg) msg.textContent = 'Copié ! Colle-le dans ta conversation avec Claude.'; }, function () { if (msg) msg.textContent = 'Sélectionne le texte ci-dessous pour le copier.'; }); } catch (er) { if (msg) msg.textContent = 'Sélectionne le texte ci-dessous pour le copier.'; }
+    }
     else if (a === 'rw-add') {
       var rn = ($('#rw-name').value || '').trim(), rp = num($('#rw-pts').value);
       if (!rn || !rp) { $(rn ? '#rw-pts' : '#rw-name').focus(); return; }
@@ -3635,6 +3688,7 @@ html[data-style="saiyan"] .card.fold.shut.done .m-head::after { border-color: va
           ids = {}; cur0.sports.forEach(function (x) { ids[x.id] = 1; }); inc.sports.forEach(function (x) { if (!ids[x.id]) { cur0.sports.push(x); add = true; } });
           ['meals', 'cheats', 'extras'].forEach(function (f) { if (!(cur0[f] || []).length && (inc[f] || []).length) { cur0[f] = inc[f].slice(); add = true; } });
           if (!cur0.blue && inc.blue) { cur0.blue = true; add = true; }
+          if (!cur0.note && inc.note) { cur0.note = inc.note; add = true; }
           ['kcal', 'water', 'sleepMin', 'screenMin', 'blueMin', 'weight', 'fat', 'muscle', 'musclePct', 'waist', 'kcalOut', 'hrRest', 'hrv', 'coffee'].forEach(function (f) { if (cur0[f] == null && inc[f] != null) { cur0[f] = inc[f]; add = true; } });
           if (add) { n++; cur0._u = Date.now(); if (db) touch(k); }
         });
